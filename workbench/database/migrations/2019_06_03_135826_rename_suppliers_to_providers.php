@@ -1,10 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Schema;
 
-class RenameSuppliersToProviders extends Migration
+final class RenameSuppliersToProviders extends Migration
 {
     /**
      * Run the migrations.

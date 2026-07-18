@@ -10,7 +10,7 @@ use Workbench\App\Models\User;
 /**
  * @extends Factory<User>
  */
-class UserFactory extends Factory
+final class UserFactory extends Factory
 {
     /**
      * The current password being used by the factory.
@@ -32,11 +32,11 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'name'              => fake()->name(),
+            'email'             => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'password'          => self::$password ??= Hash::make('password'),
+            'remember_token'    => Str::random(10),
         ];
     }
 

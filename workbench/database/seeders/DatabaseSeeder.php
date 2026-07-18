@@ -6,7 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Workbench\Database\Factories\UserFactory;
 
-class DatabaseSeeder extends Seeder
+final class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         // UserFactory::new()->times(10)->create();
 
         UserFactory::new()->create([
-            'name' => 'Test User',
+            'name'  => 'Test User',
             'email' => 'test@example.com',
         ]);
     }

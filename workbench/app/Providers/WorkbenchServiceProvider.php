@@ -4,7 +4,7 @@ namespace Workbench\App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-class WorkbenchServiceProvider extends ServiceProvider
+final class WorkbenchServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
