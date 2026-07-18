@@ -28,6 +28,8 @@ final class SchemaBuilder
         /** @var array<string, TableSchema> $tables */
         $tables = [];
 
+        $files = (array) array_first($files);
+
         foreach ($files as $file) {
             foreach ($this->parser->parseFile($file) as $operation) {
                 $this->applyOperation($tables, $operation);
