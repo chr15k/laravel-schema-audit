@@ -37,6 +37,9 @@ final class SchemaBuilder
         return $tables;
     }
 
+    /**
+     * @param  array<string, TableSchema>  $tables
+     */
     private function applyOperation(array &$tables, SchemaOperation $operation): void
     {
         $table = $tables[$operation->tableName] ?? new TableSchema($operation->tableName);

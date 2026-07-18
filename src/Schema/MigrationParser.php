@@ -22,6 +22,9 @@ use RuntimeException;
  */
 final class MigrationParser
 {
+    /**
+     * @return list<SchemaOperation>
+     */
     public function parseFile(string $path): array
     {
         $code = file_get_contents($path);
@@ -150,7 +153,7 @@ final class MigrationParser
 
                             if ($arg->value instanceof Node\Expr\Array_) {
                                 foreach ($arg->value->items as $item) {
-                                    if ($item?->value instanceof String_) {
+                                    if ($item->value instanceof String_) {
                                         $arrayArgs[] = $item->value->value;
                                     }
                                 }

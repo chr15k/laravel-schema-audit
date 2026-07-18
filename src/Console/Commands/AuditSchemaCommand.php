@@ -7,6 +7,7 @@ namespace Chr15k\SchemaAudit\Console\Commands;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\Schema\TableSchema;
 use Illuminate\Console\Command;
+use RuntimeException;
 
 /**
  * php artisan schema:audit
@@ -24,7 +25,7 @@ final class AuditSchemaCommand extends Command
 
     public function handle(SchemaBuilder $builder): int
     {
-        $path = $this->resolvePath($this->option('path'));
+        $path = $this->resolvePath();
 
         $tables = $builder->buildFromDirectory($path);
 
@@ -38,14 +39,16 @@ final class AuditSchemaCommand extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * Resolve the --path option against the app base path, unless it's
-     * already absolute — lets callers (and tests) point at a directory
-     * outside the app, e.g. a fixtures folder, without it being incorrectly
-     * concatenated onto base_path().
-     */
-    private function resolvePath(string $path): string
+    private function resolvePath(): string
     {
+        $path = $this->option('path');
+
+        if (! is_string($path)) {
+            throw new RuntimeException(
+                'The --path option must be a string, got '.get_debug_type($path).'.'
+            );
+        }
+
         $isAbsolute = str_starts_with($path, DIRECTORY_SEPARATOR)
             || preg_match('#^[A-Za-z]:[\\\\/]#', $path) === 1;
 
