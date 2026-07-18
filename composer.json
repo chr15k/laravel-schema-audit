@@ -1,0 +1,95 @@
+{
+    "name": "chr15k/laravel-schema-audit",
+    "description": "Static analysis tool that cross-references Eloquent query usage against your migration-declared schema to catch missing indexes and N+1 patterns.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Chris Keller",
+            "email": "ctk8501@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "mysql",
+        "migration",
+        "schema",
+        "index",
+        "performance",
+        "optimization"
+    ],
+    "require": {
+        "php": "^8.1",
+        "nikic/php-parser": "^5.0",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29",
+        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+        "pestphp/pest": "^2.0|^3.0|^4.0",
+        "pestphp/pest-plugin-type-coverage": "^2.0|^3.0|^4.0",
+        "phpstan/phpstan": "^2.2",
+        "rector/rector": "^2.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Chr15k\\SchemaAudit\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Chr15k\\SchemaAudit\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Chr15k\\SchemaAudit\\SchemaAuditServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "refactor": "rector",
+        "lint": "pint",
+        "fix": [
+            "@lint",
+            "@refactor",
+            "@lint"
+        ],
+        "test:refactor": "rector --dry-run",
+        "test:lint": "pint --test",
+        "test:types": "phpstan analyse --ansi --memory-limit=2G",
+        "test:unit": "pest --colors=always --coverage --parallel --min=50",
+        "test": [
+            "@test:refactor",
+            "@test:lint",
+            "@test:types",
+            "@test:unit"
+        ],
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
