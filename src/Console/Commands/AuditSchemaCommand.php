@@ -24,7 +24,7 @@ final class AuditSchemaCommand extends Command
 
     public function handle(SchemaBuilder $builder): int
     {
-        $path = base_path($this->option('path'));
+        $path = $this->resolvePath($this->option('path'));
 
         $tables = $builder->buildFromDirectory($path);
 
@@ -36,5 +36,19 @@ final class AuditSchemaCommand extends Command
         $this->line(json_encode($output, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Resolve the --path option against the app base path, unless it's
+     * already absolute — lets callers (and tests) point at a directory
+     * outside the app, e.g. a fixtures folder, without it being incorrectly
+     * concatenated onto base_path().
+     */
+    private function resolvePath(string $path): string
+    {
+        $isAbsolute = str_starts_with($path, DIRECTORY_SEPARATOR)
+            || preg_match('#^[A-Za-z]:[\\\\/]#', $path) === 1;
+
+        return $isAbsolute ? $path : base_path($path);
     }
 }

@@ -15,7 +15,7 @@ use Chr15k\SchemaAudit\Tests\TestCase;
 |
 */
 
-pest()->extend(TestCase::class)->in('Unit');
+pest()->extend(TestCase::class)->in('Unit', 'Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -41,7 +41,7 @@ expect()->extend('toBeOne', fn () => $this->toBe(1));
 |
 */
 
-function something(): void
+function migrations_path(): string|false
 {
-    // ..
+    return realpath(__DIR__.'/Fixtures/Migrations');
 }
