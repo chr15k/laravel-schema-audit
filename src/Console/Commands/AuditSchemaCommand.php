@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Console\Commands;
 
-use Chr15k\SchemaAudit\Schema\Rules\Finding;
-use Chr15k\SchemaAudit\Schema\Rules\SchemaAuditor;
-use Chr15k\SchemaAudit\Schema\SchemaBuilder;
-use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Rules\Finding;
+use Chr15k\SchemaAudit\Rules\SchemaAuditor;
+use Chr15k\SchemaAudit\SchemaBuilder;
+use Chr15k\SchemaAudit\TableSchema;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Config;
 use RuntimeException;
 
 /**
@@ -43,7 +42,7 @@ final class AuditSchemaCommand extends Command
             return self::SUCCESS;
         }
 
-        $driver = $this->option('driver') ?? Config::get('database.default');
+        $driver = $this->option('driver') ?? config('database.default');
 
         $findings = SchemaAuditor::withDefaultRules(
             is_string($driver) && filled($driver) ? $driver : 'mysql'

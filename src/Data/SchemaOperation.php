@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Data;
+namespace Chr15k\SchemaAudit\Data;
 
 /**
  * One Schema::create(...) or Schema::table(...) block as literally written

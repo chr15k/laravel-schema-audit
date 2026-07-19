@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Parsers;
+namespace Chr15k\SchemaAudit\Parsers;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;

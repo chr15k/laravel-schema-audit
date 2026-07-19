@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Rules;
+namespace Chr15k\SchemaAudit;
 
-use Chr15k\SchemaAudit\Schema\Contracts\Rule;
-use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Data\Finding;
+use Chr15k\SchemaAudit\Rules;
+use Chr15k\SchemaAudit\TableSchema;
 
 /**
  * Runs a set of Rules against the folded schema and collects every
@@ -18,18 +20,16 @@ final readonly class SchemaAuditor
     /**
      * @param  list<Rule>  $rules
      */
-    public function __construct(
-        private array $rules,
-    ) {}
+    public function __construct(private array $rules) {}
 
     public static function withDefaultRules(string $driver): self
     {
         return new self([
-            new UnindexedForeignKeyRule($driver),
-            new DuplicateIndexRule,
-            new RedundantSingleColumnIndexRule,
-            new DanglingForeignKeyRule,
-            new NoPrimaryKeyRule,
+            new Rules\UnindexedForeignKeyRule($driver),
+            new Rules\DuplicateIndexRule,
+            new Rules\RedundantSingleColumnIndexRule,
+            new Rules\DanglingForeignKeyRule,
+            new Rules\NoPrimaryKeyRule,
         ]);
     }
 

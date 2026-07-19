@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Rules;
+namespace Chr15k\SchemaAudit\Data;
 
 /**
  * One thing a Rule found wrong with the folded schema. Deliberately flat

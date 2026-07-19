@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Rules;
+namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Schema\Contracts\Rule;
+use Chr15k\SchemaAudit\Contracts\Rule;
 
 /**
  * Flags a table with no identifiable primary key — neither an

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Parsers;
+namespace Chr15k\SchemaAudit\Parsers;
 
-use Chr15k\SchemaAudit\Schema\Data\SchemaOperation;
+use Chr15k\SchemaAudit\Data\SchemaOperation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\StaticCall;

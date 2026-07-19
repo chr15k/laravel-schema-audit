@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema;
+namespace Chr15k\SchemaAudit;
 
-use Chr15k\SchemaAudit\Schema\Data\SchemaOperation;
-use Chr15k\SchemaAudit\Schema\Parsers\SchemaCallVisitor;
+use Chr15k\SchemaAudit\Data\SchemaOperation;
+use Chr15k\SchemaAudit\Parsers\SchemaCallVisitor;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 use RuntimeException;

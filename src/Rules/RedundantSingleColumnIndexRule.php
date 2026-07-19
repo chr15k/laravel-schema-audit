@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Rules;
+namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Schema\Contracts\Rule;
-use Chr15k\SchemaAudit\Schema\Data\Index;
+use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Data\Index;
 
 /**
  * Flags a single-column index that is already covered by a composite

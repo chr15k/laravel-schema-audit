@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema;
+namespace Chr15k\SchemaAudit;
 
-use Chr15k\SchemaAudit\Schema\Data\ColumnCall;
-use Chr15k\SchemaAudit\Schema\Data\ColumnChain;
-use Chr15k\SchemaAudit\Schema\Data\ForeignKey;
-use Chr15k\SchemaAudit\Schema\Data\Index;
-use Chr15k\SchemaAudit\Schema\Data\SchemaOperation;
+use Chr15k\SchemaAudit\Data\ColumnCall;
+use Chr15k\SchemaAudit\Data\ColumnChain;
+use Chr15k\SchemaAudit\Data\ForeignKey;
+use Chr15k\SchemaAudit\Data\Index;
+use Chr15k\SchemaAudit\Data\SchemaOperation;
 
 /**
  * Folds every migration file's SchemaOperations, in filename order, into a
