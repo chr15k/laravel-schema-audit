@@ -19,7 +19,7 @@ use RuntimeException;
  * This is a thin entrypoint: AST traversal and per-call interpretation
  * live in Schema\Parsers\SchemaCallVisitor and Schema\Parsers\ChainExtractor.
  */
-final class MigrationParser
+final readonly class MigrationParser
 {
     /**
      * @return list<SchemaOperation>

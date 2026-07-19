@@ -24,10 +24,14 @@ final class AuditSchemaCommand extends Command
 {
     protected $signature = 'schema:audit
         {--path=database/migrations : Directory to scan for migration files}
-        {--driver=mysql : Database driver, affects which rules apply (e.g. FK auto-indexing)}
         {--schema-only : Print the raw folded schema instead of running rules}';
 
     protected $description = 'Audit migration-declared schema for unindexed foreign keys, duplicate/redundant indexes, dangling foreign keys, and missing primary keys';
+
+    public function __construct(private readonly SchemaAuditor $auditor)
+    {
+        parent::__construct();
+    }
 
     public function handle(SchemaBuilder $builder): int
     {
@@ -42,11 +46,7 @@ final class AuditSchemaCommand extends Command
             return self::SUCCESS;
         }
 
-        $driver = $this->option('driver') ?? config('database.default');
-
-        $findings = SchemaAuditor::withDefaultRules(
-            is_string($driver) && filled($driver) ? $driver : 'mysql'
-        )->audit($tables);
+        $findings = $this->auditor->audit($tables);
 
         $this->line(json_encode(
             array_map(fn (Finding $finding): array => $finding->toArray(), $findings),

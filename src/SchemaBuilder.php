@@ -60,7 +60,7 @@ final readonly class SchemaBuilder
     private const DEFAULTS_TO_ID_COLUMN = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
 
     public function __construct(
-        private MigrationParser $parser = new MigrationParser,
+        private MigrationParser $parser,
     ) {}
 
     /**

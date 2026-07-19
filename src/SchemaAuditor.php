@@ -12,18 +12,7 @@ final readonly class SchemaAuditor
     /**
      * @param  list<Rule>  $rules
      */
-    public function __construct(private array $rules) {}
-
-    public static function withDefaultRules(string $driver): self
-    {
-        return new self([
-            new Rules\UnindexedForeignKeyRule($driver),
-            new Rules\DuplicateIndexRule,
-            new Rules\RedundantSingleColumnIndexRule,
-            new Rules\DanglingForeignKeyRule,
-            new Rules\NoPrimaryKeyRule,
-        ]);
-    }
+    public function __construct(private iterable $rules) {}
 
     /**
      * @param  array<string, TableSchema>  $tables
