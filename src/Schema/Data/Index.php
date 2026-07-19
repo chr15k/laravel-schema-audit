@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Data;
 
-final class Index
+final readonly class Index
 {
     /**
      * @param  list<string>  $columns  ordered — order matters for composite-index matching
      */
     public function __construct(
-        public readonly ?string $name,
-        public readonly array $columns,
-        public readonly bool $unique = false,
+        public ?string $name,
+        public array $columns,
+        public bool $unique = false,
     ) {}
 }

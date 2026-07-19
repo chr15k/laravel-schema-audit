@@ -21,6 +21,9 @@ use RuntimeException;
  */
 final class MigrationParser
 {
+    /**
+     * @return list<SchemaOperation>
+     */
     public function parseFile(string $path): array
     {
         $code = file_get_contents($path);

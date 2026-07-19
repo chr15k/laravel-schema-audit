@@ -9,13 +9,13 @@ namespace Chr15k\SchemaAudit\Schema\Rules;
  * and serializable — this is what both the JSON and human-readable
  * command output are built from.
  */
-final class Finding
+final readonly class Finding
 {
     public function __construct(
-        public readonly string $rule,
-        public readonly string $table,
-        public readonly string $message,
-        public readonly ?string $column = null,
+        public string $rule,
+        public string $table,
+        public string $message,
+        public ?string $column = null,
     ) {}
 
     /**

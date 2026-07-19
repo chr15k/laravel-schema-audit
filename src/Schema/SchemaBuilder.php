@@ -17,7 +17,7 @@ use Chr15k\SchemaAudit\Schema\Data\SchemaOperation;
  * alphabetical sort of the directory listing is already chronological —
  * this is the ordering assumption the whole tool depends on.
  */
-final class SchemaBuilder
+final readonly class SchemaBuilder
 {
     /**
      * Real Blueprint column-defining methods. Deliberately a WHITELIST,
@@ -60,7 +60,7 @@ final class SchemaBuilder
     private const DEFAULTS_TO_ID_COLUMN = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
 
     public function __construct(
-        private readonly MigrationParser $parser = new MigrationParser,
+        private MigrationParser $parser = new MigrationParser,
     ) {}
 
     /**
@@ -83,6 +83,9 @@ final class SchemaBuilder
         return $tables;
     }
 
+    /**
+     * @param  array<string, TableSchema>  $tables
+     */
     private function applyOperation(array &$tables, SchemaOperation $operation): void
     {
         if ($operation->type === SchemaOperation::TYPE_DROP) {

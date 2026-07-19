@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\Rules;
+namespace Chr15k\SchemaAudit\Schema\Contracts;
 
+use Chr15k\SchemaAudit\Schema\Rules\Finding;
 use Chr15k\SchemaAudit\Schema\TableSchema;
 
 /**

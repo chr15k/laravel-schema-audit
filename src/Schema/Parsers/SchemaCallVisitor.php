@@ -8,7 +8,7 @@ use Chr15k\SchemaAudit\Schema\Data\SchemaOperation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\StaticCall;
-use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
 
 /**
@@ -26,7 +26,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         private readonly ChainExtractor $chainExtractor = new ChainExtractor,
     ) {}
 
-    public function enterNode(Node $node)
+    public function enterNode(Node $node): ?int
     {
         // A migration's down() method is the ROLLBACK — it commonly
         // contains Schema::dropIfExists(...) for a table that was never
@@ -34,7 +34,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         // Schema:: calls never get folded in as if they were real
         // forward operations.
         if ($node instanceof Node\Stmt\ClassMethod && $node->name->toString() === 'down') {
-            return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+            return NodeVisitor::DONT_TRAVERSE_CHILDREN;
         }
 
         if (! $node instanceof StaticCall) {

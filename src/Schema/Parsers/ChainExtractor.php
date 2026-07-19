@@ -100,7 +100,7 @@ final class ChainExtractor
 
             if ($arg->value instanceof Node\Expr\Array_) {
                 foreach ($arg->value->items as $item) {
-                    if ($item?->value instanceof String_) {
+                    if ($item->value instanceof String_) {
                         $arrayArgs[] = $item->value->value;
                     }
                 }

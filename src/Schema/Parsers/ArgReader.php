@@ -17,7 +17,7 @@ use PhpParser\Node\Scalar\String_;
 final class ArgReader
 {
     /**
-     * @param  list<Node\Arg|Node\VariadicPlaceholder>  $args
+     * @param  array<int|string, Node\Arg|Node\VariadicPlaceholder>  $args
      */
     public static function stringArgAt(array $args, int $position): ?string
     {
@@ -31,7 +31,7 @@ final class ArgReader
     }
 
     /**
-     * @param  list<Node\Arg|Node\VariadicPlaceholder>  $args
+     * @param  array<int|string, Node\Arg|Node\VariadicPlaceholder>  $args
      */
     public static function closureArgAt(array $args, int $position): ?Closure
     {

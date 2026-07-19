@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Rules;
 
+use Chr15k\SchemaAudit\Schema\Contracts\Rule;
 use Chr15k\SchemaAudit\Schema\Data\Index;
 
 /**

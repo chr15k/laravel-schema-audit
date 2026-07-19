@@ -8,7 +8,7 @@ namespace Chr15k\SchemaAudit\Schema\Data;
  * One Schema::create(...) or Schema::table(...) block as literally written
  * in a single migration file — not yet folded against other files.
  */
-final class SchemaOperation
+final readonly class SchemaOperation
 {
     public const TYPE_CREATE = 'create';
 
@@ -24,9 +24,9 @@ final class SchemaOperation
      * @param  string|null  $renameTo  only set when type is TYPE_RENAME — the new table name
      */
     public function __construct(
-        public readonly string $type,
-        public readonly string $tableName,
-        public readonly array $chains = [],
-        public readonly ?string $renameTo = null,
+        public string $type,
+        public string $tableName,
+        public array $chains = [],
+        public ?string $renameTo = null,
     ) {}
 }

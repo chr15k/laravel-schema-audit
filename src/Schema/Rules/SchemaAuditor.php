@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Rules;
 
+use Chr15k\SchemaAudit\Schema\Contracts\Rule;
 use Chr15k\SchemaAudit\Schema\TableSchema;
 
 /**
@@ -12,13 +13,13 @@ use Chr15k\SchemaAudit\Schema\TableSchema;
  * usage scanning) — see the package README for why this package is
  * scoped to migration-only analysis.
  */
-final class SchemaAuditor
+final readonly class SchemaAuditor
 {
     /**
      * @param  list<Rule>  $rules
      */
     public function __construct(
-        private readonly array $rules,
+        private array $rules,
     ) {}
 
     public static function withDefaultRules(string $driver): self

@@ -13,13 +13,13 @@ namespace Chr15k\SchemaAudit\Schema\Data;
  * produce an 'unique' ColumnCall, but only chain position disambiguates
  * what it means.
  */
-final class ColumnChain
+final readonly class ColumnChain
 {
     /**
      * @param  list<ColumnCall>  $calls  root-first
      */
     public function __construct(
-        public readonly array $calls,
+        public array $calls,
     ) {}
 
     public function root(): ColumnCall

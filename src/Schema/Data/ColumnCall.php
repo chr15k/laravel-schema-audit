@@ -9,15 +9,15 @@ namespace Chr15k\SchemaAudit\Schema\Data;
  * ColumnCall('string', ['name'], []) for $table->string('name'), or
  * ColumnCall('index', [], ['a', 'b']) for $table->index(['a', 'b']).
  */
-final class ColumnCall
+final readonly class ColumnCall
 {
     /**
      * @param  list<string>  $stringArgs
      * @param  list<string>  $arrayArgs
      */
     public function __construct(
-        public readonly string $method,
-        public readonly array $stringArgs,
-        public readonly array $arrayArgs,
+        public string $method,
+        public array $stringArgs,
+        public array $arrayArgs,
     ) {}
 }

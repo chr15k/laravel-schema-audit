@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Rules;
 
+use Chr15k\SchemaAudit\Schema\Contracts\Rule;
+
 /**
  * Flags a foreign key whose referenced table doesn't exist in the folded
  * schema at all — a typo, or a table that was renamed/dropped without

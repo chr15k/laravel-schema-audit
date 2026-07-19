@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Rules;
 
+use Chr15k\SchemaAudit\Schema\Contracts\Rule;
+
 /**
  * Flags two or more indexes on the same table covering the exact same
  * column list (order-sensitive, since a composite index's column order
