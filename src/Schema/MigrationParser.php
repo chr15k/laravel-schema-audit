@@ -21,8 +21,6 @@ use RuntimeException;
  */
 final class MigrationParser
 {
-    public function __construct(private readonly ParserFactory $parserFactory) {}
-
     public function parseFile(string $path): array
     {
         $code = file_get_contents($path);
@@ -39,7 +37,7 @@ final class MigrationParser
      */
     public function parseCode(string $code): array
     {
-        $ast = $this->parserFactory
+        $ast = (new ParserFactory)
             ->createForNewestSupportedVersion()
             ->parse($code) ?? [];
 

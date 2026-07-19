@@ -47,8 +47,20 @@ final class SchemaBuilder
         'foreignId', 'foreignUuid', 'foreignUlid', 'foreignIdFor',
     ];
 
+    /**
+     * Blueprint methods that default to a column named 'id' when called
+     * with no arguments — e.g. $table->id() is equivalent to
+     * $table->id('id'), and is by far the more common form in practice.
+     * Without this, $table->id() (no arg) was silently dropped entirely,
+     * which meant tables using the idiomatic $table->id() were incorrectly
+     * flagged as having no primary key.
+     *
+     * @var list<string>
+     */
+    private const DEFAULTS_TO_ID_COLUMN = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
+
     public function __construct(
-        private readonly MigrationParser $parser,
+        private readonly MigrationParser $parser = new MigrationParser,
     ) {}
 
     /**
@@ -128,7 +140,8 @@ final class SchemaBuilder
             $root->method === 'dropIndex'                       => $this->applyDropIndex($table, $root),
             $root->method === 'dropUnique'                      => $this->applyDropIndex($table, $root),
             $root->method === 'dropForeign'                     => $this->applyDropForeign($table, $root),
-            default                                             => null, // primary(), dropPrimary(), timestamps(), etc. — no schema-shape impact we track
+            $root->method === 'primary'                         => $table->markPrimaryKey(),
+            default                                             => null, // dropPrimary(), timestamps(), etc. — no schema-shape impact we track
         };
     }
 
@@ -144,7 +157,7 @@ final class SchemaBuilder
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
-        $name = $root->stringArgs[0] ?? null;
+        $name = $root->stringArgs[0] ?? (in_array($root->method, self::DEFAULTS_TO_ID_COLUMN, true) ? 'id' : null);
 
         if ($name === null) {
             return; // e.g. $table->timestamps() has no name arg — not tracked as a single column

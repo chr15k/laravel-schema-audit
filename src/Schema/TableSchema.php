@@ -6,14 +6,13 @@ namespace Chr15k\SchemaAudit\Schema;
 
 use Chr15k\SchemaAudit\Schema\Data\ForeignKey;
 use Chr15k\SchemaAudit\Schema\Data\Index;
-use Illuminate\Contracts\Support\Arrayable;
 
 /**
  * Mutable, folded representation of a single table's schema, built up by
  * replaying every migration that touches it (Schema::create + Schema::table)
  * in filename/timestamp order.
  */
-final class TableSchema implements Arrayable
+final class TableSchema
 {
     /** @var array<string, string> column name => column type */
     private array $columns = [];
@@ -23,6 +22,8 @@ final class TableSchema implements Arrayable
 
     /** @var list<ForeignKey> */
     private array $foreignKeys = [];
+
+    private bool $hasExplicitPrimaryKey = false;
 
     public function __construct(
         public readonly string $tableName,
@@ -75,6 +76,30 @@ final class TableSchema implements Arrayable
             $this->indexes,
             fn (Index $index): bool => $index->name !== $indexName
         ));
+    }
+
+    public function markPrimaryKey(): void
+    {
+        $this->hasExplicitPrimaryKey = true;
+    }
+
+    /**
+     * True if the table has a primary key — either via an auto-incrementing
+     * id-style column (id(), increments(), bigIncrements(), etc., which
+     * imply a primary key by Laravel convention) or an explicit
+     * $table->primary(...) call.
+     */
+    public function hasPrimaryKey(): bool
+    {
+        $autoPrimaryTypes = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
+
+        foreach ($this->columns as $type) {
+            if (in_array($type, $autoPrimaryTypes, true)) {
+                return true;
+            }
+        }
+
+        return $this->hasExplicitPrimaryKey;
     }
 
     public function addForeignKey(ForeignKey $fk): void
