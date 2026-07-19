@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema;
 
+use Chr15k\SchemaAudit\Schema\Data\ForeignKey;
+use Chr15k\SchemaAudit\Schema\Data\Index;
+use Illuminate\Contracts\Support\Arrayable;
+
 /**
  * Mutable, folded representation of a single table's schema, built up by
  * replaying every migration that touches it (Schema::create + Schema::table)
  * in filename/timestamp order.
  */
-final class TableSchema
+final class TableSchema implements Arrayable
 {
     /** @var array<string, string> column name => column type */
     private array $columns = [];
@@ -40,6 +44,26 @@ final class TableSchema
         ));
     }
 
+    public function renameColumn(string $from, string $to): void
+    {
+        if (! array_key_exists($from, $this->columns)) {
+            return; // renaming a column we never tracked — nothing to do
+        }
+
+        $this->columns[$to] = $this->columns[$from];
+        unset($this->columns[$from]);
+
+        // Any index referencing the old column name should follow the rename.
+        $this->indexes = array_map(
+            fn (Index $index): Index => new Index(
+                name: $index->name,
+                columns: array_map(fn (string $c): string => $c === $from ? $to : $c, $index->columns),
+                unique: $index->unique,
+            ),
+            $this->indexes
+        );
+    }
+
     public function addIndex(Index $index): void
     {
         $this->indexes[] = $index;
@@ -56,6 +80,21 @@ final class TableSchema
     public function addForeignKey(ForeignKey $fk): void
     {
         $this->foreignKeys[] = $fk;
+    }
+
+    /**
+     * Drop a foreign key by explicit constraint name, or by column name
+     * when no name was recorded (Laravel's default constraint naming
+     * convention is table_column_foreign, but we don't reconstruct that
+     * here — matching by column is the pragmatic fallback since a given
+     * column typically has at most one FK).
+     */
+    public function dropForeignKey(string $nameOrColumn): void
+    {
+        $this->foreignKeys = array_values(array_filter(
+            $this->foreignKeys,
+            fn (ForeignKey $fk): bool => $fk->name !== $nameOrColumn && $fk->column !== $nameOrColumn
+        ));
     }
 
     /** @return array<string, string> */

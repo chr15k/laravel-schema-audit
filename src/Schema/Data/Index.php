@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema;
+namespace Chr15k\SchemaAudit\Schema\Data;
 
 final class Index
 {

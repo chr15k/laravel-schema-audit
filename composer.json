@@ -51,9 +51,6 @@
             "providers": [
                 "Chr15k\\SchemaAudit\\SchemaAuditServiceProvider"
             ]
-        },
-        "workbench": {
-            "start": "/"
         }
     },
     "scripts": {

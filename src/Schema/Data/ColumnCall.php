@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema;
+namespace Chr15k\SchemaAudit\Schema\Data;
 
 /**
  * A single `$table->method(...)` call as literally written — e.g.
