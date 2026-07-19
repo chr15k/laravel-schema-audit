@@ -6,8 +6,6 @@ namespace Chr15k\SchemaAudit;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
 use Chr15k\SchemaAudit\Data\Finding;
-use Chr15k\SchemaAudit\Rules;
-use Chr15k\SchemaAudit\TableSchema;
 
 /**
  * Runs a set of Rules against the folded schema and collects every
