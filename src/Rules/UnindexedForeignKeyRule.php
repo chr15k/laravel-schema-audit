@@ -18,9 +18,7 @@ final readonly class UnindexedForeignKeyRule implements Rule
 {
     private const AUTO_INDEXING_DRIVERS = ['mysql', 'mariadb'];
 
-    public function __construct(
-        private string $driver,
-    ) {}
+    public function __construct(private string $driver) {}
 
     public function check(array $tables): array
     {

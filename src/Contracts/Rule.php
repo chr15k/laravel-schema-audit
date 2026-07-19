@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Contracts;
 
-use Chr15k\SchemaAudit\Rules\Finding;
+use Chr15k\SchemaAudit\Data\Finding;
 use Chr15k\SchemaAudit\TableSchema;
 
 /**
