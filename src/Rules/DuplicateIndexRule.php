@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Data\Finding;
 
 /**
  * Flags two or more indexes on the same table covering the exact same

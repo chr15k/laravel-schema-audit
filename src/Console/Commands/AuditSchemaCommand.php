@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Console\Commands;
 
-use Chr15k\SchemaAudit\Rules\Finding;
-use Chr15k\SchemaAudit\Rules\SchemaAuditor;
+use Chr15k\SchemaAudit\Data\Finding;
+use Chr15k\SchemaAudit\SchemaAuditor;
 use Chr15k\SchemaAudit\SchemaBuilder;
 use Chr15k\SchemaAudit\TableSchema;
 use Illuminate\Console\Command;

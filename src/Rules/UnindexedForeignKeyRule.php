@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Data\Finding;
 
 /**
  * Flags foreign key columns with no covering index — driver-aware, since

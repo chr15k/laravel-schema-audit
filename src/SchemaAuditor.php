@@ -7,12 +7,6 @@ namespace Chr15k\SchemaAudit;
 use Chr15k\SchemaAudit\Contracts\Rule;
 use Chr15k\SchemaAudit\Data\Finding;
 
-/**
- * Runs a set of Rules against the folded schema and collects every
- * Finding. The default rule set is deliberately schema-only (no query
- * usage scanning) — see the package README for why this package is
- * scoped to migration-only analysis.
- */
 final readonly class SchemaAuditor
 {
     /**
