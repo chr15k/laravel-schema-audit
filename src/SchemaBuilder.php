@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit;
 
-use Chr15k\SchemaAudit\Data\ColumnCall;
-use Chr15k\SchemaAudit\Data\ColumnChain;
-use Chr15k\SchemaAudit\Data\ForeignKey;
-use Chr15k\SchemaAudit\Data\Index;
-use Chr15k\SchemaAudit\Data\SchemaOperation;
+use Chr15k\SchemaAudit\Enums\SchemaOperationType;
+use Chr15k\SchemaAudit\ValueObjects\ColumnCall;
+use Chr15k\SchemaAudit\ValueObjects\ColumnChain;
+use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
+use Chr15k\SchemaAudit\ValueObjects\Index;
+use Chr15k\SchemaAudit\ValueObjects\SchemaOperation;
 
 /**
  * Folds every migration file's SchemaOperations, in filename order, into a
@@ -88,19 +89,18 @@ final readonly class SchemaBuilder
      */
     private function applyOperation(array &$tables, SchemaOperation $operation): void
     {
-        if ($operation->type === SchemaOperation::TYPE_DROP) {
-            // A dropped table's history shouldn't leak into whatever gets
-            // created under the same name later — reset completely rather
-            // than leaving stale columns/indexes/FKs to accumulate onto.
+        if ($operation->type === SchemaOperationType::Drop) {
             unset($tables[$operation->tableName]);
 
             return;
         }
 
-        if ($operation->type === SchemaOperation::TYPE_RENAME) {
+        if ($operation->type === SchemaOperationType::Rename) {
             if (isset($tables[$operation->tableName]) && $operation->renameTo !== null) {
                 $renamed = $tables[$operation->tableName];
+
                 unset($tables[$operation->tableName]);
+
                 $tables[$operation->renameTo] = new TableSchema($operation->renameTo);
 
                 foreach ($renamed->columns() as $name => $type) {

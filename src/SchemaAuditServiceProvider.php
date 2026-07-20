@@ -6,17 +6,18 @@ namespace Chr15k\SchemaAudit;
 
 use Chr15k\SchemaAudit\Console\Commands\AuditSchemaCommand;
 use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
+use Chr15k\SchemaAudit\Support\Config;
+use Illuminate\Config\Repository;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\ServiceProvider;
-use RuntimeException;
+use InvalidArgumentException;
 
 final class SchemaAuditServiceProvider extends ServiceProvider
 {
-    private const string CONFIG_KEY = 'schema-audit';
-
     public function register(): void
     {
-        $this->mergeConfigFrom($this->configDirectory(), self::CONFIG_KEY);
+        $this->mergeConfigFrom($this->configDirectory(), Config::KEY);
 
         $this->app->singleton(MigrationParser::class);
         $this->app->singleton(SchemaBuilder::class);
@@ -26,22 +27,34 @@ final class SchemaAuditServiceProvider extends ServiceProvider
         $this->app->singleton(Rules\DanglingForeignKeyRule::class);
         $this->app->singleton(Rules\NoPrimaryKeyRule::class);
 
-        $this->app->bind(Rules\UnindexedForeignKeyRule::class,
-            fn (Container $app): Rules\UnindexedForeignKeyRule => new Rules\UnindexedForeignKeyRule(
-                driver: $app->make('config')->get('schema-audit.driver')
-            )
+        $this->app->singleton(Config::class, fn (Container $app): Config => new Config($app->make(Repository::class)));
+
+        $this->app->bind(UnindexedForeignKeyRule::class,
+            fn (Container $app): UnindexedForeignKeyRule => new UnindexedForeignKeyRule($app->make(Config::class)->driver())
         );
 
         $this->app->bind(SchemaAuditor::class, function (Container $app): SchemaAuditor {
-            $ruleClasses = $app->make('config')->get('schema-audit.rules', []);
+            $ruleClasses = $app->make(Config::class)->rules();
             $rules = [];
 
             foreach ($ruleClasses as $ruleClass) {
+                if (! is_string($ruleClass)) {
+                    throw new InvalidArgumentException(
+                        sprintf('Configuration value for key [%s.rules] must be a string, %s given.', Config::KEY, gettype($ruleClass))
+                    );
+                }
+
+                if (! class_exists($ruleClass)) {
+                    throw new InvalidArgumentException(
+                        sprintf('Configuration value for key [%s.rules] must be a defined class, %s given.', Config::KEY, $ruleClass)
+                    );
+                }
+
                 $rule = $app->make($ruleClass);
 
                 if (! $rule instanceof Rule) {
-                    throw new RuntimeException(
-                        sprintf("config('schema-audit.rules') entry [%s] does not implement %s", $ruleClass, Rule::class)
+                    throw new InvalidArgumentException(
+                        sprintf('Configuration value for key [%s.rules] does not implement %s, %s given.', Config::KEY, Rule::class, $ruleClass)
                     );
                 }
 
@@ -57,7 +70,7 @@ final class SchemaAuditServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 $this->configDirectory() => config_path($this->configFile()),
-            ], self::CONFIG_KEY.'-config');
+            ], Config::KEY.'-config');
 
             $this->commands([
                 AuditSchemaCommand::class,
@@ -72,6 +85,6 @@ final class SchemaAuditServiceProvider extends ServiceProvider
 
     private function configFile(): string
     {
-        return self::CONFIG_KEY.'.php';
+        return Config::KEY.'.php';
     }
 }

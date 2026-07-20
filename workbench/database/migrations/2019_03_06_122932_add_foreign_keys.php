@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\ValueObjectsbase\Migrations\Migration;
+use Illuminate\ValueObjectsbase\Schema\Blueprint;
 
 final class AddForeignKeys extends Migration
 {
@@ -24,6 +24,8 @@ final class AddForeignKeys extends Migration
         Schema::table('booking_lines', function (Blueprint $table) {
             $table->foreign('booking_id', 'booking_lines_booking_id_foreign')->references('id')->on('bookings')->onDelete('CASCADE')->onUpdate('RESTRICT');
             $table->foreign('cancels_line', 'booking_lines_cancels_line_foreign')->references('id')->on('booking_lines')->onDelete('CASCADE')->onUpdate('RESTRICT');
+            $table->foreign('tax_band_id', 'booking_lines_tax_band_id_foreign')->references('id')->on('tax_bands')->onDelete('RESTRICT')->onUpdate('RESTRICT');
+            // trigger duplicate_foreign_key finding..
             $table->foreign('tax_band_id', 'booking_lines_tax_band_id_foreign')->references('id')->on('tax_bands')->onDelete('RESTRICT')->onUpdate('RESTRICT');
         });
 

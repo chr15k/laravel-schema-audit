@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
-use Chr15k\SchemaAudit\Data\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Finding;
 
 /**
  * Flags foreign key columns with no covering index — driver-aware, since
@@ -16,7 +16,7 @@ use Chr15k\SchemaAudit\Data\Finding;
  */
 final readonly class UnindexedForeignKeyRule implements Rule
 {
-    private const AUTO_INDEXING_DRIVERS = ['mysql', 'mariadb'];
+    private const array AUTO_INDEXING_DRIVERS = ['mysql', 'mariadb'];
 
     public function __construct(private string $driver) {}
 

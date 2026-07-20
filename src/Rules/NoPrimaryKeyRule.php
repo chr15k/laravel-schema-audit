@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
-use Chr15k\SchemaAudit\Data\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Finding;
 
 /**
  * Flags a table with no identifiable primary key — neither an

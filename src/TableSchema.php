@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit;
 
-use Chr15k\SchemaAudit\Data\ForeignKey;
-use Chr15k\SchemaAudit\Data\Index;
+use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
+use Chr15k\SchemaAudit\ValueObjects\Index;
 
 /**
  * Mutable, folded representation of a single table's schema, built up by

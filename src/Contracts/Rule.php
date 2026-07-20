@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Contracts;
 
-use Chr15k\SchemaAudit\Data\Finding;
 use Chr15k\SchemaAudit\TableSchema;
+use Chr15k\SchemaAudit\ValueObjects\Finding;
 
 /**
  * A single schema-level check. Deliberately takes the WHOLE folded schema

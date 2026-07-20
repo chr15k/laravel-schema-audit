@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Chr15k\SchemaAudit\Schema\SchemaBuilder;
+use Chr15k\SchemaAudit\SchemaBuilder;
 
 it('folds create and later alter migrations for the same table', function (): void {
-    $tables = (new SchemaBuilder)->buildFromDirectory(__DIR__.'/../../Fixtures/Migrations');
+    $tables = app(SchemaBuilder::class)->buildFromDirectory(migrations_path());
 
     expect($tables)->toHaveKey('users');
 

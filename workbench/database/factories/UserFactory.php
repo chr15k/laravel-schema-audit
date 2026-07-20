@@ -1,10 +1,10 @@
 <?php
 
-namespace Workbench\Database\Factories;
+namespace Workbench\ValueObjectsbase\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\ValueObjectsbase\Eloquent\Factories\Factory;
 use Workbench\App\Models\User;
 
 /**

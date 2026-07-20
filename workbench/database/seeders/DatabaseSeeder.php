@@ -1,10 +1,10 @@
 <?php
 
-namespace Workbench\Database\Seeders;
+namespace Workbench\ValueObjectsbase\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use Workbench\Database\Factories\UserFactory;
+use Illuminate\ValueObjectsbase\Console\Seeds\WithoutModelEvents;
+use Illuminate\ValueObjectsbase\Seeder;
+use Workbench\ValueObjectsbase\Factories\UserFactory;
 
 final class DatabaseSeeder extends Seeder
 {

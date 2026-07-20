@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Data;
+namespace Chr15k\SchemaAudit\ValueObjects;
 
 final readonly class ForeignKey
 {

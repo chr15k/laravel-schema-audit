@@ -11,7 +11,7 @@ it('runs successfully against a valid migrations path', function (): void {
 });
 
 it('outputs the folded schema as JSON including known table and column state', function (): void {
-    Artisan::call('schema:audit', ['--path' => migrations_path()]);
+    Artisan::call('schema:audit', ['--path' => migrations_path(), '--schema-only' => true]);
 
     $decoded = json_decode(Artisan::output(), true);
 

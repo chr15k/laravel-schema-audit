@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
-use Chr15k\SchemaAudit\Data\SchemaOperation;
+use Chr15k\SchemaAudit\Enums\SchemaOperationType;
+use Chr15k\SchemaAudit\ValueObjects\SchemaOperation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\StaticCall;
@@ -62,7 +63,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         $tableName = ArgReader::stringArgAt($node->args, 0);
 
         if ($tableName !== null) {
-            $this->operations[] = new SchemaOperation(type: SchemaOperation::TYPE_DROP, tableName: $tableName);
+            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Drop, tableName: $tableName);
         }
 
         return null;
@@ -74,7 +75,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         $to = ArgReader::stringArgAt($node->args, 1);
 
         if ($from !== null && $to !== null) {
-            $this->operations[] = new SchemaOperation(type: SchemaOperation::TYPE_RENAME, tableName: $from, renameTo: $to);
+            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Rename, tableName: $from, renameTo: $to);
         }
 
         return null;
@@ -90,7 +91,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         }
 
         $this->operations[] = new SchemaOperation(
-            type: $methodName === 'create' ? SchemaOperation::TYPE_CREATE : SchemaOperation::TYPE_ALTER,
+            type: $methodName === 'create' ? SchemaOperationType::Create : SchemaOperationType::Alter,
             tableName: $tableName,
             chains: $this->chainExtractor->extract($closure),
         );

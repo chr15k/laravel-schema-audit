@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
-use Chr15k\SchemaAudit\Data\ColumnCall;
-use Chr15k\SchemaAudit\Data\ColumnChain;
+use Chr15k\SchemaAudit\ValueObjects\ColumnCall;
+use Chr15k\SchemaAudit\ValueObjects\ColumnChain;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\MethodCall;

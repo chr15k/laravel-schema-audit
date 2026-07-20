@@ -42,8 +42,8 @@
         "psr-4": {
             "Chr15k\\SchemaAudit\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/",
-            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
-            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+            "Workbench\\ValueObjectsbase\\Factories\\": "workbench/database/factories/",
+            "Workbench\\ValueObjectsbase\\Seeders\\": "workbench/database/seeders/"
         }
     },
     "extra": {
