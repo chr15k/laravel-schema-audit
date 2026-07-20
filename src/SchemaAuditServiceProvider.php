@@ -8,6 +8,7 @@ use Chr15k\SchemaAudit\Console\Commands\AuditSchemaCommand;
 use Chr15k\SchemaAudit\Contracts\Rule;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 final class SchemaAuditServiceProvider extends ServiceProvider
 {
@@ -15,6 +16,8 @@ final class SchemaAuditServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        $this->mergeConfigFrom($this->configDirectory(), self::CONFIG_KEY);
+
         $this->app->singleton(MigrationParser::class);
         $this->app->singleton(SchemaBuilder::class);
 
@@ -25,32 +28,37 @@ final class SchemaAuditServiceProvider extends ServiceProvider
 
         $this->app->bind(Rules\UnindexedForeignKeyRule::class,
             fn (Container $app): Rules\UnindexedForeignKeyRule => new Rules\UnindexedForeignKeyRule(
-                driver: $app->make('config')->get('database.default')
+                driver: $app->make('config')->get('schema-audit.driver')
             )
         );
 
-        $this->app->tag([
-            Rules\DuplicateIndexRule::class,
-            Rules\RedundantSingleColumnIndexRule::class,
-            Rules\DanglingForeignKeyRule::class,
-            Rules\NoPrimaryKeyRule::class,
-            Rules\UnindexedForeignKeyRule::class,
-        ], Rule::class);
+        $this->app->bind(SchemaAuditor::class, function (Container $app): SchemaAuditor {
+            $ruleClasses = $app->make('config')->get('schema-audit.rules', []);
+            $rules = [];
 
-        $this->app->bind(SchemaAuditor::class,
-            fn (Container $app): SchemaAuditor => new SchemaAuditor($app->tagged(Rule::class))
-        );
+            foreach ($ruleClasses as $ruleClass) {
+                $rule = $app->make($ruleClass);
+
+                if (! $rule instanceof Rule) {
+                    throw new RuntimeException(
+                        sprintf("config('schema-audit.rules') entry [%s] does not implement %s", $ruleClass, Rule::class)
+                    );
+                }
+
+                $rules[] = $rule;
+            }
+
+            return new SchemaAuditor($rules);
+        });
     }
 
     public function boot(): void
     {
-        $this->publishes([
-            $this->configDirectory() => config_path($this->configFile()),
-        ], self::CONFIG_KEY.'-config');
-
-        $this->mergeConfigFrom($this->configDirectory(), self::CONFIG_KEY);
-
         if ($this->app->runningInConsole()) {
+            $this->publishes([
+                $this->configDirectory() => config_path($this->configFile()),
+            ], self::CONFIG_KEY.'-config');
+
             $this->commands([
                 AuditSchemaCommand::class,
             ]);

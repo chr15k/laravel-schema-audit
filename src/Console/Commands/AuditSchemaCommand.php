@@ -58,7 +58,7 @@ final class AuditSchemaCommand extends Command
 
     private function resolvePath(): string
     {
-        $path = $this->option('path');
+        $path = $this->option('path') ?? config('schema-audit.path');
 
         if (! is_string($path)) {
             throw new RuntimeException(
