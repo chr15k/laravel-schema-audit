@@ -3,33 +3,46 @@
 declare(strict_types=1);
 
 use Chr15k\SchemaAudit\SchemaBuilder;
+use Chr15k\SchemaAudit\ValueObjects\Index;
 
 it('folds create and later alter migrations for the same table', function (): void {
     $tables = app(SchemaBuilder::class)->buildFromDirectory(migrations_path());
 
     expect($tables)->toHaveKey('users');
+    expect($tables)->toHaveCount(1);
 
     $users = $tables['users'];
 
-    // Columns from the original create() are present.
+    expect($users->hasPrimaryKey())->toBeTrue();
+
     expect($users->hasColumn('name'))->toBeTrue();
     expect($users->hasColumn('email'))->toBeTrue();
     expect($users->hasColumn('team_id'))->toBeTrue();
 
-    // nickname was added in migration 2, then dropped in migration 3 —
-    // folded state should NOT contain it. This is the core "folding
-    // across files in order" behaviour the whole tool depends on.
     expect($users->hasColumn('nickname'))->toBeFalse();
 
-    // email had no index at create time, but got one in migration 2.
     expect($users->isIndexed('email'))->toBeTrue();
+    expect($users->indexes())->toHaveCount(1);
+    expect(collect($users->indexes())->contains(fn (Index $index): bool => $index->columns === ['email'] && $index->unique))->toBeTrue();
 
-    // name was never indexed anywhere.
     expect($users->isIndexed('name'))->toBeFalse();
-
-    // team_id is a foreign key but Laravel's foreignId()->constrained()
-    // alone does not create an index — confirm we don't claim it does.
     expect($users->isIndexed('team_id'))->toBeFalse();
+
     expect($users->foreignKeys())->toHaveCount(1);
     expect($users->foreignKeys()[0]->column)->toBe('team_id');
+    expect($users->foreignKeys()[0]->referencesTable)->toBeNull();
+});
+
+it('returns an empty result set when no migration files exist', function (): void {
+    $path = sys_get_temp_dir().'/schema-builder-test-'.uniqid('empty_', true);
+    mkdir($path, 0700, true);
+
+    try {
+        $tables = app(SchemaBuilder::class)->buildFromDirectory($path);
+
+        expect($tables)->toBeArray();
+        expect($tables)->toBeEmpty();
+    } finally {
+        rmdir($path);
+    }
 });
