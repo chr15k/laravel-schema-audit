@@ -7,7 +7,7 @@ migrations:
   - workbench/database/migrations
 
 seeders:
-  - Workbench\ValueObjectsbase\Seeders\ValueObjectsbaseSeeder
+  - Workbench\Database\Seeders\ValueObjectsbaseSeeder
 
 workbench:
   start: '/'

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Chr15k\SchemaAudit\Rules\DanglingForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\DuplicateIndexRule;
+use Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule;
 use Chr15k\SchemaAudit\Rules\RedundantSingleColumnIndexRule;
 use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
@@ -55,6 +56,7 @@ return [
         RedundantSingleColumnIndexRule::class,
         DanglingForeignKeyRule::class,
         NoPrimaryKeyRule::class,
+        MismatchedForeignKeyRule::class,
     ],
 
 ];

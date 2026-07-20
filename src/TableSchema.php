@@ -45,6 +45,19 @@ final class TableSchema
         ));
     }
 
+    public function primaryKeyColumnType(): ?string
+    {
+        $autoPrimaryTypes = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
+
+        foreach ($this->columns as $type) {
+            if (in_array($type, $autoPrimaryTypes, true)) {
+                return $type;
+            }
+        }
+
+        return null;
+    }
+
     public function renameColumn(string $from, string $to): void
     {
         if (! array_key_exists($from, $this->columns)) {

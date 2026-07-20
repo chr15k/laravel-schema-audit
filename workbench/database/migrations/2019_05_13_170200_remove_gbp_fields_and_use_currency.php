@@ -1,8 +1,8 @@
 <?php
 
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\ValueObjectsbase\Migrations\Migration;
-use Illuminate\ValueObjectsbase\Schema\Blueprint;
 
 final class RemoveGBPFieldsAndUseCurrency extends Migration
 {

@@ -1,7 +1,7 @@
 <?php
 
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\ValueObjectsbase\Migrations\Migration;
 
 final class RenameSuppliersToProviders extends Migration
 {
