@@ -9,6 +9,7 @@ use Chr15k\SchemaAudit\SchemaBuilder;
 use Chr15k\SchemaAudit\TableSchema;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -18,9 +19,10 @@ use RuntimeException;
  * By default, folds every migration into final per-table schema state and
  * runs the built-in rule set (unindexed FKs, duplicate/redundant indexes,
  * dangling FKs, missing primary keys) against it, printing findings as a
- * styled report. Pass --schema-only to print the raw folded schema
- * instead, with no rules applied — useful for debugging the folding step
- * itself. Pass --json for machine-readable findings output (CI-friendly).
+ * styled report using Artisan's own component output (no extra styling
+ * dependency — same primitives `migrate`/`route:list` use). Pass
+ * --schema-only to print the raw folded schema instead. Pass --json for
+ * machine-readable findings output (CI-friendly).
  */
 final class AuditSchemaCommand extends Command
 {
@@ -107,11 +109,6 @@ final class AuditSchemaCommand extends Command
         return self::FAILURE;
     }
 
-    private function renderPass(string $duration, int $tableCount): void
-    {
-        $this->info(sprintf('No schema issues found across %d table(s). Duration: %ss', $tableCount, $duration));
-    }
-
     /**
      * @param  list<Finding>  $findings
      */
@@ -120,21 +117,49 @@ final class AuditSchemaCommand extends Command
         collect($findings)
             ->sortBy('table')
             ->groupBy('table')
-            ->each->each(function (Finding $finding): void {
-                $this->components->error($finding->table);
-                $this->comment('   '.$this->humanizeRule($finding->rule));
+            ->each(function (Collection $items, string $table): void {
+                $count = $items->count();
+                $grammar = Str::plural('issue', $count);
+
                 $this->newLine();
-                $this->comment('   '.$finding->message);
-                $this->newLine(2);
+                $this->line(sprintf('  <fg=red;options=bold>%s</> <fg=gray>(%d %s)</>', $table, $count, $grammar));
+
+                $items->each($this->renderFinding(...));
             });
+    }
+
+    private function renderFinding(Finding $finding): void
+    {
+        $rule = $this->humanizeRule($finding->rule);
+        $column = $finding->column ?? '—';
+
+        $this->components->twoColumnDetail(
+            '  <fg=red>➜</> '.$rule,
+            sprintf('<fg=gray>%s</>', $column)
+        );
+
+        $this->components->bulletList([$finding->message]);
+    }
+
+    private function renderPass(string $duration, int $tableCount): void
+    {
+        $this->newLine();
+        $this->components->info(sprintf('No schema issues found across %d table(s).', $tableCount));
+        $this->line(sprintf('  <fg=gray>Duration: %ss</>', $duration));
+        $this->newLine();
     }
 
     private function renderFail(string $duration, int $count): void
     {
         $grammar = Str::plural('issue', $count);
 
-        $this->components->error(sprintf('%d schema %s found. Duration: %ss', $count, $grammar, $duration));
-        $this->components->info('Run with --json for machine-readable output, or --schema-only to inspect the raw folded schema.');
+        $this->newLine();
+        $this->components->twoColumnDetail(
+            '<fg=red;options=bold>FAIL</>',
+            sprintf('<fg=gray>%ss</>', $duration)
+        );
+        $this->components->bulletList([sprintf('%d schema %s found.', $count, $grammar)]);
+        $this->newLine();
     }
 
     /**
