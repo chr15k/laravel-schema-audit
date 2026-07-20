@@ -15,7 +15,7 @@ use Chr15k\SchemaAudit\ValueObjects\Finding;
 interface Rule
 {
     /**
-     * @param  array<string, TableSchema>  $tables  table name => folded schema
+     * @param  array<string, TableSchema>  $tables
      * @return list<Finding>
      */
     public function check(array $tables): array;

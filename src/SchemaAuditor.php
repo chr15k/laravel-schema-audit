@@ -12,7 +12,7 @@ final readonly class SchemaAuditor
     /**
      * @param  list<Rule>  $rules
      */
-    public function __construct(private iterable $rules) {}
+    public function __construct(private array $rules) {}
 
     /**
      * @param  array<string, TableSchema>  $tables

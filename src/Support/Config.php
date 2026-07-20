@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Support;
 
+use Chr15k\SchemaAudit\Contracts\Rule;
 use Illuminate\Config\Repository;
+use InvalidArgumentException;
 
 final readonly class Config
 {
@@ -23,10 +25,37 @@ final readonly class Config
     }
 
     /**
-     * @return array<array-key, mixed>
+     * @return list<Rule>
+     *
+     * @throws InvalidArgumentException
      */
     public function rules(): array
     {
-        return $this->config->array(self::KEY.'.rules', []);
+        $rules = [];
+        $config = $this->config->array(self::KEY.'.rules', []);
+
+        foreach ($config as $class) {
+            if (! is_string($class)) {
+                throw new InvalidArgumentException(
+                    sprintf('Configuration value for key [%s.rules] must be a string, %s given.', self::KEY, gettype($class))
+                );
+            }
+
+            if (! class_exists($class)) {
+                throw new InvalidArgumentException(
+                    sprintf('Configuration value for key [%s.rules] must be a defined class, %s given.', self::KEY, $class)
+                );
+            }
+
+            if (! is_subclass_of($class, Rule::class)) {
+                throw new InvalidArgumentException(
+                    sprintf('Configuration value for key [%s.rules] does not implement %s, %s given.', self::KEY, Rule::class, $class)
+                );
+            }
+
+            $rules[] = app($class);
+        }
+
+        return $rules;
     }
 }
