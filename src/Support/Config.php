@@ -26,8 +26,6 @@ final readonly class Config
 
     /**
      * @return list<Rule>
-     *
-     * @throws InvalidArgumentException
      */
     public function rules(): array
     {
