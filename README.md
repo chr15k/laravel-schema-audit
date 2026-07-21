@@ -1,83 +1,50 @@
 # Laravel Schema Audit
 
-Static analysis that cross-references your Eloquent query usage against
-your migration-declared schema — catching unindexed columns, unindexed
-foreign keys, and composite-index mismatches before they ship.
+Static analysis that audits your migration-declared schema — catching
+unindexed foreign keys, duplicate/redundant indexes, dangling foreign
+keys, type-mismatched foreign keys, and missing primary keys before they
+ship.
 
-No database connection required. No test traffic required. It reads your
-migration files and your model/query source, and tells you where they
-disagree.
+No database connection required. No test traffic required. It folds
+your migration history into final per-table schema state and checks it
+for internal consistency.
 
 ## Why this over a runtime query monitor?
 
-Tools like Laravel Debugbar, Telescope, or `laravel-query-detector` are
-genuinely better than this package at one specific job: **catching N+1
-query storms as they actually happen.** They watch real query execution,
-so when they flag something, it's a real problem with real timing and
-real row counts — zero false positives, by construction. If N+1 detection
-is what you need, use one of those instead of this.
+This package is not a replacement for runtime query monitoring — Laravel
+Debugbar, Telescope, and laravel-query-detector already do a good job catching
+N+1 query storms as they happen, using real execution data this package doesn't
+have access to. What this package checks instead is schema-level consistency: facts
+about your migrations that are true or false regardless of how the code queries them.
 
 This package solves a different, narrower problem that runtime tools
 structurally can't:
 
-**Runtime monitors only see code that runs.** A rarely-hit admin report,
-a seasonal batch job, a conditional branch nobody's exercised in staging
-— none of that shows up in a query monitor until someone actually
-triggers it, possibly in production, possibly under load. Static
-analysis reads the source directly, so it doesn't need the code path to
-execute to flag a problem with it.
+- **It doesn't need the code to run.** A rarely-hit admin report, a
+  seasonal batch job, a conditional branch nobody's exercised in staging
+  — none of that shows up in a query monitor until someone triggers it,
+  possibly in production. Static analysis reads the migrations directly.
+- **It runs in CI, before merge.** Point it at a pull request's migrations
+  and it can flag a missing index or a dangling foreign key before the
+  code ships.
+- **It checks facts a query monitor was never built to check** — whether
+  an index exists at all, whether two foreign keys' types actually
+  match, whether an index is declared twice for no reason. These are
+  schema-internal-consistency questions, not query-performance questions.
 
-**Runtime monitors tell you a query was slow. They don't tell you why.**
-Debugbar shows you timing. It doesn't cross-reference the column you
-filtered on against your migration history to tell you it was never
-indexed. You still have to make that connection yourself, usually after
-the fact, usually in production.
-
-**This runs in CI, before merge.** Point it at a pull request's changed
-models and migrations and it can flag a missing index before the code
-ships — not after a slow query shows up in Debugbar three weeks later.
-
-### What this package checks
-
-1. **Unindexed filter/sort columns** — `where()`, `orderBy()`,
-   `whereIn()`, `firstWhere()` calls on a column with no index anywhere
-   in your folded migration history.
-2. **Unindexed foreign keys** — same check, specifically for foreign key
-   columns used in `where()`/`whereHas()`. Driver-aware: MySQL/InnoDB
-   auto-indexes foreign key columns, Postgres and SQLite do not — this
-   package only flags what's actually unindexed on your configured
-   driver, not every bare `foreignId()` regardless of database.
-3. **Composite-index shape mismatches** — `where('a', ...)->where('b', ...)`
-   where no index covers `(a, b)` in that order at all. Deliberately
-   narrow: this only flags a genuine absence, not "this index could be
-   better," to keep false positives near zero.
-
-### What this package deliberately does NOT check
-
-- **N+1 query patterns.** Existing runtime tools already solve this well
-  with real execution data; a static approximation would just be a
-  weaker version of a solved problem.
-- **Query timing, row counts, or execution plans.** These are runtime
-  facts. This tool only knows what your migrations and source code say
-  — it has no idea what your data actually looks like.
-- **Whether an index is a *good* index** — just whether one exists that
-  covers the columns you're filtering on.
-
-### Similar tools, and how this differs
-
-- **[intentphp/guard](https://github.com/drnasin)** and PHPStan/Larastan
-  rules already cover mass-assignment (`$fillable`/`$guarded`) auditing
-  well — this package doesn't attempt that.
-- **Debugbar / Telescope / `laravel-query-detector`** cover runtime N+1
-  and slow-query detection well — see above, this package intentionally
-  doesn't compete there.
-- Nothing found at the time of writing does static, migration-aware
-  index checking — that's the actual gap this package fills.
+This package deliberately does **not** attempt N+1 detection, query
+timing, or execution-plan analysis — see [Honest limitations](#honest-limitations).
 
 ## Installation
 
 ```bash
 composer require chr15k/laravel-schema-audit --dev
+```
+
+Optionally publish the config file:
+
+```bash
+php artisan vendor:publish --tag=schema-audit-config
 ```
 
 ## Usage
@@ -86,26 +53,125 @@ composer require chr15k/laravel-schema-audit --dev
 php artisan schema:audit
 ```
 
-By default this reads `database/migrations`. Point it elsewhere with:
+By default this reads `database/migrations` and prints a styled report
+of any findings, exiting non-zero if issues were found (CI-friendly).
 
 ```bash
-php artisan schema:audit --path=/absolute/or/relative/path
+# scan a different directory
+php artisan schema:audit --path=/path/to/migrations
+
+# machine-readable output
+php artisan schema:audit --json
+
+# print the raw folded schema instead of running rules — useful for
+# debugging what the tool actually thinks your schema looks like
+php artisan schema:audit --schema-only
 ```
+
+## What this package checks
+
+| Rule | What it flags |
+|---|---|
+| `UnindexedForeignKeyRule` | A foreign key column with no covering index. Driver-aware — MySQL/MariaDB auto-index FK columns, PostgreSQL/SQLite/SQL Server do not, so this only fires where it's actually true for your configured driver. |
+| `DuplicateIndexRule` | The same index (same columns, same uniqueness) declared more than once. |
+| `DuplicateForeignKeyRule` | The same foreign key (same column, same referenced table) declared more than once. |
+| `RedundantSingleColumnIndexRule` | A single-column index already covered by a composite index's leading column. |
+| `DanglingForeignKeyRule` | A foreign key referencing a table that doesn't exist anywhere in the folded schema — a typo, or a table renamed/dropped without updating the reference. |
+| `MismatchedForeignKeyRule` | A foreign key whose column type doesn't match the type family of the referenced table's primary key (e.g. `foreignId()` pointing at a plain `increments()` primary key). |
+| `NoPrimaryKeyRule` | A table with no identifiable primary key — no `id()`/`increments()`-style column and no explicit `primary()` call. |
+
+Every rule is a pure fact about the folded schema — no query usage, no
+runtime data, no heuristics about "is this a good index." If a rule
+fires, it's because something in your migration history is verifiably
+inconsistent, not because a pattern looked suspicious.
+
+## Configuration
+
+```php
+// config/schema-audit.php
+return [
+    'path' => 'database/migrations',
+    'driver' => env('DB_CONNECTION', 'mysql'),
+    'rules' => [
+        \Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule::class,
+        \Chr15k\SchemaAudit\Rules\DuplicateIndexRule::class,
+        \Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule::class,
+        \Chr15k\SchemaAudit\Rules\RedundantSingleColumnIndexRule::class,
+        \Chr15k\SchemaAudit\Rules\DanglingForeignKeyRule::class,
+        \Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule::class,
+        \Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule::class,
+    ],
+];
+```
+
+- **`path`** — default migrations directory; `--path` overrides it per run.
+- **`driver`** — defaults to your app's configured connection
+  (`DB_CONNECTION`); override with `--driver` to audit against a
+  different target database than the one currently configured.
+- **`rules`** — remove an entry to disable that rule without touching
+  any package code. Add your own class here too — see below.
+
+## Writing custom rules
+
+Any class implementing `Chr15k\SchemaAudit\Contracts\Rule` can be added
+to `config('schema-audit.rules')` alongside the built-in ones:
+
+```php
+namespace App\SchemaRules;
+
+use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\ValueObjects\Finding;
+
+final class NoTextColumnsOnHighTrafficTablesRule implements Rule
+{
+    public function check(array $tables): array
+    {
+        $findings = [];
+
+        foreach ($tables as $table) {
+            foreach ($table->columns() as $column => $type) {
+                if ($type === 'text' /* ...your condition... */) {
+                    $findings[] = new Finding(
+                        rule: 'no_text_on_high_traffic_tables',
+                        table: $table->tableName,
+                        column: $column,
+                        message: "Column '{$column}' is a text column on a high-traffic table.",
+                    );
+                }
+            }
+        }
+
+        return $findings;
+    }
+}
+```
+
+`$tables` is `array<string, TableSchema>` — the fully folded schema.
+Useful `TableSchema` methods: `columns()`, `indexes()`, `foreignKeys()`,
+`isIndexed()`, `hasPrimaryKey()`, `primaryKeyColumnType()`.
 
 ## Requirements
 
-- PHP 8.1+
+- PHP 8.2+
 - Laravel 10, 11, 12, or 13
 
 ## Honest limitations
 
-- This tool works entirely from source — it does not run your
-  migrations or connect to a database. If your schema was changed
-  outside of a migration (a manual `ALTER TABLE`, a seeder, a rogue DBA),
-  this tool won't know about it.
-- Conditional migration logic (e.g. `if (DB::getDriverName() === 'mysql')`)
-  is read as written — the tool can't resolve which branch is "true" for
-  your environment, it just sees whatever source is there.
-- This is not a replacement for `EXPLAIN`, query profiling, or an actual
-  DBA review. It catches a specific, narrow class of static mismatch —
-  nothing more.
+- **Works entirely from source** — it does not run your migrations or
+  connect to a database. A manual `ALTER TABLE`, a seeder-driven schema
+  change, or anything done outside a migration won't be seen.
+- **Composite (multi-column) foreign keys are not currently parsed.**
+  `$table->foreign(['a', 'b'])->references(['x', 'y'])->on(...)` is
+  silently skipped by all foreign-key rules. Single-column foreign keys
+  — including `foreignId()`, by far the more common case — are fully
+  supported, as are composite **indexes** (`$table->index(['a', 'b'])`),
+  which are a separate, already-working feature.
+- **Conditional migration logic is read as written.** `if
+  (DB::getDriverName() === 'mysql') { ... }` in a migration is parsed
+  literally — the tool can't resolve which branch is "true" for your
+  environment.
+- **Not a replacement for `EXPLAIN`, query profiling, or a DBA review.**
+  It catches a specific, narrow class of static schema mismatch —
+  nothing about query performance or data-dependent behavior.
+- **No N+1 or query-usage detection**, by design — see
+  [Why this over a runtime query monitor?](#why-this-over-a-runtime-query-monitor).
