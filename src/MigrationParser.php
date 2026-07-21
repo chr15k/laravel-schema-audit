@@ -10,15 +10,6 @@ use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 use RuntimeException;
 
-/**
- * Parses a single migration file and returns a list of raw SchemaOperations
- * (one per Schema::create/table/drop/rename call found in the file's up()
- * method). The SchemaBuilder is responsible for folding these across
- * multiple files — this class only extracts what one file literally says.
- *
- * This is a thin entrypoint: AST traversal and per-call interpretation
- * live in Schema\Parsers\SchemaCallVisitor and Schema\Parsers\ChainExtractor.
- */
 final readonly class MigrationParser
 {
     /**

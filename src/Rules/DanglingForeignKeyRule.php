@@ -4,40 +4,27 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Contracts\Rule;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Schema;
 
-/**
- * Flags a foreign key whose referenced table doesn't exist in the folded
- * schema at all — a typo, or a table that was renamed/dropped without
- * updating the reference. Only fires when the referenced table name was
- * actually resolved (foreignId()->constrained() without an explicit
- * table name is skipped — inferring the conventional table name from the
- * column name is a guess we don't want to make findings out of).
- */
-final class DanglingForeignKeyRule implements Rule
+final class DanglingForeignKeyRule extends Rule
 {
-    public function check(array $tables): array
+    public function check(Schema $schema): array
     {
         $findings = [];
 
-        foreach ($tables as $table) {
+        foreach ($schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
-                if ($fk->referencesTable === null) {
+                if ($fk->referencesTable === null || $schema->hasTable($fk->referencesTable)) {
                     continue;
                 }
 
-                if (! array_key_exists($fk->referencesTable, $tables)) {
-                    $findings[] = new Finding(
-                        rule: 'dangling_foreign_key',
-                        table: $table->tableName,
-                        message: sprintf("Foreign key '%s' references missing table '%s'. Ensure the referenced table exists or update the foreign key.", $fk->column, $fk->referencesTable),
-                        column: $fk->column,
-                        severity: Severity::Error,
-                    );
-                }
-            }
+                $findings[] = $this->finding(
+                    table: $table->name,
+                    column: $fk->column,
+                    message: sprintf("Foreign key '%s' references missing table '%s'. Ensure the referenced table exists or update the foreign key.", $fk->column, $fk->referencesTable),
+                    severity: Severity::Error
+                );
         }
 
         return $findings;

@@ -7,13 +7,9 @@ namespace Chr15k\SchemaAudit;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\ValueObjects\Index;
+use Illuminate\Contracts\Support\Arrayable;
 
-/**
- * Mutable, folded representation of a single table's schema, built up by
- * replaying every migration that touches it (Schema::create + Schema::table)
- * in filename/timestamp order.
- */
-final class TableSchema
+final class TableSchema implements Arrayable
 {
     /** @var array<string, string> column name => column type */
     private array $columns = [];
@@ -27,7 +23,7 @@ final class TableSchema
     private bool $hasExplicitPrimaryKey = false;
 
     public function __construct(
-        public readonly string $tableName,
+        public readonly string $name,
     ) {}
 
     public function addColumn(string $name, string $type): void
@@ -39,7 +35,6 @@ final class TableSchema
     {
         unset($this->columns[$name]);
 
-        // Dropping a column should also drop any index solely on that column.
         $this->indexes = array_values(array_filter(
             $this->indexes,
             fn (Index $index): bool => $index->columns !== [$name]
@@ -49,13 +44,12 @@ final class TableSchema
     public function renameColumn(string $from, string $to): void
     {
         if (! array_key_exists($from, $this->columns)) {
-            return; // renaming a column we never tracked — nothing to do
+            return;
         }
 
         $this->columns[$to] = $this->columns[$from];
         unset($this->columns[$from]);
 
-        // Any index referencing the old column name should follow the rename.
         $this->indexes = array_map(
             fn (Index $index): Index => new Index(
                 name: $index->name,
@@ -84,16 +78,6 @@ final class TableSchema
         $this->hasExplicitPrimaryKey = true;
     }
 
-    /**
-     * The Blueprint method of the auto-incrementing id-style column that
-     * implies this table's primary key (id(), increments(),
-     * bigIncrements(), etc.) — or null if none exists, either because the
-     * table has no primary key at all, or because it uses an explicit
-     * $table->primary(...) call whose target column(s) we don't track.
-     * Deliberately returns null rather than guessing in the explicit-
-     * primary case, since a wrong guess here would produce a false
-     * mismatch finding rather than just a missed one.
-     */
     public function primaryKeyColumnType(): ?string
     {
         foreach ($this->columns as $type) {
@@ -105,12 +89,6 @@ final class TableSchema
         return null;
     }
 
-    /**
-     * True if the table has a primary key — either via an auto-incrementing
-     * id-style column (id(), increments(), bigIncrements(), etc., which
-     * imply a primary key by Laravel convention) or an explicit
-     * $table->primary(...) call.
-     */
     public function hasPrimaryKey(): bool
     {
         if ($this->primaryKeyColumnType() !== null) {
@@ -125,13 +103,6 @@ final class TableSchema
         $this->foreignKeys[] = $fk;
     }
 
-    /**
-     * Drop a foreign key by explicit constraint name, or by column name
-     * when no name was recorded (Laravel's default constraint naming
-     * convention is table_column_foreign, but we don't reconstruct that
-     * here — matching by column is the pragmatic fallback since a given
-     * column typically has at most one FK).
-     */
     public function dropForeignKey(string $nameOrColumn): void
     {
         $this->foreignKeys = array_values(array_filter(
@@ -163,12 +134,6 @@ final class TableSchema
         return array_key_exists($name, $this->columns);
     }
 
-    /**
-     * True if the given column is covered by *some* index — either as a
-     * single-column index/unique, or as the leading column of a composite
-     * index (leading-column semantics match how most DB engines use
-     * composite indexes for single-column filters).
-     */
     public function isIndexed(string $column): bool
     {
         foreach ($this->indexes as $index) {
@@ -177,23 +142,15 @@ final class TableSchema
             }
         }
 
-        foreach ($this->foreignKeys as $fk) {
-            if ($fk->column === $column) {
-                // Laravel's foreignId()->constrained() does NOT auto-index
-                // on all DB drivers/versions, so we deliberately do not
-                // treat "is a foreign key" as "is indexed" here — that gap
-                // is exactly what rule UnindexedForeignKey checks for.
-            }
-        }
+        // Laravel's foreignId()->constrained() does NOT auto-index
+        // on all DB drivers/versions, so we deliberately do not
+        // treat "is a foreign key" as "is indexed" here - that gap
+        // is exactly what rule UnindexedForeignKey checks for.
 
         return false;
     }
 
     /**
-     * True if an index exists whose column list exactly matches the given
-     * ordered column list (used for composite-mismatch checks in a later
-     * phase — kept here now so the schema model doesn't need reshaping).
-     *
      * @param  list<string>  $columns
      */
     public function hasExactCompositeIndex(array $columns): bool
@@ -213,7 +170,7 @@ final class TableSchema
     public function toArray(): array
     {
         return [
-            'table'   => $this->tableName,
+            'table'   => $this->name,
             'columns' => $this->columns,
             'indexes' => array_map(
                 fn (Index $i): array => [

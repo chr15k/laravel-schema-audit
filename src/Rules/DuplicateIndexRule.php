@@ -4,31 +4,21 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Contracts\Rule;
-use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Schema;
 
-/**
- * Flags two or more indexes on the same table covering the exact same
- * column list (order-sensitive, since a composite index's column order
- * matters for query planning). Pure dead weight — every write pays the
- * cost of maintaining both, for zero additional read benefit.
- */
-final class DuplicateIndexRule implements Rule
+final class DuplicateIndexRule extends Rule
 {
-    public function check(array $tables): array
+    public function check(Schema $schema): array
     {
         $findings = [];
 
-        foreach ($tables as $table) {
+        foreach ($schema->tables() as $table) {
             $seen = [];
 
             foreach ($table->indexes() as $index) {
-                $key = implode(',', $index->columns).'|'.($index->unique ? 'unique' : 'plain');
-
-                if (isset($seen[$key])) {
-                    $findings[] = new Finding(
-                        rule: 'duplicate_index',
-                        table: $table->tableName,
+                if (isset($seen[$index->key()])) {
+                    $findings[] = $this->finding(
+                        table: $table->name,
                         message: sprintf("Duplicate index on columns '%s' - declared more than once. Remove the redundant index.", implode(', ', $index->columns)),
                         column: implode(',', $index->columns),
                     );
@@ -36,7 +26,7 @@ final class DuplicateIndexRule implements Rule
                     continue;
                 }
 
-                $seen[$key] = true;
+                $seen[$index->key()] = true;
             }
         }
 

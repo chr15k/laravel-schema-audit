@@ -13,18 +13,6 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
 
-/**
- * Turns a Blueprint closure — the `function (Blueprint $table) { ... }`
- * passed to Schema::create()/Schema::table() — into a list of ColumnChains,
- * one per `$table->x()->y()->z()` statement.
- *
- * Each chain is captured root-first (the call directly on $table comes
- * first, then each ->modifier() in the order written) rather than as
- * independent flat calls. Chain position is what disambiguates e.g.
- * $table->string('email')->unique() (a column-level modifier) from
- * $table->unique('a', 'b') (a table-level composite index) — both involve
- * an 'unique' call, but only one is a root call on $table directly.
- */
 final class ChainExtractor
 {
     /**
@@ -54,12 +42,7 @@ final class ChainExtractor
     }
 
     /**
-     * Descend a MethodCall's ->var chain until reaching the $table
-     * variable, collecting a ColumnCall per level, outermost first.
-     * Returns null if the chain doesn't bottom out at $table (e.g. some
-     * unrelated variable — not a Blueprint call, skip it).
-     *
-     * @return list<ColumnCall>|null outermost-first (caller reverses)
+     * @return list<ColumnCall>|null
      */
     private function unwind(MethodCall $call, int $depth = 0): ?array
     {

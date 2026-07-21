@@ -149,7 +149,7 @@ final class NoTextColumnsOnHighTrafficTablesRule implements Rule
                 if ($type === 'text' /* ...your condition... */) {
                     $findings[] = new Finding(
                         rule: 'no_text_on_high_traffic_tables',
-                        table: $table->tableName,
+                        table: $table->name,
                         column: $column,
                         message: "Column '{$column}' is a text column on a high-traffic table.",
                     );

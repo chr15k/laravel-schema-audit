@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Contracts;
 
-use Chr15k\SchemaAudit\TableSchema;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Schema;
 
 /**
  * A single schema-level check. Deliberately takes the WHOLE folded schema
@@ -15,8 +15,7 @@ use Chr15k\SchemaAudit\ValueObjects\Finding;
 interface Rule
 {
     /**
-     * @param  array<string, TableSchema>  $tables
      * @return list<Finding>
      */
-    public function check(array $tables): array;
+    public function check(Schema $schema): array;
 }

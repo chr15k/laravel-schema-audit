@@ -14,21 +14,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-/**
- * php artisan schema:audit
- *
- * By default, folds every migration into final per-table schema state and
- * runs the built-in rule set (unindexed FKs, duplicate/redundant indexes,
- * dangling FKs, missing primary keys) against it, printing findings as a
- * styled report using Artisan's own component output (no extra styling
- * dependency — same primitives `migrate`/`route:list` use). Severity is
- * conveyed by glyph AND color (✗ red = error, ▲ yellow = warning), not by
- * a redundant text badge, so it still reads correctly with color stripped
- * (piped output, CI logs, colorblind terminals). Pass --schema-only to
- * print the raw folded schema instead. Pass --json for machine-readable
- * findings output (CI-friendly) — the JSON always carries the literal
- * severity string regardless of what the terminal shows.
- */
 final class AuditSchemaCommand extends Command
 {
     protected $signature = 'schema:audit
@@ -152,12 +137,11 @@ final class AuditSchemaCommand extends Command
 
     private function renderFinding(Finding $finding): void
     {
-        $rule = $this->humanizeRule($finding->rule);
         $column = $finding->column ?? '—';
         $severity = $finding->severity;
 
         $this->components->twoColumnDetail(
-            sprintf('  <fg=%s>%s</> %s', $severity->color(), $severity->glyph(), $rule),
+            sprintf('  <fg=%s>%s</> %s', $severity->color(), $severity->glyph(), (string) $finding),
             sprintf('<fg=gray>%s</>', $column)
         );
 
@@ -165,11 +149,6 @@ final class AuditSchemaCommand extends Command
     }
 
     /**
-     * The most severe level present in a group of findings — Error
-     * outranks Warning outranks Info. Used to color a table's header by
-     * the worst thing found on it, rather than a fixed color regardless
-     * of what's actually wrong.
-     *
      * @param  Collection<int, Finding>  $findings
      */
     private function worstSeverity(Collection $findings): Severity
@@ -177,8 +156,8 @@ final class AuditSchemaCommand extends Command
         $rank = [Severity::Error->value => 0, Severity::Warning->value => 1, Severity::Info->value => 2];
 
         return $findings
-            ->map(fn (Finding $f): Severity => $f->severity)
-            ->sortBy(fn (Severity $s): int => $rank[$s->value])
+            ->map(fn (Finding $finding): Severity => $finding->severity)
+            ->sortBy(fn (Severity $severity): int => $rank[$severity->value])
             ->first();
     }
 
@@ -201,15 +180,6 @@ final class AuditSchemaCommand extends Command
         );
         $this->components->bulletList([sprintf('%d schema %s found.', $count, $grammar)]);
         $this->newLine();
-    }
-
-    /**
-     * Turns a snake_case rule identifier like 'unindexed_foreign_key' into
-     * a readable label like 'Unindexed Foreign Key' for the report header.
-     */
-    private function humanizeRule(string $rule): string
-    {
-        return str(str_replace('_', ' ', $rule))->title()->toString();
     }
 
     private function resolvePath(): string

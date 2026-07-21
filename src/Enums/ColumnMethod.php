@@ -4,15 +4,6 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Enums;
 
-/**
- * Every Blueprint method that defines a column, in the whitelist
- * SchemaBuilder uses to decide "is this call a column definition" — see
- * SchemaBuilder's docblock for why this is a whitelist rather than a
- * blacklist of "structural" methods.
- *
- * Case values match the literal Blueprint method name, so a parsed
- * method name string can be looked up directly via tryFrom().
- */
 enum ColumnMethod: string
 {
     case Id = 'id';
@@ -83,15 +74,6 @@ enum ColumnMethod: string
     case ForeignUlid = 'foreignUlid';
     case ForeignIdFor = 'foreignIdFor';
 
-    /**
-     * True for the auto-incrementing id-style methods that imply a
-     * primary key by Laravel convention, AND that default to a column
-     * named 'id' when called with no explicit name argument (e.g.
-     * $table->id() with no args). Both facts happen to apply to exactly
-     * the same set of methods, so this is deliberately one predicate
-     * rather than two — SchemaBuilder uses it to resolve the default
-     * column name, TableSchema uses it to detect a primary key.
-     */
     public function impliesAutoIncrementingPrimaryKey(): bool
     {
         return match ($this) {

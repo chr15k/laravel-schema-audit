@@ -25,7 +25,7 @@ final class NoPrimaryKeyRule implements Rule
             if (! $table->hasPrimaryKey()) {
                 $findings[] = new Finding(
                     rule: 'no_primary_key',
-                    table: $table->tableName,
+                    table: $table->name,
                     message: 'No primary key found. Add an auto-incrementing id() or define an explicit primary(...) for this table.',
                     severity: Severity::Error,
                 );

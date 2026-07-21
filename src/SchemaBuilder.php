@@ -12,26 +12,17 @@ use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\ValueObjects\Index;
 use Chr15k\SchemaAudit\ValueObjects\SchemaOperation;
 
-/**
- * Folds every migration file's SchemaOperations, in filename order, into a
- * final map of table name => TableSchema. Laravel migration filenames are
- * timestamp-prefixed (YYYY_MM_DD_HHMMSS_description.php), so a plain
- * alphabetical sort of the directory listing is already chronological —
- * this is the ordering assumption the whole tool depends on.
- */
 final readonly class SchemaBuilder
 {
-    public function __construct(
-        private MigrationParser $parser
-    ) {}
+    public function __construct(private MigrationParser $parser) {}
 
     /**
-     * @return array<string, TableSchema> table name => folded schema
+     * @return array<string, TableSchema>
      */
     public function buildFromDirectory(string $migrationsPath): array
     {
         $files = glob(mb_rtrim($migrationsPath, '/').'/*.php') ?: [];
-        sort($files); // relies on timestamp-prefixed filenames for chronological order
+        sort($files);
 
         /** @var array<string, TableSchema> $tables */
         $tables = [];
@@ -51,9 +42,6 @@ final readonly class SchemaBuilder
     private function applyOperation(array &$tables, SchemaOperation $operation): void
     {
         if ($operation->type === SchemaOperationType::Drop) {
-            // A dropped table's history shouldn't leak into whatever gets
-            // created under the same name later — reset completely rather
-            // than leaving stale columns/indexes/FKs to accumulate onto.
             unset($tables[$operation->tableName]);
 
             return;
@@ -63,6 +51,7 @@ final readonly class SchemaBuilder
             if (isset($tables[$operation->tableName]) && $operation->renameTo !== null) {
                 $renamed = $tables[$operation->tableName];
                 unset($tables[$operation->tableName]);
+
                 $tables[$operation->renameTo] = new TableSchema($operation->renameTo);
 
                 foreach ($renamed->columns() as $name => $type) {
@@ -112,22 +101,11 @@ final readonly class SchemaBuilder
 
     private function applyDropForeign(TableSchema $table, ColumnCall $call): void
     {
-        // dropForeign('constraint_name') most commonly; dropForeign(['column'])
-        // is also valid Laravel syntax (matches by column via convention).
         foreach (($call->stringArgs !== [] ? $call->stringArgs : $call->arrayArgs) as $nameOrColumn) {
             $table->dropForeignKey($nameOrColumn);
         }
     }
 
-    /**
-     * $table->id() (and increments()/bigIncrements()/etc.) default to a
-     * column named 'id' when called with no arguments — by far the more
-     * common form in practice. Without this, $table->id() (no arg) was
-     * silently dropped entirely, which meant tables using the idiomatic
-     * $table->id() were incorrectly flagged as having no primary key.
-     * Uses the same ColumnMethod predicate TableSchema uses to detect a
-     * primary key — one source of truth for "which methods are id-like".
-     */
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
@@ -136,24 +114,17 @@ final readonly class SchemaBuilder
         $name = $root->stringArgs[0] ?? ($defaultsToId ? 'id' : null);
 
         if ($name === null) {
-            return; // e.g. $table->timestamps() has no name arg — not tracked as a single column
+            return;
         }
 
         $table->addColumn($name, $root->method);
 
-        // foreignId('x')->constrained() implies a foreign key even though
-        // the referenced table isn't explicit in the constrained() call
-        // itself (Laravel infers it from the column name by convention).
         if (in_array($root->method, ['foreignId', 'foreignUuid', 'foreignUlid'], true) && $chain->hasModifier('constrained')) {
             $constrained = $chain->modifier('constrained');
             $referencesTable = $constrained?->stringArgs[0] ?? null;
             $table->addForeignKey(new ForeignKey(column: $name, referencesTable: $referencesTable));
         }
 
-        // A column-level ->unique() or ->index() modifier (no args, chained
-        // directly onto the column definition) creates a single-column
-        // index on THIS column — distinct from a table-level $table->unique(...)
-        // call, which is why this only fires from inside a column chain.
         if ($chain->hasModifier('unique')) {
             $table->addIndex(new Index(name: null, columns: [$name], unique: true));
         }
@@ -163,11 +134,6 @@ final readonly class SchemaBuilder
         }
     }
 
-    /**
-     * $table->foreign('col')->references('id')->on('other_table')->onDelete(...)->onUpdate(...)
-     * The optional second string arg on foreign() itself is a constraint
-     * NAME, not a second column — a mistake the old flat-call parser made.
-     */
     private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
@@ -179,32 +145,14 @@ final readonly class SchemaBuilder
 
         $onCall = $chain->modifier('on');
         $referencesTable = $onCall?->stringArgs[0] ?? null;
-
-        // $table->foreign('col', 'constraint_name') — optional second
-        // string arg on the root call is the constraint name, allowing
-        // a later dropForeign('constraint_name') to find and remove it.
         $constraintName = $root->stringArgs[1] ?? null;
 
         $table->addForeignKey(new ForeignKey(column: $column, referencesTable: $referencesTable, name: $constraintName));
-
-        // references()/on()/onDelete()/onUpdate() carry no independent
-        // schema meaning beyond building this one ForeignKey — intentionally
-        // not applied as column definitions, unlike the old blacklist parser.
     }
 
-    /**
-     * Table-level index/unique/fullText call. The first positional arg is
-     * either a single column string or an array of columns; if a SECOND
-     * string arg is present it is an explicit index NAME, never an
-     * additional column — e.g. $table->index('property_id', 'property_id')
-     * names the index 'property_id', it does not index two columns.
-     */
     private function buildTableLevelIndex(ColumnCall $call, bool $unique): Index
     {
         if ($call->arrayArgs !== []) {
-            // $table->unique(['a', 'b'], 'optional_name') — arrayArgs holds
-            // the columns; any string arg alongside it is the name, not
-            // captured in arrayArgs since it's parsed from a separate Arg.
             $name = $call->stringArgs[0] ?? null;
 
             return new Index(name: $name, columns: $call->arrayArgs, unique: $unique);
@@ -238,11 +186,6 @@ final readonly class SchemaBuilder
 
     private function applyDropIndex(TableSchema $table, ColumnCall $call): void
     {
-        // Laravel allows dropIndex(['col1', 'col2']) as an alternative to
-        // an explicit name (it derives the conventional name internally).
-        // We only support the explicit-name string form for now — the
-        // array form is silently ignored rather than guessed at, since a
-        // wrong guess here would incorrectly un-index a real index.
         foreach ($call->stringArgs as $name) {
             $table->dropIndex($name);
         }

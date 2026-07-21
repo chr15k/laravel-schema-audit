@@ -12,12 +12,6 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
 
-/**
- * Walks a migration file's AST looking for Schema:: static calls and turns
- * each one into a SchemaOperation. Chain-walking inside create()/table()
- * closures is delegated to ChainExtractor — this class is only responsible
- * for recognising WHICH Schema:: call it is and what table(s) it names.
- */
 final class SchemaCallVisitor extends NodeVisitorAbstract
 {
     /** @var list<SchemaOperation> */
@@ -29,11 +23,6 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     public function enterNode(Node $node): ?int
     {
-        // A migration's down() method is the ROLLBACK — it commonly
-        // contains Schema::dropIfExists(...) for a table that was never
-        // actually dropped in forward history. Skip it entirely so its
-        // Schema:: calls never get folded in as if they were real
-        // forward operations.
         if ($node instanceof Node\Stmt\ClassMethod && $node->name->toString() === 'down') {
             return NodeVisitor::DONT_TRAVERSE_CHILDREN;
         }
@@ -60,10 +49,10 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     private function recordDrop(StaticCall $node): null
     {
-        $tableName = ArgReader::stringArgAt($node->args, 0);
+        $name = ArgReader::stringArgAt($node->args, 0);
 
-        if ($tableName !== null) {
-            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Drop, tableName: $tableName);
+        if ($name !== null) {
+            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Drop, name: $name);
         }
 
         return null;
@@ -75,7 +64,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         $to = ArgReader::stringArgAt($node->args, 1);
 
         if ($from !== null && $to !== null) {
-            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Rename, tableName: $from, renameTo: $to);
+            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Rename, name: $from, renameTo: $to);
         }
 
         return null;
@@ -83,16 +72,16 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     private function recordCreateOrAlter(StaticCall $node, string $methodName): null
     {
-        $tableName = ArgReader::stringArgAt($node->args, 0);
+        $name = ArgReader::stringArgAt($node->args, 0);
         $closure = ArgReader::closureArgAt($node->args, 1);
 
-        if ($tableName === null || ! $closure instanceof Closure) {
+        if ($name === null || ! $closure instanceof Closure) {
             return null;
         }
 
         $this->operations[] = new SchemaOperation(
             type: $methodName === 'create' ? SchemaOperationType::Create : SchemaOperationType::Alter,
-            tableName: $tableName,
+            name: $name,
             chains: $this->chainExtractor->extract($closure),
         );
 

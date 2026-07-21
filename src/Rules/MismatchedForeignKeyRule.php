@@ -78,7 +78,7 @@ final class MismatchedForeignKeyRule implements Rule
 
                 $findings[] = new Finding(
                     rule: 'mismatched_foreign_key',
-                    table: $table->tableName,
+                    table: $table->name,
                     message: sprintf(
                         "Foreign key on '%s' (%s) does not match key type '%s' on '%s'.",
                         $fk->column,

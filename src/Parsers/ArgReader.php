@@ -8,12 +8,6 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Scalar\String_;
 
-/**
- * Small, stateless helpers for pulling typed values out of PHP-Parser Arg
- * nodes. Exists purely to keep the visitor/chain-extraction classes free
- * of this kind of "is this Arg a String_, and if so give me its value"
- * boilerplate.
- */
 final class ArgReader
 {
     /**
