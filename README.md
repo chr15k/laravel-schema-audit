@@ -1,3 +1,19 @@
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="art/header.webp">
+    <img alt="Logo for Laravel Schema Audit package" src="art/header.webp">
+</picture>
+
+<p></p>
+
+<p align="center">
+    <a href="https://github.com/chr15k/laravel-schema-audit/actions"><img alt="GitHub Workflow Status (master)" src="https://img.shields.io/github/actions/workflow/status/chr15k/laravel-schema-audit/main.yml"></a>
+    <a href="https://packagist.org/packages/chr15k/laravel-schema-audit"><img alt="Total Downloads" src="https://img.shields.io/packagist/dt/chr15k/laravel-schema-audit"></a>
+    <a href="https://packagist.org/packages/chr15k/laravel-schema-audit"><img alt="Latest Version" src="https://img.shields.io/packagist/v/chr15k/laravel-schema-audit"></a>
+    <a href="https://packagist.org/packages/chr15k/laravel-schema-audit"><img alt="License" src="https://img.shields.io/github/license/chr15k/laravel-schema-audit"></a>
+</p>
+
+------
+
 # Laravel Schema Audit
 
 Static analysis that audits your migration-declared schema — catching

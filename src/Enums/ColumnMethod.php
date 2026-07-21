@@ -103,4 +103,18 @@ enum ColumnMethod: string
             default                => false,
         };
     }
+
+    public function toType(): string
+    {
+        $type = match ($this) {
+            self::Id               => self::UnsignedBigInteger,
+            self::Increments       => self::UnsignedInteger,
+            self::BigIncrements    => self::UnsignedBigInteger,
+            self::SmallIncrements  => self::UnsignedSmallInteger,
+            self::MediumIncrements => self::UnsignedMediumInteger,
+            default                => $this,
+        };
+
+        return $type->value;
+    }
 }

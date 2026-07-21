@@ -1,6 +1,6 @@
 {
     "name": "chr15k/laravel-schema-audit",
-    "description": "Static analysis tool that cross-references Eloquent query usage against your migration-declared schema to catch missing indexes and N+1 patterns.",
+    "description": "Performs static analysis of your Laravel migrations to detect schema inconsistencies before they ship.",
     "type": "library",
     "authors": [
         {
