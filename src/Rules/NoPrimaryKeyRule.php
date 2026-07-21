@@ -25,7 +25,8 @@ final class NoPrimaryKeyRule implements Rule
                 $findings[] = new Finding(
                     rule: 'no_primary_key',
                     table: $table->tableName,
-                    message: 'No primary key found - no id()/increments()-style column and no explicit primary() call.',
+                    message: "No primary key found. Add an auto-incrementing id() or define an explicit primary(...) for this table.",
+                    severity: \Chr15k\SchemaAudit\Enums\Severity::Error,
                 );
             }
         }

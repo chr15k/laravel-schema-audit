@@ -103,7 +103,7 @@ final class AuditSchemaCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->renderFindings($findings);
+        $this->renderFindings($findings, $tableCount, $duration);
         $this->renderFail($duration, count($findings));
 
         return self::FAILURE;
@@ -112,8 +112,26 @@ final class AuditSchemaCommand extends Command
     /**
      * @param  list<Finding>  $findings
      */
-    private function renderFindings(array $findings): void
+    private function renderFindings(array $findings, int $tableCount, string $duration): void
     {
+        $this->newLine();
+        $this->line('  <options=bold>Schema Audit Results</>');
+        $this->newLine();
+        $this->line(sprintf(
+            '  <fg=green>%d</> tables audited    <fg=blue>%d</> rules executed    <fg=red>%d</> findings',
+            $tableCount,
+            $this->auditor->ruleCount(),
+            count($findings)
+        ));
+
+        if ($findings === []) {
+            $this->components->info('No schema issues found.');
+            $this->newLine();
+            $this->line("  <fg=gray>Duration: {$duration}s</>");
+
+            return;
+        }
+
         collect($findings)
             ->sortBy('table')
             ->groupBy('table')

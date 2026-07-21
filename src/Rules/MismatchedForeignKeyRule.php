@@ -77,9 +77,9 @@ final class MismatchedForeignKeyRule implements Rule
                 $findings[] = new Finding(
                     rule: 'mismatched_foreign_key',
                     table: $table->tableName,
-                    message: sprintf("Foreign key '%s' (%s) does not match the type of ", $fk->column, $fkColumnType)
-                        .sprintf("'%s's primary key (%s).", $fk->referencesTable, $referencedPkType),
+                    message: sprintf("Foreign key '%s' has type '%s' which does not match primary key type '%s' on '%s'.", $fk->column, $fkColumnType, $referencedPkType, $fk->referencesTable),
                     column: $fk->column,
+                    severity: \Chr15k\SchemaAudit\Enums\Severity::Error,
                 );
             }
         }

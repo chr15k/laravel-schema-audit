@@ -38,7 +38,7 @@ final class RedundantSingleColumnIndexRule implements Rule
                     $findings[] = new Finding(
                         rule: 'redundant_single_column_index',
                         table: $table->tableName,
-                        message: sprintf("Single-column index on '%s' is redundant — already covered by a composite index leading with '%s'.", $column, $column),
+                        message: sprintf("Single-column index on '%s' is redundant because a composite index leading with '%s' already covers it. Consider removing the single-column index.", $column, $column),
                         column: $column,
                     );
                 }

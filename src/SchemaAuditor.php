@@ -30,4 +30,9 @@ final readonly class SchemaAuditor
 
         return $findings;
     }
+
+    public function ruleCount(): int
+    {
+        return count($this->rules);
+    }
 }

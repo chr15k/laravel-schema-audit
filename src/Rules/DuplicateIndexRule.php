@@ -29,7 +29,7 @@ final class DuplicateIndexRule implements Rule
                     $findings[] = new Finding(
                         rule: 'duplicate_index',
                         table: $table->tableName,
-                        message: 'Duplicate index on ('.implode(', ', $index->columns).') — defined more than once.',
+                        message: sprintf("Duplicate index on columns '%s' — declared more than once. Remove the redundant index.", implode(', ', $index->columns)),
                         column: implode(',', $index->columns),
                     );
 

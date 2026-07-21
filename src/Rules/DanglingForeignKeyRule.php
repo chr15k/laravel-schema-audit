@@ -31,8 +31,9 @@ final class DanglingForeignKeyRule implements Rule
                     $findings[] = new Finding(
                         rule: 'dangling_foreign_key',
                         table: $table->tableName,
-                        message: sprintf("Foreign key '%s' references table '%s', which doesn't exist in the folded schema.", $fk->column, $fk->referencesTable),
+                        message: sprintf("Foreign key '%s' references missing table '%s'. Ensure the referenced table exists or update the foreign key.", $fk->column, $fk->referencesTable),
                         column: $fk->column,
+                        severity: \Chr15k\SchemaAudit\Enums\Severity::Error,
                     );
                 }
             }

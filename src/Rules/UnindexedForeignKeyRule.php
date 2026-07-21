@@ -34,7 +34,7 @@ final readonly class UnindexedForeignKeyRule implements Rule
                     $findings[] = new Finding(
                         rule: 'unindexed_foreign_key',
                         table: $table->tableName,
-                        message: sprintf("Foreign key '%s' has no index. %s does not auto-index foreign key columns.", $fk->column, $this->driver),
+                        message: sprintf("Foreign key '%s' has no covering index. %s does not auto-index foreign key columns; add an index to improve lookup and join performance.", $fk->column, $this->driver),
                         column: $fk->column,
                     );
                 }

@@ -21,7 +21,7 @@ final class DuplicateForeignKeyRule implements Rule
                     $findings[] = new Finding(
                         rule: 'duplicate_foreign_key',
                         table: $table->tableName,
-                        message: 'Duplicate foreign key on ('.$fk->column.') - defined more than once.',
+                        message: sprintf("Duplicate foreign key on column '%s' — defined more than once. Remove the redundant constraint.", $fk->column),
                         column: $fk->column,
                     );
 
