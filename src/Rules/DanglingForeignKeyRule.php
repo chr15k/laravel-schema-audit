@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 
 /**
@@ -33,7 +34,7 @@ final class DanglingForeignKeyRule implements Rule
                         table: $table->tableName,
                         message: sprintf("Foreign key '%s' references missing table '%s'. Ensure the referenced table exists or update the foreign key.", $fk->column, $fk->referencesTable),
                         column: $fk->column,
-                        severity: \Chr15k\SchemaAudit\Enums\Severity::Error,
+                        severity: Severity::Error,
                     );
                 }
             }

@@ -15,11 +15,11 @@ use Illuminate\Contracts\Support\Arrayable;
 final readonly class Finding implements Arrayable
 {
     public function __construct(
-        public readonly string $rule,
-        public readonly string $table,
-        public readonly string $message,
-        public readonly ?string $column = null,
-        public readonly Severity $severity = Severity::Warning,
+        public string $rule,
+        public string $table,
+        public string $message,
+        public ?string $column = null,
+        public Severity $severity = Severity::Warning,
     ) {}
 
     /**
@@ -28,10 +28,10 @@ final readonly class Finding implements Arrayable
     public function toArray(): array
     {
         return [
-            'rule' => $this->rule,
-            'table' => $this->table,
-            'column' => $this->column,
-            'message' => $this->message,
+            'rule'     => $this->rule,
+            'table'    => $this->table,
+            'column'   => $this->column,
+            'message'  => $this->message,
             'severity' => $this->severity->value,
         ];
     }

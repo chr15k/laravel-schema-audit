@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Console\Commands;
 
+use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\SchemaAuditor;
 use Chr15k\SchemaAudit\SchemaBuilder;
 use Chr15k\SchemaAudit\TableSchema;
@@ -20,9 +21,13 @@ use RuntimeException;
  * runs the built-in rule set (unindexed FKs, duplicate/redundant indexes,
  * dangling FKs, missing primary keys) against it, printing findings as a
  * styled report using Artisan's own component output (no extra styling
- * dependency — same primitives `migrate`/`route:list` use). Pass
- * --schema-only to print the raw folded schema instead. Pass --json for
- * machine-readable findings output (CI-friendly).
+ * dependency — same primitives `migrate`/`route:list` use). Severity is
+ * conveyed by glyph AND color (✗ red = error, ▲ yellow = warning), not by
+ * a redundant text badge, so it still reads correctly with color stripped
+ * (piped output, CI logs, colorblind terminals). Pass --schema-only to
+ * print the raw folded schema instead. Pass --json for machine-readable
+ * findings output (CI-friendly) — the JSON always carries the literal
+ * severity string regardless of what the terminal shows.
  */
 final class AuditSchemaCommand extends Command
 {
@@ -31,7 +36,7 @@ final class AuditSchemaCommand extends Command
         {--schema-only : Print the raw folded schema instead of running rules}
         {--json : Print findings as JSON instead of the styled report}';
 
-    protected $description = 'Audit migration-declared schema for unindexed foreign keys, duplicate/redundant indexes, dangling foreign keys, and missing primary keys';
+    protected $description = 'Audit migration-declared schema for unindexed foreign keys, duplicate/redundant indexes, dangling foreign keys, mismatched foreign keys, and missing primary keys';
 
     public function __construct(private readonly SchemaAuditor $auditor)
     {
@@ -45,7 +50,7 @@ final class AuditSchemaCommand extends Command
         $tables = $builder->buildFromDirectory($this->resolvePath());
 
         if ($this->option('schema-only')) {
-            return $this->renderSchemaOnly($tables);
+            return $this->renderFindingschemaOnly($tables);
         }
 
         $findings = $this->auditor->audit($tables);
@@ -66,7 +71,7 @@ final class AuditSchemaCommand extends Command
     /**
      * @param  array<string, TableSchema>  $tables
      */
-    private function renderSchemaOnly(array $tables): int
+    private function renderFindingschemaOnly(array $tables): int
     {
         $output = collect($tables)
             ->values()
@@ -103,7 +108,7 @@ final class AuditSchemaCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->renderFindings($findings, $tableCount, $duration);
+        $this->renderFindings($findings, $tableCount);
         $this->renderFail($duration, count($findings));
 
         return self::FAILURE;
@@ -112,7 +117,7 @@ final class AuditSchemaCommand extends Command
     /**
      * @param  list<Finding>  $findings
      */
-    private function renderFindings(array $findings, int $tableCount, string $duration): void
+    private function renderFindings(array $findings, int $tableCount): void
     {
         $this->newLine();
         $this->line('  <options=bold>Schema Audit Results</>');
@@ -124,23 +129,22 @@ final class AuditSchemaCommand extends Command
             count($findings)
         ));
 
-        if ($findings === []) {
-            $this->components->info('No schema issues found.');
-            $this->newLine();
-            $this->line("  <fg=gray>Duration: {$duration}s</>");
-
-            return;
-        }
-
         collect($findings)
             ->sortBy('table')
             ->groupBy('table')
             ->each(function (Collection $items, string $table): void {
                 $count = $items->count();
                 $grammar = Str::plural('issue', $count);
+                $worst = $this->worstSeverity($items);
 
                 $this->newLine();
-                $this->line(sprintf('  <fg=red;options=bold>%s</> <fg=gray>(%d %s)</>', $table, $count, $grammar));
+                $this->line(sprintf(
+                    '  <fg=%s;options=bold>%s</> <fg=gray>(%d %s)</>',
+                    $worst->color(),
+                    $table,
+                    $count,
+                    $grammar
+                ));
 
                 $items->each($this->renderFinding(...));
             });
@@ -150,13 +154,32 @@ final class AuditSchemaCommand extends Command
     {
         $rule = $this->humanizeRule($finding->rule);
         $column = $finding->column ?? '—';
+        $severity = $finding->severity;
 
         $this->components->twoColumnDetail(
-            '  <fg=red>➜</> '.$rule,
+            sprintf('  <fg=%s>%s</> %s', $severity->color(), $severity->glyph(), $rule),
             sprintf('<fg=gray>%s</>', $column)
         );
 
-        $this->components->bulletList([$finding->message]);
+        $this->line(sprintf('    <fg=gray>↳ %s</>', $finding->message));
+    }
+
+    /**
+     * The most severe level present in a group of findings — Error
+     * outranks Warning outranks Info. Used to color a table's header by
+     * the worst thing found on it, rather than a fixed color regardless
+     * of what's actually wrong.
+     *
+     * @param  Collection<int, Finding>  $findings
+     */
+    private function worstSeverity(Collection $findings): Severity
+    {
+        $rank = [Severity::Error->value => 0, Severity::Warning->value => 1, Severity::Info->value => 2];
+
+        return $findings
+            ->map(fn (Finding $f): Severity => $f->severity)
+            ->sortBy(fn (Severity $s): int => $rank[$s->value])
+            ->first();
     }
 
     private function renderPass(string $duration, int $tableCount): void

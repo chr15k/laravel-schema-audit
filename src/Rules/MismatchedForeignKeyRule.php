@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 
 /**
@@ -79,7 +80,7 @@ final class MismatchedForeignKeyRule implements Rule
                     table: $table->tableName,
                     message: sprintf("Foreign key '%s' has type '%s' which does not match primary key type '%s' on '%s'.", $fk->column, $fkColumnType, $referencedPkType, $fk->referencesTable),
                     column: $fk->column,
-                    severity: \Chr15k\SchemaAudit\Enums\Severity::Error,
+                    severity: Severity::Error,
                 );
             }
         }
