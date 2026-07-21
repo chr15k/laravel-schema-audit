@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit;
 
+use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\ValueObjects\Index;
 
@@ -45,19 +46,6 @@ final class TableSchema
         ));
     }
 
-    public function primaryKeyColumnType(): ?string
-    {
-        $autoPrimaryTypes = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
-
-        foreach ($this->columns as $type) {
-            if (in_array($type, $autoPrimaryTypes, true)) {
-                return $type;
-            }
-        }
-
-        return null;
-    }
-
     public function renameColumn(string $from, string $to): void
     {
         if (! array_key_exists($from, $this->columns)) {
@@ -97,6 +85,27 @@ final class TableSchema
     }
 
     /**
+     * The Blueprint method of the auto-incrementing id-style column that
+     * implies this table's primary key (id(), increments(),
+     * bigIncrements(), etc.) — or null if none exists, either because the
+     * table has no primary key at all, or because it uses an explicit
+     * $table->primary(...) call whose target column(s) we don't track.
+     * Deliberately returns null rather than guessing in the explicit-
+     * primary case, since a wrong guess here would produce a false
+     * mismatch finding rather than just a missed one.
+     */
+    public function primaryKeyColumnType(): ?string
+    {
+        foreach ($this->columns as $type) {
+            if (ColumnMethod::tryFrom($type)?->impliesAutoIncrementingPrimaryKey() === true) {
+                return $type;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * True if the table has a primary key — either via an auto-incrementing
      * id-style column (id(), increments(), bigIncrements(), etc., which
      * imply a primary key by Laravel convention) or an explicit
@@ -104,12 +113,8 @@ final class TableSchema
      */
     public function hasPrimaryKey(): bool
     {
-        $autoPrimaryTypes = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
-
-        foreach ($this->columns as $type) {
-            if (in_array($type, $autoPrimaryTypes, true)) {
-                return true;
-            }
+        if ($this->primaryKeyColumnType() !== null) {
+            return true;
         }
 
         return $this->hasExplicitPrimaryKey;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit;
 
+use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
 use Chr15k\SchemaAudit\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\ValueObjects\ColumnChain;
@@ -20,48 +21,8 @@ use Chr15k\SchemaAudit\ValueObjects\SchemaOperation;
  */
 final readonly class SchemaBuilder
 {
-    /**
-     * Real Blueprint column-defining methods. Deliberately a WHITELIST,
-     * not a blacklist of "structural" methods — an earlier blacklist
-     * approach silently treated chain continuations like ->references(),
-     * ->on(), ->onDelete(), ->onUpdate(), ->dropForeign() as if they were
-     * columns (e.g. $table->references('id') was read as "a column named
-     * id of type references", overwriting the real id column). A
-     * whitelist can only miss column types we haven't listed — it can
-     * never misinterpret a non-column chain call as one.
-     *
-     * @var list<string>
-     */
-    private const COLUMN_METHODS = [
-        'id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements',
-        'integer', 'tinyInteger', 'smallInteger', 'mediumInteger', 'bigInteger',
-        'unsignedInteger', 'unsignedTinyInteger', 'unsignedSmallInteger',
-        'unsignedMediumInteger', 'unsignedBigInteger',
-        'float', 'double', 'decimal', 'unsignedDecimal',
-        'string', 'char', 'text', 'tinyText', 'mediumText', 'longText',
-        'boolean', 'enum', 'set', 'json', 'jsonb',
-        'date', 'dateTime', 'dateTimeTz', 'time', 'timeTz',
-        'timestamp', 'timestampTz', 'softDeletes', 'softDeletesTz', 'year',
-        'binary', 'uuid', 'ulid', 'ipAddress', 'macAddress',
-        'geometry', 'geography', 'point', 'lineString', 'polygon',
-        'morphs', 'nullableMorphs', 'uuidMorphs', 'ulidMorphs',
-        'foreignId', 'foreignUuid', 'foreignUlid', 'foreignIdFor',
-    ];
-
-    /**
-     * Blueprint methods that default to a column named 'id' when called
-     * with no arguments — e.g. $table->id() is equivalent to
-     * $table->id('id'), and is by far the more common form in practice.
-     * Without this, $table->id() (no arg) was silently dropped entirely,
-     * which meant tables using the idiomatic $table->id() were incorrectly
-     * flagged as having no primary key.
-     *
-     * @var list<string>
-     */
-    private const DEFAULTS_TO_ID_COLUMN = ['id', 'increments', 'bigIncrements', 'smallIncrements', 'mediumIncrements'];
-
     public function __construct(
-        private MigrationParser $parser,
+        private MigrationParser $parser
     ) {}
 
     /**
@@ -90,6 +51,9 @@ final readonly class SchemaBuilder
     private function applyOperation(array &$tables, SchemaOperation $operation): void
     {
         if ($operation->type === SchemaOperationType::Drop) {
+            // A dropped table's history shouldn't leak into whatever gets
+            // created under the same name later — reset completely rather
+            // than leaving stale columns/indexes/FKs to accumulate onto.
             unset($tables[$operation->tableName]);
 
             return;
@@ -98,9 +62,7 @@ final readonly class SchemaBuilder
         if ($operation->type === SchemaOperationType::Rename) {
             if (isset($tables[$operation->tableName]) && $operation->renameTo !== null) {
                 $renamed = $tables[$operation->tableName];
-
                 unset($tables[$operation->tableName]);
-
                 $tables[$operation->renameTo] = new TableSchema($operation->renameTo);
 
                 foreach ($renamed->columns() as $name => $type) {
@@ -133,18 +95,18 @@ final readonly class SchemaBuilder
         $root = $chain->root();
 
         match (true) {
-            in_array($root->method, self::COLUMN_METHODS, true) => $this->applyColumnDefinition($table, $chain),
-            $root->method === 'foreign'                         => $this->applyOldStyleForeign($table, $chain),
-            $root->method === 'unique'                          => $table->addIndex($this->buildTableLevelIndex($root, unique: true)),
-            $root->method === 'index'                           => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
-            $root->method === 'fullText'                        => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
-            $root->method === 'dropColumn'                      => $this->applyDropColumn($table, $root),
-            $root->method === 'renameColumn'                    => $this->applyRenameColumn($table, $root),
-            $root->method === 'dropIndex'                       => $this->applyDropIndex($table, $root),
-            $root->method === 'dropUnique'                      => $this->applyDropIndex($table, $root),
-            $root->method === 'dropForeign'                     => $this->applyDropForeign($table, $root),
-            $root->method === 'primary'                         => $table->markPrimaryKey(),
-            default                                             => null, // dropPrimary(), timestamps(), etc. — no schema-shape impact we track
+            ColumnMethod::tryFrom($root->method) !== null => $this->applyColumnDefinition($table, $chain),
+            $root->method === 'foreign'                   => $this->applyOldStyleForeign($table, $chain),
+            $root->method === 'unique'                    => $table->addIndex($this->buildTableLevelIndex($root, unique: true)),
+            $root->method === 'index'                     => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
+            $root->method === 'fullText'                  => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
+            $root->method === 'dropColumn'                => $this->applyDropColumn($table, $root),
+            $root->method === 'renameColumn'              => $this->applyRenameColumn($table, $root),
+            $root->method === 'dropIndex'                 => $this->applyDropIndex($table, $root),
+            $root->method === 'dropUnique'                => $this->applyDropIndex($table, $root),
+            $root->method === 'dropForeign'               => $this->applyDropForeign($table, $root),
+            $root->method === 'primary'                   => $table->markPrimaryKey(),
+            default                                       => null, // dropPrimary(), timestamps(), etc. — no schema-shape impact we track
         };
     }
 
@@ -157,10 +119,21 @@ final readonly class SchemaBuilder
         }
     }
 
+    /**
+     * $table->id() (and increments()/bigIncrements()/etc.) default to a
+     * column named 'id' when called with no arguments — by far the more
+     * common form in practice. Without this, $table->id() (no arg) was
+     * silently dropped entirely, which meant tables using the idiomatic
+     * $table->id() were incorrectly flagged as having no primary key.
+     * Uses the same ColumnMethod predicate TableSchema uses to detect a
+     * primary key — one source of truth for "which methods are id-like".
+     */
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
-        $name = $root->stringArgs[0] ?? (in_array($root->method, self::DEFAULTS_TO_ID_COLUMN, true) ? 'id' : null);
+        $method = ColumnMethod::tryFrom($root->method);
+        $defaultsToId = $method?->impliesAutoIncrementingPrimaryKey() ?? false;
+        $name = $root->stringArgs[0] ?? ($defaultsToId ? 'id' : null);
 
         if ($name === null) {
             return; // e.g. $table->timestamps() has no name arg — not tracked as a single column
