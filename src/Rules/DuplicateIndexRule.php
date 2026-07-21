@@ -6,7 +6,7 @@ namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\ValueObjects\Schema;
 
-final class DuplicateIndexRule extends Rule
+final readonly class DuplicateIndexRule extends Rule
 {
     public function check(Schema $schema): array
     {
@@ -17,7 +17,7 @@ final class DuplicateIndexRule extends Rule
 
             foreach ($table->indexes() as $index) {
                 if (isset($seen[$index->key()])) {
-                    $findings[] = $this->finding(
+                    $findings[] = $this->makeFinding(
                         table: $table->name,
                         message: sprintf("Duplicate index on columns '%s' - declared more than once. Remove the redundant index.", implode(', ', $index->columns)),
                         column: implode(',', $index->columns),

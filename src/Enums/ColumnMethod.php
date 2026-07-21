@@ -99,4 +99,31 @@ enum ColumnMethod: string
 
         return $type->value;
     }
+
+    public function family(): ?ColumnFamily
+    {
+        return match ($this) {
+            self::Id,
+            self::BigIncrements,
+            self::ForeignId,
+            self::UnsignedBigInteger => ColumnFamily::Big,
+
+            self::Increments,
+            self::UnsignedInteger => ColumnFamily::Int,
+
+            self::SmallIncrements,
+            self::UnsignedSmallInteger => ColumnFamily::Small,
+
+            self::MediumIncrements,
+            self::UnsignedMediumInteger => ColumnFamily::Medium,
+
+            self::Uuid,
+            self::ForeignUuid => ColumnFamily::Uuid,
+
+            self::Ulid,
+            self::ForeignUlid => ColumnFamily::Ulid,
+
+            default => null,
+        };
+    }
 }

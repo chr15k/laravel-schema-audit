@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
+use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\ValueObjects\ColumnChain;
 use PhpParser\Node;
@@ -90,6 +91,8 @@ final class ChainExtractor
             }
         }
 
-        return new ColumnCall(method: $methodName, stringArgs: $stringArgs, arrayArgs: $arrayArgs);
+        $method = ColumnMethod::tryFrom($methodName);
+
+        return new ColumnCall(method: $method, stringArgs: $stringArgs, arrayArgs: $arrayArgs);
     }
 }

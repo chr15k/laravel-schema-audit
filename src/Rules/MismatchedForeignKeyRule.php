@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Contracts\Rule;
-use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Schema;
 
 /**
  * Flags a foreign key whose column type doesn't match the type family of
@@ -24,33 +22,23 @@ use Chr15k\SchemaAudit\ValueObjects\Finding;
  * guessed at, since a wrong guess here produces a false mismatch, which
  * is worse than a missed one.
  */
-final class MismatchedForeignKeyRule implements Rule
+final readonly class MismatchedForeignKeyRule extends Rule
 {
-    /** @var array<string, list<string>> */
-    private const TYPE_FAMILIES = [
-        'big'    => ['id', 'bigIncrements', 'foreignId', 'unsignedBigInteger'],
-        'int'    => ['increments', 'unsignedInteger'],
-        'small'  => ['smallIncrements', 'unsignedSmallInteger'],
-        'medium' => ['mediumIncrements', 'unsignedMediumInteger'],
-        'uuid'   => ['uuid', 'foreignUuid'],
-        'ulid'   => ['ulid', 'foreignUlid'],
-    ];
-
-    public function check(array $tables): array
+    public function check(Schema $schema): array
     {
         $findings = [];
 
-        foreach ($tables as $table) {
+        foreach ($schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
                 if ($fk->referencesTable === null) {
                     continue;
                 }
 
-                if (! isset($tables[$fk->referencesTable])) {
+                if (! $schema->hasTable($fk->referencesTable)) {
                     continue;
                 }
 
-                $referencedPkType = $tables[$fk->referencesTable]->primaryKeyColumnType();
+                $referencedPkType = $schema->table($fk->referencesTable)?->primaryKeyColumnType();
 
                 if ($referencedPkType === null) {
                     continue;
@@ -62,8 +50,9 @@ final class MismatchedForeignKeyRule implements Rule
                     continue;
                 }
 
-                $fkFamily = $this->familyOf($fkColumnType);
-                $pkFamily = $this->familyOf($referencedPkType);
+                $fkFamily = $fkColumnType->family();
+                $pkFamily = $referencedPkType->family();
+
                 if ($fkFamily === null) {
                     continue;
                 }
@@ -76,14 +65,13 @@ final class MismatchedForeignKeyRule implements Rule
                     continue;
                 }
 
-                $findings[] = new Finding(
-                    rule: 'mismatched_foreign_key',
+                $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf(
                         "Foreign key on '%s' (%s) does not match key type '%s' on '%s'.",
                         $fk->column,
-                        ColumnMethod::tryFrom($fkColumnType)?->toType() ?? $fkColumnType,
-                        ColumnMethod::tryFrom($referencedPkType)?->toType() ?? $referencedPkType,
+                        $fkColumnType->toType() ?? $fkColumnType,
+                        $referencedPkType->toType() ?? $referencedPkType,
                         $fk->referencesTable
                     ),
                     column: $fk->column,
@@ -93,16 +81,5 @@ final class MismatchedForeignKeyRule implements Rule
         }
 
         return $findings;
-    }
-
-    private function familyOf(string $type): ?string
-    {
-        foreach (self::TYPE_FAMILIES as $family => $types) {
-            if (in_array($type, $types, true)) {
-                return $family;
-            }
-        }
-
-        return null;
     }
 }

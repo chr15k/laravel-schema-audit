@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\ValueObjects;
 
+use Chr15k\SchemaAudit\Enums\ColumnMethod;
+
 /**
  * A single `$table->method(...)` call as literally written — e.g.
  * ColumnCall('string', ['name'], []) for $table->string('name'), or
@@ -16,7 +18,7 @@ final readonly class ColumnCall
      * @param  list<string>  $arrayArgs
      */
     public function __construct(
-        public string $method,
+        public ColumnMethod $method,
         public array $stringArgs,
         public array $arrayArgs,
     ) {}

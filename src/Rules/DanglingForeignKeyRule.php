@@ -7,7 +7,7 @@ namespace Chr15k\SchemaAudit\Rules;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\ValueObjects\Schema;
 
-final class DanglingForeignKeyRule extends Rule
+final readonly class DanglingForeignKeyRule extends Rule
 {
     public function check(Schema $schema): array
     {
@@ -19,7 +19,7 @@ final class DanglingForeignKeyRule extends Rule
                     continue;
                 }
 
-                $findings[] = $this->finding(
+                $findings[] = $this->makeFinding(
                     table: $table->name,
                     column: $fk->column,
                     message: sprintf("Foreign key '%s' references missing table '%s'. Ensure the referenced table exists or update the foreign key.", $fk->column, $fk->referencesTable),

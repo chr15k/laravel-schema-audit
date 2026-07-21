@@ -11,7 +11,7 @@ use Illuminate\Contracts\Support\Arrayable;
 
 final class TableSchema implements Arrayable
 {
-    /** @var array<string, string> column name => column type */
+    /** @var array<string, ColumnMethod> */
     private array $columns = [];
 
     /** @var list<Index> */
@@ -26,7 +26,7 @@ final class TableSchema implements Arrayable
         public readonly string $name,
     ) {}
 
-    public function addColumn(string $name, string $type): void
+    public function addColumn(string $name, ColumnMethod $type): void
     {
         $this->columns[$name] = $type;
     }
@@ -78,10 +78,10 @@ final class TableSchema implements Arrayable
         $this->hasExplicitPrimaryKey = true;
     }
 
-    public function primaryKeyColumnType(): ?string
+    public function primaryKeyColumnType(): ?ColumnMethod
     {
         foreach ($this->columns as $type) {
-            if (ColumnMethod::tryFrom($type)?->impliesAutoIncrementingPrimaryKey() === true) {
+            if ($type->impliesAutoIncrementingPrimaryKey() === true) {
                 return $type;
             }
         }
@@ -111,7 +111,7 @@ final class TableSchema implements Arrayable
         ));
     }
 
-    /** @return array<string, string> */
+    /** @return array<string, ColumnMethod> */
     public function columns(): array
     {
         return $this->columns;
@@ -171,7 +171,13 @@ final class TableSchema implements Arrayable
     {
         return [
             'table'   => $this->name,
-            'columns' => $this->columns,
+            'columns' => array_map(
+                fn (string $name, ColumnMethod $method): array => [
+                    'name'   => $name,
+                    'method' => $method,
+                ],
+                $this->columns,
+            ),
             'indexes' => array_map(
                 fn (Index $i): array => [
                     'name'    => $i->name,

@@ -109,8 +109,7 @@ final readonly class SchemaBuilder
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
-        $method = ColumnMethod::tryFrom($root->method);
-        $defaultsToId = $method?->impliesAutoIncrementingPrimaryKey() ?? false;
+        $defaultsToId = $root->method->impliesAutoIncrementingPrimaryKey() ?? false;
         $name = $root->stringArgs[0] ?? ($defaultsToId ? 'id' : null);
 
         if ($name === null) {
