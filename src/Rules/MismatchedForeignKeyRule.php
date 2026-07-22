@@ -7,7 +7,7 @@ namespace Chr15k\SchemaAudit\Rules;
 use Chr15k\SchemaAudit\Enums\ColumnFamily;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\ValueObjects\Schema;
+use Chr15k\SchemaAudit\Schema\Schema;
 
 /**
  * Flags a foreign key whose column type doesn't match the type family of
@@ -52,7 +52,7 @@ final readonly class MismatchedForeignKeyRule extends Rule
                     continue;
                 }
 
-                $fkFamily = $fkColumnType->family();
+                $fkFamily = $fkColumnType->method->family();
                 $pkFamily = $referencedPkType->family();
 
                 if ($fkFamily === null) {
@@ -72,8 +72,8 @@ final readonly class MismatchedForeignKeyRule extends Rule
                     message: sprintf(
                         "Foreign key on '%s' (%s) does not match key type '%s' on '%s'.",
                         $fk->column,
-                        $fkColumnType->toType() ?? $fkColumnType,
-                        $referencedPkType->toType() ?? $referencedPkType,
+                        $fkColumnType->method->toType(),
+                        $referencedPkType->toType(),
                         $fk->referencesTable
                     ),
                     column: $fk->column,

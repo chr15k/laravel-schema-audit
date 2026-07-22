@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
-use Chr15k\SchemaAudit\ValueObjects\ColumnCall;
-use Chr15k\SchemaAudit\ValueObjects\ColumnChain;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\MethodCall;
@@ -16,7 +14,7 @@ use PhpParser\Node\Stmt\Expression;
 final class ChainExtractor
 {
     /**
-     * @return list<ColumnChain>
+     * @return list<ValueObjects\ColumnChain>
      */
     public function extract(Closure $closure): array
     {
@@ -34,7 +32,7 @@ final class ChainExtractor
             $calls = $this->unwind($stmt->expr);
 
             if ($calls !== null) {
-                $chains[] = new ColumnChain(array_reverse($calls));
+                $chains[] = new ValueObjects\ColumnChain(array_reverse($calls));
             }
         }
 
@@ -42,7 +40,7 @@ final class ChainExtractor
     }
 
     /**
-     * @return list<ColumnCall>|null
+     * @return list<ValueObjects\ColumnCall>|null
      */
     private function unwind(MethodCall $call, int $depth = 0): ?array
     {
@@ -65,7 +63,7 @@ final class ChainExtractor
         return null;
     }
 
-    private function toColumnCall(MethodCall $node): ColumnCall
+    private function toColumnCall(MethodCall $node): ValueObjects\ColumnCall
     {
         $methodName = $node->name instanceof Node\Identifier ? $node->name->toString() : '';
 
@@ -90,7 +88,7 @@ final class ChainExtractor
             }
         }
 
-        return new ColumnCall(
+        return new ValueObjects\ColumnCall(
             method: $methodName,
             stringArgs: $stringArgs,
             arrayArgs: $arrayArgs

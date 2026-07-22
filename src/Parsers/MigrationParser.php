@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit;
+namespace Chr15k\SchemaAudit\Parsers;
 
-use Chr15k\SchemaAudit\Parsers\SchemaCallVisitor;
-use Chr15k\SchemaAudit\ValueObjects\SchemaOperation;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 use RuntimeException;
@@ -13,7 +11,7 @@ use RuntimeException;
 final readonly class MigrationParser
 {
     /**
-     * @return list<SchemaOperation>
+     * @return list<ValueObjects\SchemaOperation>
      */
     public function parseFile(string $path): array
     {
@@ -27,7 +25,7 @@ final readonly class MigrationParser
     }
 
     /**
-     * @return list<SchemaOperation>
+     * @return list<ValueObjects\SchemaOperation>
      */
     public function parseCode(string $code): array
     {

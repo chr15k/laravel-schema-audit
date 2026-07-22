@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\ValueObjects\Schema;
+use Chr15k\SchemaAudit\Schema\Schema;
 
 final readonly class DuplicateIndexRule extends Rule
 {
@@ -16,7 +16,7 @@ final readonly class DuplicateIndexRule extends Rule
             $seen = [];
 
             foreach ($table->indexes() as $index) {
-                if (isset($seen[$index->key()])) {
+                if (isset($seen[$index->signature()])) {
                     $findings[] = $this->makeFinding(
                         table: $table->name,
                         message: sprintf("Duplicate index on columns '%s' - declared more than once. Remove the redundant index.", implode(', ', $index->columns)),
@@ -26,7 +26,7 @@ final readonly class DuplicateIndexRule extends Rule
                     continue;
                 }
 
-                $seen[$index->key()] = true;
+                $seen[$index->signature()] = true;
             }
         }
 

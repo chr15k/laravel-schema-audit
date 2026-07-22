@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Console\Commands;
 
 use Chr15k\SchemaAudit\Enums\Severity;
+use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\SchemaAuditor;
 use Chr15k\SchemaAudit\SchemaBuilder;
-use Chr15k\SchemaAudit\TableSchema;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
-use Chr15k\SchemaAudit\ValueObjects\Schema;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -56,12 +55,7 @@ final class AuditSchemaCommand extends Command
 
     private function renderFindingschemaOnly(Schema $schema): int
     {
-        $output = collect($schema->tables())
-            ->values()
-            ->map(fn (TableSchema $table): array => $table->toArray())
-            ->all();
-
-        $this->line(json_encode($output, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+        $this->line(json_encode($schema, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 
         return self::SUCCESS;
     }
@@ -71,13 +65,9 @@ final class AuditSchemaCommand extends Command
      */
     private function renderJson(array $findings): int
     {
-        $output = collect($findings)
-            ->map(fn (Finding $finding): array => $finding->toArray())
-            ->all();
+        $this->line(json_encode($findings, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 
-        $this->line(json_encode($output, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
-
-        return $output === [] ? self::SUCCESS : self::FAILURE;
+        return $findings === [] ? self::SUCCESS : self::FAILURE;
     }
 
     /**
@@ -156,7 +146,7 @@ final class AuditSchemaCommand extends Command
         return $findings
             ->map(fn (Finding $finding): Severity => $finding->severity)
             ->sortBy(fn (Severity $severity): int => $rank[$severity->value])
-            ->first();
+            ->firstOrFail();
     }
 
     private function renderPass(string $duration, int $tableCount): void

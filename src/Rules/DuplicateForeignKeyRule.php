@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\ValueObjects\Schema;
+use Chr15k\SchemaAudit\Schema\Schema;
 
 final readonly class DuplicateForeignKeyRule extends Rule
 {

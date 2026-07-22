@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\ValueObjects;
+namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 
 final readonly class ColumnChain
 {

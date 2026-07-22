@@ -2,13 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\ValueObjects;
+namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 
-/**
- * A single `$table->method(...)` call as literally written — e.g.
- * ColumnCall('string', ['name'], []) for $table->string('name'), or
- * ColumnCall('index', [], ['a', 'b']) for $table->index(['a', 'b']).
- */
 final readonly class ColumnCall
 {
     /**

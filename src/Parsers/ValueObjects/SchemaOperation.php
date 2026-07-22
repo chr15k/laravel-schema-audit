@@ -2,14 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\ValueObjects;
+namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
 
-/**
- * One Schema::create(...) or Schema::table(...) block as literally written
- * in a single migration file — not yet folded against other files.
- */
 final readonly class SchemaOperation
 {
     /**

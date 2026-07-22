@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
-use Chr15k\SchemaAudit\ValueObjects\Schema;
 
 final readonly class SchemaAuditor
 {

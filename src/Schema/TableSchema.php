@@ -2,22 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit;
+namespace Chr15k\SchemaAudit\Schema;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
-use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
-use Chr15k\SchemaAudit\ValueObjects\Index;
 use Illuminate\Contracts\Support\Arrayable;
+use JsonSerializable;
 
-final class TableSchema implements Arrayable
+/**
+ * @implements Arrayable<string, list<array<string, bool|list<string>|string|null>>|string>
+ */
+final class TableSchema implements Arrayable, JsonSerializable
 {
-    /** @var array<string, ColumnMethod> */
+    /** @var array<string, ValueObjects\Column> */
     private array $columns = [];
 
-    /** @var list<Index> */
+    /** @var list<ValueObjects\Index> */
     private array $indexes = [];
 
-    /** @var list<ForeignKey> */
+    /** @var list<ValueObjects\ForeignKey> */
     private array $foreignKeys = [];
 
     private bool $hasExplicitPrimaryKey = false;
@@ -26,9 +28,9 @@ final class TableSchema implements Arrayable
         public readonly string $name,
     ) {}
 
-    public function addColumn(string $name, ColumnMethod $type): void
+    public function addColumn(ValueObjects\Column $column): void
     {
-        $this->columns[$name] = $type;
+        $this->columns[$column->name] = $column;
     }
 
     public function dropColumn(string $name): void
@@ -37,7 +39,7 @@ final class TableSchema implements Arrayable
 
         $this->indexes = array_values(array_filter(
             $this->indexes,
-            fn (Index $index): bool => $index->columns !== [$name]
+            fn (ValueObjects\Index $index): bool => $index->columns !== [$name]
         ));
     }
 
@@ -51,16 +53,16 @@ final class TableSchema implements Arrayable
         unset($this->columns[$from]);
 
         $this->indexes = array_map(
-            fn (Index $index): Index => new Index(
+            fn (ValueObjects\Index $index): ValueObjects\Index => new ValueObjects\Index(
                 name: $index->name,
-                columns: array_map(fn (string $c): string => $c === $from ? $to : $c, $index->columns),
+                columns: array_map(fn (string $column): string => $column === $from ? $to : $column, $index->columns),
                 unique: $index->unique,
             ),
             $this->indexes
         );
     }
 
-    public function addIndex(Index $index): void
+    public function addIndex(ValueObjects\Index $index): void
     {
         $this->indexes[] = $index;
     }
@@ -69,7 +71,7 @@ final class TableSchema implements Arrayable
     {
         $this->indexes = array_values(array_filter(
             $this->indexes,
-            fn (Index $index): bool => $index->name !== $indexName
+            fn (ValueObjects\Index $index): bool => $index->name !== $indexName
         ));
     }
 
@@ -80,9 +82,9 @@ final class TableSchema implements Arrayable
 
     public function primaryKeyColumnType(): ?ColumnMethod
     {
-        foreach ($this->columns as $type) {
-            if ($type->impliesAutoIncrementingPrimaryKey() === true) {
-                return $type;
+        foreach ($this->columns as $column) {
+            if ($column->method->impliesAutoIncrementingPrimaryKey()) {
+                return $column->method;
             }
         }
 
@@ -98,7 +100,7 @@ final class TableSchema implements Arrayable
         return $this->hasExplicitPrimaryKey;
     }
 
-    public function addForeignKey(ForeignKey $fk): void
+    public function addForeignKey(ValueObjects\ForeignKey $fk): void
     {
         $this->foreignKeys[] = $fk;
     }
@@ -107,23 +109,23 @@ final class TableSchema implements Arrayable
     {
         $this->foreignKeys = array_values(array_filter(
             $this->foreignKeys,
-            fn (ForeignKey $fk): bool => $fk->name !== $nameOrColumn && $fk->column !== $nameOrColumn
+            fn (ValueObjects\ForeignKey $fk): bool => $fk->name !== $nameOrColumn && $fk->column !== $nameOrColumn
         ));
     }
 
-    /** @return array<string, ColumnMethod> */
+    /** @return array<string,ValueObjects\Column> */
     public function columns(): array
     {
         return $this->columns;
     }
 
-    /** @return list<Index> */
+    /** @return list<ValueObjects\Index> */
     public function indexes(): array
     {
         return $this->indexes;
     }
 
-    /** @return list<ForeignKey> */
+    /** @return list<ValueObjects\ForeignKey> */
     public function foreignKeys(): array
     {
         return $this->foreignKeys;
@@ -165,34 +167,33 @@ final class TableSchema implements Arrayable
     }
 
     /**
-     * @return array{table: string, columns: array<string,string>, indexes: list<array{name:?string,columns:list<string>,unique:bool}>, foreign_keys: list<array{column:string,references_table:?string}>}
+     * @return array{
+     *     table: string,
+     *     columns: list<ValueObjects\Column>,
+     *     indexes: list<ValueObjects\Index>,
+     *     foreign_keys: list<ValueObjects\ForeignKey>,
+     * }
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
+
+    /**
+     * @return array{
+     *     table: string,
+     *     columns: list<ValueObjects\Column>,
+     *     indexes: list<ValueObjects\Index>,
+     *     foreign_keys: list<ValueObjects\ForeignKey>,
+     * }
      */
     public function toArray(): array
     {
         return [
-            'table'   => $this->name,
-            'columns' => array_map(
-                fn (string $name, ColumnMethod $method): array => [
-                    'name'   => $name,
-                    'method' => $method,
-                ],
-                $this->columns,
-            ),
-            'indexes' => array_map(
-                fn (Index $i): array => [
-                    'name'    => $i->name,
-                    'columns' => $i->columns,
-                    'unique'  => $i->unique,
-                ],
-                $this->indexes
-            ),
-            'foreign_keys' => array_map(
-                fn (ForeignKey $fk): array => [
-                    'column'           => $fk->column,
-                    'references_table' => $fk->referencesTable,
-                ],
-                $this->foreignKeys
-            ),
+            'table'        => $this->name,
+            'columns'      => array_values($this->columns),
+            'indexes'      => $this->indexes,
+            'foreign_keys' => $this->foreignKeys,
         ];
     }
 }

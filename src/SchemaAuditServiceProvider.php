@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit;
 
 use Chr15k\SchemaAudit\Console\Commands\AuditSchemaCommand;
+use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
 use Chr15k\SchemaAudit\Support\Config;
 use Illuminate\Config\Repository;

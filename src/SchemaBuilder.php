@@ -6,12 +6,16 @@ namespace Chr15k\SchemaAudit;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
-use Chr15k\SchemaAudit\ValueObjects\ColumnCall;
-use Chr15k\SchemaAudit\ValueObjects\ColumnChain;
-use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
-use Chr15k\SchemaAudit\ValueObjects\Index;
-use Chr15k\SchemaAudit\ValueObjects\Schema;
-use Chr15k\SchemaAudit\ValueObjects\SchemaOperation;
+use Chr15k\SchemaAudit\Enums\StructuralMethod;
+use Chr15k\SchemaAudit\Parsers\MigrationParser;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnCall;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SchemaOperation;
+use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
+use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
+use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 
 final readonly class SchemaBuilder
 {
@@ -52,8 +56,8 @@ final readonly class SchemaBuilder
 
                 $tables[$operation->renameTo] = new TableSchema($operation->renameTo);
 
-                foreach ($renamed->columns() as $name => $type) {
-                    $tables[$operation->renameTo]->addColumn($name, $type);
+                foreach ($renamed->columns() as $column) {
+                    $tables[$operation->renameTo]->addColumn($column);
                 }
 
                 foreach ($renamed->indexes() as $index) {
@@ -81,19 +85,23 @@ final readonly class SchemaBuilder
     {
         $root = $chain->root();
 
-        match (true) {
-            ColumnMethod::tryFrom($root->method) !== null => $this->applyColumnDefinition($table, $chain),
-            $root->method === 'foreign'                   => $this->applyOldStyleForeign($table, $chain),
-            $root->method === 'unique'                    => $table->addIndex($this->buildTableLevelIndex($root, unique: true)),
-            $root->method === 'index'                     => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
-            $root->method === 'fullText'                  => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
-            $root->method === 'dropColumn'                => $this->applyDropColumn($table, $root),
-            $root->method === 'renameColumn'              => $this->applyRenameColumn($table, $root),
-            $root->method === 'dropIndex'                 => $this->applyDropIndex($table, $root),
-            $root->method === 'dropUnique'                => $this->applyDropIndex($table, $root),
-            $root->method === 'dropForeign'               => $this->applyDropForeign($table, $root),
-            $root->method === 'primary'                   => $table->markPrimaryKey(),
-            default                                       => null, // dropPrimary(), timestamps(), etc. — no schema-shape impact we track
+        if (ColumnMethod::tryFrom($root->method) !== null) {
+            $this->applyColumnDefinition($table, $chain);
+
+            return;
+        }
+
+        match (StructuralMethod::tryFrom($root->method)) {
+            StructuralMethod::Foreign                                 => $this->applyOldStyleForeign($table, $chain),
+            StructuralMethod::Unique                                  => $table->addIndex($this->buildTableLevelIndex($root, unique: true)),
+            StructuralMethod::Index                                   => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
+            StructuralMethod::FullText                                => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
+            StructuralMethod::DropColumn                              => $this->applyDropColumn($table, $root),
+            StructuralMethod::RenameColumn                            => $this->applyRenameColumn($table, $root),
+            StructuralMethod::DropIndex, StructuralMethod::DropUnique => $this->applyDropIndex($table, $root),
+            StructuralMethod::DropForeign                             => $this->applyDropForeign($table, $root),
+            StructuralMethod::Primary                                 => $table->markPrimaryKey(),
+            null                                                      => null, // not a known structural method — dropPrimary(), timestamps(), etc.
         };
     }
 
@@ -121,7 +129,7 @@ final readonly class SchemaBuilder
             return;
         }
 
-        $table->addColumn($name, $method);
+        $table->addColumn(new Column($name, $method));
 
         if ($method->isForeignIdType() && $chain->hasModifier('constrained')) {
             $constrained = $chain->modifier('constrained');

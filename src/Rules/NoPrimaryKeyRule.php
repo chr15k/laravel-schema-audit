@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\ValueObjects\Schema;
+use Chr15k\SchemaAudit\Schema\Schema;
 
 final readonly class NoPrimaryKeyRule extends Rule
 {

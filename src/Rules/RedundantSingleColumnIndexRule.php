@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\ValueObjects\Index;
-use Chr15k\SchemaAudit\ValueObjects\Schema;
+use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 
 final readonly class RedundantSingleColumnIndexRule extends Rule
 {
