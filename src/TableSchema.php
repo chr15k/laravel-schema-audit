@@ -91,7 +91,7 @@ final class TableSchema implements Arrayable
 
     public function hasPrimaryKey(): bool
     {
-        if ($this->primaryKeyColumnType() !== null) {
+        if ($this->primaryKeyColumnType() instanceof ColumnMethod) {
             return true;
         }
 

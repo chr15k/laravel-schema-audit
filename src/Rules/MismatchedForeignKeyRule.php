@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
+use Chr15k\SchemaAudit\Enums\ColumnFamily;
+use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\ValueObjects\Schema;
 
@@ -40,7 +42,7 @@ final readonly class MismatchedForeignKeyRule extends Rule
 
                 $referencedPkType = $schema->table($fk->referencesTable)?->primaryKeyColumnType();
 
-                if ($referencedPkType === null) {
+                if (! $referencedPkType instanceof ColumnMethod) {
                     continue;
                 }
 
@@ -57,7 +59,7 @@ final readonly class MismatchedForeignKeyRule extends Rule
                     continue;
                 }
 
-                if ($pkFamily === null) {
+                if (! $pkFamily instanceof ColumnFamily) {
                     continue;
                 }
 

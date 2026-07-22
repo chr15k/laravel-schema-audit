@@ -9,6 +9,7 @@ use Chr15k\SchemaAudit\SchemaAuditor;
 use Chr15k\SchemaAudit\SchemaBuilder;
 use Chr15k\SchemaAudit\TableSchema;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Schema;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -32,20 +33,20 @@ final class AuditSchemaCommand extends Command
     {
         $start = microtime(true);
 
-        $tables = $builder->buildFromDirectory($this->resolvePath());
+        $schema = $builder->buildFromDirectory($this->resolvePath());
 
         if ($this->option('schema-only')) {
-            return $this->renderFindingschemaOnly($tables);
+            return $this->renderFindingschemaOnly($schema);
         }
 
-        $findings = $this->auditor->audit($tables);
+        $findings = $this->auditor->audit($schema);
         $duration = $this->duration($start);
 
         if ($this->option('json')) {
             return $this->renderJson($findings);
         }
 
-        return $this->renderReport($findings, count($tables), $duration);
+        return $this->renderReport($findings, $schema->tableCount(), $duration);
     }
 
     private function duration(float $start): string
@@ -53,12 +54,9 @@ final class AuditSchemaCommand extends Command
         return number_format(microtime(true) - $start, 2);
     }
 
-    /**
-     * @param  array<string, TableSchema>  $tables
-     */
-    private function renderFindingschemaOnly(array $tables): int
+    private function renderFindingschemaOnly(Schema $schema): int
     {
-        $output = collect($tables)
+        $output = collect($schema->tables())
             ->values()
             ->map(fn (TableSchema $table): array => $table->toArray())
             ->all();

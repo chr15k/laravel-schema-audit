@@ -52,7 +52,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         $name = ArgReader::stringArgAt($node->args, 0);
 
         if ($name !== null) {
-            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Drop, name: $name);
+            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Drop, tableName: $name);
         }
 
         return null;
@@ -64,7 +64,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         $to = ArgReader::stringArgAt($node->args, 1);
 
         if ($from !== null && $to !== null) {
-            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Rename, name: $from, renameTo: $to);
+            $this->operations[] = new SchemaOperation(type: SchemaOperationType::Rename, tableName: $from, renameTo: $to);
         }
 
         return null;
@@ -81,7 +81,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
         $this->operations[] = new SchemaOperation(
             type: $methodName === 'create' ? SchemaOperationType::Create : SchemaOperationType::Alter,
-            name: $name,
+            tableName: $name,
             chains: $this->chainExtractor->extract($closure),
         );
 

@@ -10,16 +10,14 @@ use Chr15k\SchemaAudit\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\ValueObjects\Index;
+use Chr15k\SchemaAudit\ValueObjects\Schema;
 use Chr15k\SchemaAudit\ValueObjects\SchemaOperation;
 
 final readonly class SchemaBuilder
 {
     public function __construct(private MigrationParser $parser) {}
 
-    /**
-     * @return array<string, TableSchema>
-     */
-    public function buildFromDirectory(string $migrationsPath): array
+    public function buildFromDirectory(string $migrationsPath): Schema
     {
         $files = glob(mb_rtrim($migrationsPath, '/').'/*.php') ?: [];
         sort($files);
@@ -33,7 +31,7 @@ final readonly class SchemaBuilder
             }
         }
 
-        return $tables;
+        return new Schema($tables);
     }
 
     /**
@@ -109,16 +107,23 @@ final readonly class SchemaBuilder
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
-        $defaultsToId = $root->method->impliesAutoIncrementingPrimaryKey() ?? false;
+        $method = ColumnMethod::tryFrom($root->method);
+        $defaultsToId = $method?->impliesAutoIncrementingPrimaryKey() ?? false;
         $name = $root->stringArgs[0] ?? ($defaultsToId ? 'id' : null);
 
         if ($name === null) {
             return;
         }
 
-        $table->addColumn($name, $root->method);
+        $method ??= ColumnMethod::tryFrom($name);
 
-        if (in_array($root->method, ['foreignId', 'foreignUuid', 'foreignUlid'], true) && $chain->hasModifier('constrained')) {
+        if ($method === null) {
+            return;
+        }
+
+        $table->addColumn($name, $method);
+
+        if ($method->isForeignIdType() && $chain->hasModifier('constrained')) {
             $constrained = $chain->modifier('constrained');
             $referencesTable = $constrained?->stringArgs[0] ?? null;
             $table->addForeignKey(new ForeignKey(column: $name, referencesTable: $referencesTable));

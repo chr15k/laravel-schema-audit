@@ -53,10 +53,10 @@ trait CreatesFindings
         ?Severity $severity = null,
     ): Finding {
         return new Finding(
+            code: $code ?? $this->defaultCode(),
             table: $table,
             message: $message,
             column: $column,
-            code: $code ?? $this->defaultCode(),
             severity: $severity ?? $this->defaultSeverity(),
         );
     }

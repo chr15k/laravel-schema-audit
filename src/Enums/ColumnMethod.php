@@ -74,6 +74,16 @@ enum ColumnMethod: string
     case ForeignUlid = 'foreignUlid';
     case ForeignIdFor = 'foreignIdFor';
 
+    public function isForeignIdType(): bool
+    {
+        return match ($this) {
+            self::ForeignId,
+            self::ForeignUuid,
+            self::ForeignUlid => true,
+            default           => false,
+        };
+    }
+
     public function impliesAutoIncrementingPrimaryKey(): bool
     {
         return match ($this) {

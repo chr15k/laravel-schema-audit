@@ -4,15 +4,6 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\ValueObjects;
 
-/**
- * One full `$table->x()->y()->z()` statement, captured as an ordered list
- * of calls — the root call (directly on $table) first, then each chained
- * modifier in the order written. Chain-awareness is what lets us tell
- * apart e.g. $table->string('email')->unique() (a column-level modifier)
- * from $table->unique('a', 'b') (a table-level composite index) — both
- * produce an 'unique' ColumnCall, but only chain position disambiguates
- * what it means.
- */
 final readonly class ColumnChain
 {
     /**

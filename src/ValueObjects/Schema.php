@@ -30,4 +30,9 @@ final readonly class Schema
     {
         return $this->tables[$name] ?? null;
     }
+
+    public function tableCount(): int
+    {
+        return count($this->tables);
+    }
 }

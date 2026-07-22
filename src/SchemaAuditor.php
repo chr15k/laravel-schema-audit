@@ -6,6 +6,7 @@ namespace Chr15k\SchemaAudit;
 
 use Chr15k\SchemaAudit\Contracts\Rule;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\Schema;
 
 final readonly class SchemaAuditor
 {
@@ -15,20 +16,18 @@ final readonly class SchemaAuditor
     public function __construct(private array $rules) {}
 
     /**
-     * @param  array<string, TableSchema>  $tables
      * @return list<Finding>
      */
-    public function audit(array $tables): array
+    public function audit(Schema $schema): array
     {
-        $findings = [];
-
-        foreach ($this->rules as $rule) {
-            foreach ($rule->check($tables) as $finding) {
-                $findings[] = $finding;
-            }
+        if ($this->rules === []) {
+            return [];
         }
 
-        return $findings;
+        return array_merge(...array_map(
+            fn (Rule $rule): array => $rule->check($schema),
+            $this->rules
+        ));
     }
 
     public function ruleCount(): int
