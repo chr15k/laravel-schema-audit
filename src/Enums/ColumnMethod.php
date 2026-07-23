@@ -73,6 +73,7 @@ enum ColumnMethod: string
     case ForeignUuid = 'foreignUuid';
     case ForeignUlid = 'foreignUlid';
     case ForeignIdFor = 'foreignIdFor';
+    case ForeignUuidFor = 'foreignUuidFor';
 
     public function isForeignIdType(): bool
     {
@@ -80,8 +81,9 @@ enum ColumnMethod: string
             self::ForeignId,
             self::ForeignUuid,
             self::ForeignUlid,
-            self::ForeignIdFor => true,
-            default            => false,
+            self::ForeignIdFor,
+            self::ForeignUuidFor => true,
+            default              => false,
         };
     }
 

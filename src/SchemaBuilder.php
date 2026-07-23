@@ -43,19 +43,23 @@ final readonly class SchemaBuilder
      */
     private function applyOperation(array &$tables, SchemaOperation $operation): void
     {
+        $declared = isset($tables[$operation->tableName]);
+
         // prevent the builder from manufacturing a table out of a conditional alter.
-        if ($operation->type === SchemaOperationType::Alter && ! isset($tables[$operation->tableName])) {
+        if ($operation->type === SchemaOperationType::Alter && ! $declared) {
             return;
         }
 
         if ($operation->type === SchemaOperationType::Drop) {
-            unset($tables[$operation->tableName]);
+            if ($declared) {
+                unset($tables[$operation->tableName]);
+            }
 
             return;
         }
 
         if ($operation->type === SchemaOperationType::Rename) {
-            if (isset($tables[$operation->tableName]) && $operation->renameTo !== null) {
+            if ($declared && $operation->renameTo !== null) {
                 $renamed = $tables[$operation->tableName];
                 unset($tables[$operation->tableName]);
 
@@ -123,29 +127,23 @@ final readonly class SchemaBuilder
         $method = ColumnMethod::tryFrom($root->method);
         $impliedPrimaryKey = $method?->impliesAutoIncrementingPrimaryKey() ?? false;
 
-        $name = $root->stringArgs[0] ?? ($impliedPrimaryKey ? 'id' : null);
+        $columnName = $root->stringArgs[0] ?? ($impliedPrimaryKey ? 'id' : null);
 
-        if ($name === null) {
+        if ($columnName === null) {
             return;
         }
 
-        $method ??= ColumnMethod::tryFrom($name);
+        $method ??= ColumnMethod::tryFrom($columnName);
 
         if ($method === null) {
             return;
         }
 
-        // @todo - currently guessing (need to parse models)...
-        if ($method->isForeignIdType() && str_contains($name, '::class')) {
-            $name = str($name)
-                ->before('::class')
-                ->singular()
-                ->lower()
-                ->append('_id')
-                ->toString();
+        if ($method->isForeignIdType() && str_contains($columnName, '::class')) {
+            $columnName = $root->stringArgs[1] ?? $this->determineForeignKeyColumnNameFromModelClassName($columnName);
         }
 
-        $table->addColumn(new Column($name, $method));
+        $table->addColumn(new Column($columnName, $method));
 
         if ($chain->hasModifier('primary') || $impliedPrimaryKey) {
             $table->markPrimaryKey();
@@ -154,19 +152,70 @@ final readonly class SchemaBuilder
         if ($method->isForeignIdType() && $chain->hasModifier('constrained')) {
             $constrained = $chain->modifier('constrained');
 
-            // @todo - resolve referenced table if no stringArgs
-            $referencesTable = $constrained?->stringArgs[0] ?? null;
+            // $table->foreignId('user_id')->constrained();
+            // $table->foreignIdFor(User::class)->constrained();
+            // $table->foreignIdFor(User::class, 'owner_id')->constrained();
 
-            $table->addForeignKey(new ForeignKey(column: $name, referencesTable: $referencesTable));
+            // $table->foreignId('user_id')->constrained('users');
+            // $table->foreignIdFor(User::class)->constrained('users');
+            // $table->foreignIdFor(User::class, 'owner_id')->constrained('users');
+
+            // $table->foreignId('user_id')->constrained(table: 'users');
+            // $table->foreignIdFor(User::class)->constrained(table: 'users');
+            // $table->foreignIdFor(User::class, 'owner_id')->constrained(table: 'users');
+
+            $referencesTable = $constrained->stringArgs[0]
+                ?? $this->determineForeignIdReferenceTableFromRoot($root);
+
+            $table->addForeignKey(new ForeignKey(column: $columnName, referencesTable: $referencesTable));
         }
 
         if ($chain->hasModifier('unique')) {
-            $table->addIndex(new Index(name: null, columns: [$name], unique: true));
+            $table->addIndex(new Index(name: null, columns: [$columnName], unique: true));
         }
 
         if ($chain->hasModifier('index')) {
-            $table->addIndex(new Index(name: null, columns: [$name], unique: false));
+            $table->addIndex(new Index(name: null, columns: [$columnName], unique: false));
         }
+    }
+
+    private function determineForeignIdReferenceTableFromRoot(ColumnCall $root)
+    {
+        // $table->foreignId('user_id')->constrained();
+        // $table->foreignIdFor(User::class)->constrained();
+        return match ($root->method) {
+            'foreignIdFor', 'foreignUuidFor' => $this->determineTableNameFromModelClassName($root->stringArgs[0]),
+            default                          => $this->determineTableNameFromForeignKeyColumnName($root->stringArgs[0])
+        };
+    }
+
+    private function determineClassBaseNameFromModelClassName(string $modelClass): string
+    {
+        return class_basename(str_replace('::class', '', $modelClass));
+    }
+
+    private function determineTableNameFromModelClassName(string $modelClass): string
+    {
+        $baseName = $this->determineClassBaseNameFromModelClassName($modelClass);
+
+        return str($baseName)->pluralStudly()->snake()->toString();
+    }
+
+    private function determineTableNameFromForeignKeyColumnName(string $foreignKeyColumnName)
+    {
+        return str($foreignKeyColumnName)->beforeLast('_id')->plural();
+    }
+
+    /** @todo - implement model parsing to get $tableName property from Model */
+    private function determineForeignKeyColumnNameFromModelClassName(string $modelClass): string
+    {
+        $baseName = $this->determineClassBaseNameFromModelClassName($modelClass);
+
+        return str($baseName)
+            ->singular()
+            ->snake()
+            ->append('_id')
+            ->toString();
     }
 
     private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain): void
