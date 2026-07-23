@@ -131,6 +131,10 @@ final readonly class SchemaBuilder
 
         $table->addColumn(new Column($name, $method));
 
+        if ($chain->hasModifier('primary')) {
+            $table->markPrimaryKey();
+        }
+
         if ($method->isForeignIdType() && $chain->hasModifier('constrained')) {
             $constrained = $chain->modifier('constrained');
             $referencesTable = $constrained?->stringArgs[0] ?? null;
