@@ -14,23 +14,36 @@ final readonly class RedundantSingleColumnIndexRule extends Rule
         $findings = [];
 
         foreach ($schema->tables() as $table) {
+            $indexes = $table->indexes();
+
             $singleColumnIndexes = array_filter(
-                $table->indexes(),
+                $indexes,
                 fn (Index $index): bool => count($index->columns) === 1
             );
 
             $compositeLeadingColumns = array_map(
                 fn (Index $index): string => $index->columns[0],
-                array_filter($table->indexes(), fn (Index $index): bool => count($index->columns) > 1)
+                array_filter($indexes, fn (Index $index): bool => count($index->columns) > 1)
+            );
+
+            $uniqueSingleColumnColumns = array_map(
+                fn (Index $index): string => $index->columns[0],
+                array_filter($indexes, fn (Index $index): bool => count($index->columns) === 1 && $index->unique)
             );
 
             foreach ($singleColumnIndexes as $index) {
                 $column = $index->columns[0];
+                $isRedundantBecauseOfComposite = in_array($column, $compositeLeadingColumns, true);
+                $isRedundantBecauseUniqueExists = in_array($column, $uniqueSingleColumnColumns, true) && ! $index->unique;
 
-                if (in_array($column, $compositeLeadingColumns, true)) {
+                if ($isRedundantBecauseOfComposite || $isRedundantBecauseUniqueExists) {
+                    $reason = $isRedundantBecauseOfComposite
+                        ? sprintf("a composite index leading with '%s' already covers it", $column)
+                        : sprintf("a unique index on '%s' already covers it", $column);
+
                     $findings[] = $this->makeFinding(
                         table: $table->name,
-                        message: sprintf("Single-column index on '%s' is redundant because a composite index leading with '%s' already covers it. Consider removing the single-column index.", $column, $column),
+                        message: sprintf("Single-column index on '%s' is redundant because %s. Consider removing the single-column index.", $column, $reason),
                         column: $column,
                     );
                 }

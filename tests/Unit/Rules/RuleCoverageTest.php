@@ -51,6 +51,19 @@ it('flags a redundant single-column index when a composite index covers the same
     expect($findings[0]->table)->toBe('orders');
 });
 
+it('flags a redundant non-unique single-column index when the same column already has a unique index', function (): void {
+    $table = new TableSchema('users');
+    $table->addIndex(new Index(name: 'users_email_unique', columns: ['email'], unique: true));
+    $table->addIndex(new Index(name: 'users_email_index', columns: ['email']));
+
+    $findings = (new RedundantSingleColumnIndexRule)->check(new Schema(['users' => $table]));
+
+    expect($findings)->toHaveCount(1);
+    expect($findings[0]->code)->toBe('redundant_single_column_index');
+    expect($findings[0]->table)->toBe('users');
+    expect($findings[0]->column)->toBe('email');
+});
+
 it('finds duplicate foreign keys defined on the same column', function (): void {
     $table = new TableSchema('comments');
     $table->addForeignKey(new ForeignKey(column: 'post_id', referencesTable: 'posts'));

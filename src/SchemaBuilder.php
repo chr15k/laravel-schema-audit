@@ -43,6 +43,11 @@ final readonly class SchemaBuilder
      */
     private function applyOperation(array &$tables, SchemaOperation $operation): void
     {
+        // prevent the builder from manufacturing a table out of a conditional alter.
+        if ($operation->type === SchemaOperationType::Alter && ! isset($tables[$operation->tableName])) {
+            return;
+        }
+
         if ($operation->type === SchemaOperationType::Drop) {
             unset($tables[$operation->tableName]);
 
@@ -116,8 +121,9 @@ final readonly class SchemaBuilder
     {
         $root = $chain->root();
         $method = ColumnMethod::tryFrom($root->method);
-        $defaultsToId = $method?->impliesAutoIncrementingPrimaryKey() ?? false;
-        $name = $root->stringArgs[0] ?? ($defaultsToId ? 'id' : null);
+        $impliedPrimaryKey = $method?->impliesAutoIncrementingPrimaryKey() ?? false;
+
+        $name = $root->stringArgs[0] ?? ($impliedPrimaryKey ? 'id' : null);
 
         if ($name === null) {
             return;
@@ -131,13 +137,13 @@ final readonly class SchemaBuilder
 
         $table->addColumn(new Column($name, $method));
 
-        if ($chain->hasModifier('primary')) {
+        if ($chain->hasModifier('primary') || $impliedPrimaryKey) {
             $table->markPrimaryKey();
         }
 
         if ($method->isForeignIdType() && $chain->hasModifier('constrained')) {
             $constrained = $chain->modifier('constrained');
-            $referencesTable = $constrained?->stringArgs[0] ?? null;
+            $referencesTable = $constrained?->stringArgs[0] ?? $table->name;
             $table->addForeignKey(new ForeignKey(column: $name, referencesTable: $referencesTable));
         }
 
