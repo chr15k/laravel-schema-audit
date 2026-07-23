@@ -23,17 +23,9 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
         public array $findings
     ) {}
 
-    /**
-     * @return list<Finding>
-     */
-    public function findings(): array
-    {
-        return $this->findings;
-    }
-
     public function count(): int
     {
-        return count($this->findings());
+        return count($this->findings);
     }
 
     public function hasIssues(): bool
@@ -49,7 +41,7 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
     public function toJson($options = 0)
     {
         try {
-            return json_encode($this->jsonSerialize(), $options | JSON_THROW_ON_ERROR);
+            return json_encode($this->findings, $options | JSON_THROW_ON_ERROR);
         } catch (JsonException $jsonException) {
             throw JsonEncodingException::forAudit($this, $jsonException);
         }
@@ -60,7 +52,7 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
      */
     public function jsonSerialize(): array
     {
-        return $this->toArray();
+        return $this->findings;
     }
 
     /**
@@ -68,6 +60,6 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
      */
     public function toArray(): array
     {
-        return $this->findings();
+        return $this->findings;
     }
 }
