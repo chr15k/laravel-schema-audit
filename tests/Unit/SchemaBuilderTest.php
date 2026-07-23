@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
+use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 use Chr15k\SchemaAudit\SchemaBuilder;
-use Chr15k\SchemaAudit\ValueObjects\Index;
 
 it('folds create and later alter migrations for the same table', function (): void {
-    $tables = app(SchemaBuilder::class)->buildFromDirectory(migrations_path());
+    $schema = app(SchemaBuilder::class)->buildFromDirectory(migrations_path());
 
-    expect($tables)->toHaveKey('users');
-    expect($tables)->toHaveCount(1);
+    expect($schema->tables())->toHaveKey('users');
+    expect($schema->tables())->toHaveCount(1);
 
-    $users = $tables['users'];
+    $users = $schema->tables()['users'];
 
     expect($users->hasPrimaryKey())->toBeTrue();
 
@@ -38,10 +38,10 @@ it('returns an empty result set when no migration files exist', function (): voi
     mkdir($path, 0700, true);
 
     try {
-        $tables = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
 
-        expect($tables)->toBeArray();
-        expect($tables)->toBeEmpty();
+        expect($schema->tables())->toBeArray();
+        expect($schema->tables())->toBeEmpty();
     } finally {
         rmdir($path);
     }

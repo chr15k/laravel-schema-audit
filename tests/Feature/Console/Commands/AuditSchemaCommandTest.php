@@ -17,10 +17,14 @@ it('outputs the folded schema as JSON including known table and column state', f
 
     expect($decoded)->toBeArray();
 
-    $users = collect($decoded)->firstWhere('table', 'users');
+    $users = collect($decoded)->firstWhere('schema.table', 'users');
 
-    expect($users)->not->toBeNull()
-        ->and($users['columns'])->toHaveKey('email')
-        ->and($users['columns'])->not->toHaveKey('nickname')
-        ->and(collect($users['indexes'])->pluck('columns')->flatten())->toContain('email');
+    $columns = collect($users['schema']['columns']);
+
+    expect($columns->pluck('name'))
+        ->toContain('email')
+        ->not->toContain('nickname');
+
+    expect(collect($users['schema']['indexes'])
+        ->pluck('columns')->flatten()->first())->toBe('email');
 });

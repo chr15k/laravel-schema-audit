@@ -94,7 +94,7 @@ final class AuditSchemaCommand extends Command
             $audit->count()
         ));
 
-        collect($audit->findings())
+        collect($audit->findings)
             ->sortBy('table')
             ->groupBy('table')
             ->each(function (Collection $items, string $table): void {

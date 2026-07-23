@@ -21,11 +21,11 @@ final readonly class Schema implements Arrayable, Jsonable, JsonSerializable
     ) {}
 
     /**
-     * @return list<TableSchema>
+     * @return array<string, TableSchema>
      */
     public function tables(): array
     {
-        return array_values($this->tables);
+        return $this->tables;
     }
 
     public function hasTable(string $name): bool

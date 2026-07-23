@@ -33,18 +33,18 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
         return $this->count() > 0;
     }
 
-    public function toPrettyJson(int $options = 0): string
-    {
-        return $this->toJson(JSON_PRETTY_PRINT | $options);
-    }
-
     public function toJson($options = 0)
     {
         try {
-            return json_encode($this->findings, $options | JSON_THROW_ON_ERROR);
+            return json_encode($this, $options | JSON_THROW_ON_ERROR);
         } catch (JsonException $jsonException) {
             throw JsonEncodingException::forAudit($this, $jsonException);
         }
+    }
+
+    public function toPrettyJson(int $options = 0): string
+    {
+        return $this->toJson(JSON_PRETTY_PRINT | $options);
     }
 
     /**
