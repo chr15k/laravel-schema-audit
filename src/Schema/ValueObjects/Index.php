@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
 use Illuminate\Contracts\Support\Arrayable;
+use JsonSerializable;
 
 /**
  * @implements Arrayable<string, array|bool|string|null>
  */
-final readonly class Index implements Arrayable
+final readonly class Index implements Arrayable, JsonSerializable
 {
     /**
      * @param  list<string>  $columns

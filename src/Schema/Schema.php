@@ -2,13 +2,16 @@
 
 namespace Chr15k\SchemaAudit\Schema;
 
+use Chr15k\SchemaAudit\Exceptions\JsonEncodingException;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Jsonable;
+use JsonException;
 use JsonSerializable;
 
 /**
  * @implements Arrayable<int, array>
  */
-final readonly class Schema implements Arrayable, JsonSerializable
+final readonly class Schema implements Arrayable, Jsonable, JsonSerializable
 {
     /**
      * @param  array<string, TableSchema>  $tables
@@ -46,6 +49,20 @@ final readonly class Schema implements Arrayable, JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->toArray();
+    }
+
+    public function toJson($options = 0)
+    {
+        try {
+            return json_encode($this->jsonSerialize(), $options | JSON_THROW_ON_ERROR);
+        } catch (JsonException $jsonException) {
+            throw JsonEncodingException::forSchema($this, $jsonException);
+        }
+    }
+
+    public function toPrettyJson(int $options = 0): string
+    {
+        return $this->toJson(JSON_PRETTY_PRINT | $options);
     }
 
     /**

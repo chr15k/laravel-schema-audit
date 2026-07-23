@@ -6,6 +6,7 @@ namespace Chr15k\SchemaAudit\Console\Commands;
 
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\SchemaAudit;
 use Chr15k\SchemaAudit\SchemaAuditor;
 use Chr15k\SchemaAudit\SchemaBuilder;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
@@ -55,42 +56,33 @@ final class AuditSchemaCommand extends Command
 
     private function renderFindingschemaOnly(Schema $schema): int
     {
-        $this->line(json_encode($schema, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+        $this->line($schema->toPrettyJson());
 
         return self::SUCCESS;
     }
 
-    /**
-     * @param  list<Finding>  $findings
-     */
-    private function renderJson(array $findings): int
+    private function renderJson(SchemaAudit $audit): int
     {
-        $this->line(json_encode($findings, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+        $this->line($audit->toPrettyJson());
 
-        return $findings === [] ? self::SUCCESS : self::FAILURE;
+        return $audit->hasIssues() ? self::FAILURE : self::SUCCESS;
     }
 
-    /**
-     * @param  list<Finding>  $findings
-     */
-    private function renderReport(array $findings, int $tableCount, string $duration): int
+    private function renderReport(SchemaAudit $audit, int $tableCount, string $duration): int
     {
-        if ($findings === []) {
-            $this->renderPass($duration, $tableCount);
+        if ($audit->hasIssues()) {
+            $this->renderFindings($audit, $tableCount);
+            $this->renderFail($duration, $audit->count());
 
-            return self::SUCCESS;
+            return self::FAILURE;
         }
 
-        $this->renderFindings($findings, $tableCount);
-        $this->renderFail($duration, count($findings));
+        $this->renderPass($duration, $tableCount);
 
-        return self::FAILURE;
+        return self::SUCCESS;
     }
 
-    /**
-     * @param  list<Finding>  $findings
-     */
-    private function renderFindings(array $findings, int $tableCount): void
+    private function renderFindings(SchemaAudit $audit, int $tableCount): void
     {
         $this->newLine();
         $this->line('  <options=bold>Schema Audit Results</>');
@@ -99,10 +91,10 @@ final class AuditSchemaCommand extends Command
             '  <fg=green>%d</> tables audited    <fg=blue>%d</> rules executed    <fg=red>%d</> findings',
             $tableCount,
             $this->auditor->ruleCount(),
-            count($findings)
+            $audit->count()
         ));
 
-        collect($findings)
+        collect($audit->findings())
             ->sortBy('table')
             ->groupBy('table')
             ->each(function (Collection $items, string $table): void {
@@ -141,7 +133,11 @@ final class AuditSchemaCommand extends Command
      */
     private function worstSeverity(Collection $findings): Severity
     {
-        $rank = [Severity::Error->value => 0, Severity::Warning->value => 1, Severity::Info->value => 2];
+        $rank = [
+            Severity::Error->value   => 0,
+            Severity::Warning->value => 1,
+            Severity::Info->value    => 2,
+        ];
 
         return $findings
             ->map(fn (Finding $finding): Severity => $finding->severity)
