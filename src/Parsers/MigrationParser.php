@@ -39,6 +39,6 @@ final readonly class MigrationParser
         $traverser->addVisitor($visitor);
         $traverser->traverse($ast);
 
-        return $visitor->operations;
+        return $visitor->operations();
     }
 }

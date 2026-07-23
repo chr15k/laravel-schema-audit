@@ -79,8 +79,9 @@ enum ColumnMethod: string
         return match ($this) {
             self::ForeignId,
             self::ForeignUuid,
-            self::ForeignUlid => true,
-            default           => false,
+            self::ForeignUlid,
+            self::ForeignIdFor => true,
+            default            => false,
         };
     }
 

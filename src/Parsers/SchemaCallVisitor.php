@@ -14,11 +14,19 @@ use PhpParser\NodeVisitorAbstract;
 final class SchemaCallVisitor extends NodeVisitorAbstract
 {
     /** @var list<ValueObjects\SchemaOperation> */
-    public array $operations = [];
+    private array $operations = [];
 
     public function __construct(
         private readonly ChainExtractor $chainExtractor = new ChainExtractor,
     ) {}
+
+    /**
+     * @return list<ValueObjects\SchemaOperation>
+     */
+    public function operations(): array
+    {
+        return $this->operations;
+    }
 
     public function enterNode(Node $node): ?int
     {
@@ -38,23 +46,35 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
         $methodName = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
 
-        return match (true) {
-            $methodName === 'dropIfExists' || $methodName === 'drop' => $this->recordDrop($node),
-            $methodName === 'rename'                                 => $this->recordRename($node),
-            in_array($methodName, ['create', 'table'], true)         => $this->recordCreateOrAlter($node, $methodName),
-            default                                                  => null,
+        return match ($methodName) {
+            'dropIfExists', 'drop' => $this->recordDrop($node),
+            'rename'               => $this->recordRename($node),
+            'create', 'table'      => $this->recordCreateOrAlter($node, $methodName),
+            default                => null,
         };
     }
 
     private function recordDrop(StaticCall $node): null
     {
-        $name = ArgReader::stringArgAt($node->args, 0);
-
-        if ($name !== null) {
-            $this->operations[] = new ValueObjects\SchemaOperation(type: SchemaOperationType::Drop, tableName: $name);
+        if ($name = ArgReader::stringArgAt($node->args, 0)) {
+            $this->addOperation(SchemaOperationType::Drop, $name);
         }
 
         return null;
+    }
+
+    private function addOperation(
+        SchemaOperationType $type,
+        string $tableName,
+        ?string $renameTo = null,
+        array $chains = [],
+    ): void {
+        $this->operations[] = new ValueObjects\SchemaOperation(
+            type: $type,
+            tableName: $tableName,
+            chains: $chains,
+            renameTo: $renameTo,
+        );
     }
 
     private function recordRename(StaticCall $node): null
@@ -62,8 +82,12 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         $from = ArgReader::stringArgAt($node->args, 0);
         $to = ArgReader::stringArgAt($node->args, 1);
 
-        if ($from !== null && $to !== null) {
-            $this->operations[] = new ValueObjects\SchemaOperation(type: SchemaOperationType::Rename, tableName: $from, renameTo: $to);
+        if ($from && $to) {
+            $this->addOperation(
+                SchemaOperationType::Rename,
+                $from,
+                renameTo: $to,
+            );
         }
 
         return null;
@@ -74,13 +98,15 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         $name = ArgReader::stringArgAt($node->args, 0);
         $closure = ArgReader::closureArgAt($node->args, 1);
 
-        if ($name === null || ! $closure instanceof Closure) {
+        if (! $name || ! $closure instanceof Closure) {
             return null;
         }
 
-        $this->operations[] = new ValueObjects\SchemaOperation(
-            type: $methodName === 'create' ? SchemaOperationType::Create : SchemaOperationType::Alter,
-            tableName: $name,
+        $this->addOperation(
+            $methodName === 'create'
+                ? SchemaOperationType::Create
+                : SchemaOperationType::Alter,
+            $name,
             chains: $this->chainExtractor->extract($closure),
         );
 

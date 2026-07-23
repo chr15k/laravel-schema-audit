@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Parsers;
 
 use PhpParser\Node;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
 
@@ -77,6 +79,12 @@ final class ChainExtractor
 
             if ($arg->value instanceof String_) {
                 $stringArgs[] = $arg->value->value;
+            }
+
+            if ($arg->value instanceof ClassConstFetch && $arg->value->class instanceof Name) {
+                // @todo - parse Models via a new parser to resolve
+                // the actual table name from this value otherwise we're guessing...
+                $stringArgs[] = sprintf('%s::class', $arg->value->class->toString());
             }
 
             if ($arg->value instanceof Node\Expr\Array_) {

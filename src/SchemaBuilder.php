@@ -135,6 +135,16 @@ final readonly class SchemaBuilder
             return;
         }
 
+        // @todo - currently guessing (need to parse models)...
+        if ($method->isForeignIdType() && str_contains($name, '::class')) {
+            $name = str($name)
+                ->before('::class')
+                ->singular()
+                ->lower()
+                ->append('_id')
+                ->toString();
+        }
+
         $table->addColumn(new Column($name, $method));
 
         if ($chain->hasModifier('primary') || $impliedPrimaryKey) {
@@ -143,7 +153,10 @@ final readonly class SchemaBuilder
 
         if ($method->isForeignIdType() && $chain->hasModifier('constrained')) {
             $constrained = $chain->modifier('constrained');
-            $referencesTable = $constrained?->stringArgs[0] ?? $table->name;
+
+            // @todo - resolve referenced table if no stringArgs
+            $referencesTable = $constrained?->stringArgs[0] ?? null;
+
             $table->addForeignKey(new ForeignKey(column: $name, referencesTable: $referencesTable));
         }
 
