@@ -7,6 +7,7 @@ namespace Chr15k\SchemaAudit;
 use Chr15k\SchemaAudit\Console\Commands\AuditSchemaCommand;
 use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
+use Chr15k\SchemaAudit\Schema\NameResolver;
 use Chr15k\SchemaAudit\Support\Config;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Container\Container;
@@ -25,6 +26,8 @@ final class SchemaAuditServiceProvider extends ServiceProvider
         $this->app->singleton(Rules\RedundantSingleColumnIndexRule::class);
         $this->app->singleton(Rules\DanglingForeignKeyRule::class);
         $this->app->singleton(Rules\NoPrimaryKeyRule::class);
+
+        $this->app->singleton(NameResolver::class);
 
         $this->app->singleton(Config::class,
             fn (Container $app): Config => new Config($app->make(Repository::class))

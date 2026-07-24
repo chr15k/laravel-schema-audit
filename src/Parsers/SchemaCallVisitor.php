@@ -63,6 +63,9 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         return null;
     }
 
+    /**
+     * @param  list<ValueObjects\ColumnChain>  $chains
+     */
     private function addOperation(
         SchemaOperationType $type,
         string $tableName,

@@ -11,6 +11,7 @@ use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SchemaOperation;
+use Chr15k\SchemaAudit\Schema\NameResolver;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\TableSchema;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
@@ -19,7 +20,10 @@ use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 
 final readonly class SchemaBuilder
 {
-    public function __construct(private MigrationParser $parser) {}
+    public function __construct(
+        private MigrationParser $parser,
+        private NameResolver $resolver
+    ) {}
 
     public function buildFromDirectory(string $migrationsPath): Schema
     {
@@ -116,9 +120,13 @@ final readonly class SchemaBuilder
 
     private function applyDropForeign(TableSchema $table, ColumnCall $call): void
     {
-        foreach (($call->stringArgs !== [] ? $call->stringArgs : $call->arrayArgs) as $nameOrColumn) {
-            $table->dropForeignKey($nameOrColumn);
+        $index = $call->stringArgs[0] ?? $call->arrayArgs;
+
+        if (is_array($index)) {
+            $index = $this->resolver->indexName($table->name, $index, 'foreign');
         }
+
+        $table->dropForeignKey($index);
     }
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
@@ -140,7 +148,7 @@ final readonly class SchemaBuilder
         }
 
         if ($method->isForeignIdType() && str_contains($columnName, '::class')) {
-            $columnName = $root->stringArgs[1] ?? $this->determineForeignKeyColumnNameFromModelClassName($columnName);
+            $columnName = $root->stringArgs[1] ?? $this->resolver->foreignKeyColumnFromModel($columnName);
         }
 
         $table->addColumn(new Column($columnName, $method));
@@ -165,9 +173,15 @@ final readonly class SchemaBuilder
             // $table->foreignIdFor(User::class, 'owner_id')->constrained(table: 'users');
 
             $referencesTable = $constrained->stringArgs[0]
-                ?? $this->determineForeignIdReferenceTableFromRoot($root);
+                ?? $this->resolveForeignKeyReferenceTableFromRoot($root);
 
-            $table->addForeignKey(new ForeignKey(column: $columnName, referencesTable: $referencesTable));
+            $table->addForeignKey(
+                new ForeignKey(
+                    column: $columnName,
+                    referencesTable: $referencesTable,
+                    name: $this->resolver->indexName($table->name, [$columnName], 'foreign')
+                )
+            );
         }
 
         if ($chain->hasModifier('unique')) {
@@ -179,43 +193,14 @@ final readonly class SchemaBuilder
         }
     }
 
-    private function determineForeignIdReferenceTableFromRoot(ColumnCall $root)
+    private function resolveForeignKeyReferenceTableFromRoot(ColumnCall $root): string
     {
         // $table->foreignId('user_id')->constrained();
         // $table->foreignIdFor(User::class)->constrained();
         return match ($root->method) {
-            'foreignIdFor', 'foreignUuidFor' => $this->determineTableNameFromModelClassName($root->stringArgs[0]),
-            default                          => $this->determineTableNameFromForeignKeyColumnName($root->stringArgs[0])
+            'foreignIdFor', 'foreignUuidFor' => $this->resolver->tableNameFromModel($root->stringArgs[0]),
+            default                          => $this->resolver->tableNameFromForeignKey($root->stringArgs[0])
         };
-    }
-
-    private function determineClassBaseNameFromModelClassName(string $modelClass): string
-    {
-        return class_basename(str_replace('::class', '', $modelClass));
-    }
-
-    private function determineTableNameFromModelClassName(string $modelClass): string
-    {
-        $baseName = $this->determineClassBaseNameFromModelClassName($modelClass);
-
-        return str($baseName)->pluralStudly()->snake()->toString();
-    }
-
-    private function determineTableNameFromForeignKeyColumnName(string $foreignKeyColumnName)
-    {
-        return str($foreignKeyColumnName)->beforeLast('_id')->plural();
-    }
-
-    /** @todo - implement model parsing to get $tableName property from Model */
-    private function determineForeignKeyColumnNameFromModelClassName(string $modelClass): string
-    {
-        $baseName = $this->determineClassBaseNameFromModelClassName($modelClass);
-
-        return str($baseName)
-            ->singular()
-            ->snake()
-            ->append('_id')
-            ->toString();
     }
 
     private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain): void
@@ -231,7 +216,12 @@ final readonly class SchemaBuilder
         $referencesTable = $onCall?->stringArgs[0] ?? null;
         $constraintName = $root->stringArgs[1] ?? null;
 
-        $table->addForeignKey(new ForeignKey(column: $column, referencesTable: $referencesTable, name: $constraintName));
+        // @todo - check name here is correct
+        $table->addForeignKey(new ForeignKey(
+            column: $column,
+            referencesTable: $referencesTable,
+            name: $constraintName
+        ));
     }
 
     private function buildTableLevelIndex(ColumnCall $call, bool $unique): Index

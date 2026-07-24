@@ -25,7 +25,7 @@ final class TableSchema implements Arrayable, JsonSerializable
     private bool $hasExplicitPrimaryKey = false;
 
     public function __construct(
-        public readonly string $name,
+        public readonly string $name
     ) {}
 
     public function addColumn(ValueObjects\Column $column): void
@@ -105,11 +105,11 @@ final class TableSchema implements Arrayable, JsonSerializable
         $this->foreignKeys[] = $fk;
     }
 
-    public function dropForeignKey(string $nameOrColumn): void
+    public function dropForeignKey(string $index): void
     {
         $this->foreignKeys = array_values(array_filter(
             $this->foreignKeys,
-            fn (ValueObjects\ForeignKey $fk): bool => $fk->name !== $nameOrColumn && $fk->column !== $nameOrColumn
+            fn (ValueObjects\ForeignKey $fk): bool => $fk->name !== $index
         ));
     }
 
