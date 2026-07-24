@@ -7,7 +7,7 @@ namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 final readonly class ColumnCall
 {
     /**
-     * @param  list<string>  $stringArgs
+     * @param  array<int|string, string>  $stringArgs
      * @param  list<string>  $arrayArgs
      */
     public function __construct(

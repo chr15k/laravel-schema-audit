@@ -172,15 +172,16 @@ final readonly class SchemaBuilder
             // $table->foreignIdFor(User::class)->constrained(table: 'users');
             // $table->foreignIdFor(User::class, 'owner_id')->constrained(table: 'users');
 
-            $referencesTable = $constrained->stringArgs[0]
-                ?? $this->resolveForeignKeyReferenceTableFromRoot($root);
+            $fkTableName = $constrained->stringArgs['table']
+                ?? ($constrained->stringArgs[0] ?? $this->resolveForeignKeyReferenceTableFromRoot($root));
+
+            $fkColumnName = $constrained->stringArgs['column'] ?? ($constrained->stringArgs[1] ?? $columnName);
+
+            $fkIndexName = $constrained->stringArgs['indexName']
+                ?? ($constrained->stringArgs[2] ?? $this->resolver->indexName($table->name, [$columnName], 'foreign'));
 
             $table->addForeignKey(
-                new ForeignKey(
-                    column: $columnName,
-                    referencesTable: $referencesTable,
-                    name: $this->resolver->indexName($table->name, [$columnName], 'foreign')
-                )
+                new ForeignKey(column: $fkColumnName, referencesTable: $fkTableName, name: $fkIndexName)
             );
         }
 
@@ -195,8 +196,6 @@ final readonly class SchemaBuilder
 
     private function resolveForeignKeyReferenceTableFromRoot(ColumnCall $root): string
     {
-        // $table->foreignId('user_id')->constrained();
-        // $table->foreignIdFor(User::class)->constrained();
         return match ($root->method) {
             'foreignIdFor', 'foreignUuidFor' => $this->resolver->tableNameFromModel($root->stringArgs[0]),
             default                          => $this->resolver->tableNameFromForeignKey($root->stringArgs[0])

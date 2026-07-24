@@ -72,13 +72,13 @@ final class ChainExtractor
         $stringArgs = [];
         $arrayArgs = [];
 
-        foreach ($node->args as $arg) {
+        foreach ($node->args as $i => $arg) {
             if (! $arg instanceof Node\Arg) {
                 continue;
             }
 
             if ($arg->value instanceof String_) {
-                $stringArgs[] = $arg->value->value;
+                $stringArgs[$arg->name instanceof Node\Identifier ? $arg->name->toString() : $i] = $arg->value->value;
             }
 
             if ($arg->value instanceof ClassConstFetch && $arg->value->class instanceof Name) {
