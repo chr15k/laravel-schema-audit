@@ -142,6 +142,34 @@ extend the abstract `Rule` class, which provides `makeFinding()` method:
 
 ### Step 1 - Create custom rule
 
+#### Audit Context
+
+Each rule receives an instance of `AuditContext`, which contains the current
+schema being analyzed and the accumulated audit results.
+
+Rules should treat the context as immutable. To add findings, return a new
+context instance using `withFindings()` and pass it to the next rule in the
+pipeline.
+
+```php
+public function handle(AuditContext $context, Closure $next): AuditContext
+{
+    $findings = [
+        $this->makeFinding(
+            table: 'users',
+            message: 'Example finding.',
+        ),
+    ];
+
+    return $next($context->withFindings($findings));
+}
+```
+
+The context allows rules to run independently while sharing the same schema
+state and progressively building the final SchemaAudit result.
+
+### Sample custom rule
+
 ```php
 <?php
 
@@ -149,6 +177,7 @@ declare(strict_types=1);
 
 namespace App\SchemaRules;
 
+use Chr15k\SchemaAudit\Rules\Rule;
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Closure;
@@ -184,7 +213,7 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 php artisan vendor:publish --tag=schema-audit-config
 ```
 
-### Step 3 - Add custom rule to array
+### Step 3 - Add custom rule to rules array
 
 ```php
 // config/schema-audit.php
