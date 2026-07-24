@@ -51,6 +51,11 @@ structurally can't:
 This package deliberately does **not** attempt N+1 detection, query
 timing, or execution-plan analysis — see [Honest limitations](#honest-limitations).
 
+## Requirements
+
+- PHP 8.2+
+- Laravel 10, 11, 12, or 13
+
 ## Installation
 
 ```bash
@@ -127,28 +132,37 @@ return [
 - **`rules`** — remove an entry to disable that rule without touching
   any package code. Add your own class here too — see below.
 
+---
+
 ## Writing custom rules
 
-Any class implementing `Chr15k\SchemaAudit\Contracts\AuditRule` can be added
-to `config('schema-audit.rules')` alongside the built-in ones:
+Any class implementing `Chr15k\SchemaAudit\Contracts\AuditRule` can be added to
+`config('schema-audit.rules')` alongside the built-in rules. For convenience,
+extend the abstract `Rule` class, which provides `makeFinding()` method:
+
+### Step 1 - Create custom rule
 
 ```php
+<?php
+
+declare(strict_types=1);
+
 namespace App\SchemaRules;
 
-use Chr15k\SchemaAudit\Contracts\AuditRule;
-use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\Data\AuditContext;
+use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Closure;
 
-final class NoTextColumnsOnHighTrafficTablesRule implements Rule
+final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 {
-    public function handle(array $tables): array
+    public function handle(AuditContext $context, Closure $next): AuditContext
     {
         $findings = [];
 
-        foreach ($tables as $table) {
-            foreach ($table->columns() as $column => $type) {
-                if ($type === 'text' /* ...your condition... */) {
-                    $findings[] = new Finding(
-                        rule: 'no_text_on_high_traffic_tables',
+        foreach ($context->schema->tables() as $table) {
+            foreach ($table->columns() as $column) {
+                if ($column->method === ColumnMethod::Text /* ...your condition... */) {
+                    $findings[] = $this->makeFinding(
                         table: $table->name,
                         column: $column,
                         message: "Column '{$column}' is a text column on a high-traffic table.",
@@ -157,19 +171,33 @@ final class NoTextColumnsOnHighTrafficTablesRule implements Rule
             }
         }
 
-        return $findings;
+        $context = $context->withFindings($findings);
+
+        return $next($context);
     }
 }
 ```
 
-`$tables` is `array<string, TableSchema>` — the fully folded schema.
-Useful `TableSchema` methods: `columns()`, `indexes()`, `foreignKeys()`,
-`isIndexed()`, `hasPrimaryKey()`, `primaryKeyColumnType()`.
+### Step 2 - Publish config file
 
-## Requirements
+```bash
+php artisan vendor:publish --tag=schema-audit-config
+```
 
-- PHP 8.2+
-- Laravel 10, 11, 12, or 13
+### Step 3 - Add custom rule to array
+
+```php
+// config/schema-audit.php
+return [
+    // ...
+    'rules' => [
+        // ...
+        \App\SchemaRules\NoTextColumnsOnHighTrafficTablesRule::class
+    ],
+];
+```
+
+---
 
 ## Honest limitations
 
