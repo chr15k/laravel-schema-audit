@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
+use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\ColumnFamily;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\Schema\Schema;
+use Closure;
 
 /**
  * Flags a foreign key whose column type doesn't match the type family of
@@ -26,21 +27,21 @@ use Chr15k\SchemaAudit\Schema\Schema;
  */
 final readonly class MismatchedForeignKeyRule extends Rule
 {
-    public function check(Schema $schema): array
+    public function handle(AuditContext $context, Closure $next): AuditContext
     {
         $findings = [];
 
-        foreach ($schema->tables() as $table) {
+        foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
                 if ($fk->referencesTable === null) {
                     continue;
                 }
 
-                if (! $schema->hasTable($fk->referencesTable)) {
+                if (! $context->schema->hasTable($fk->referencesTable)) {
                     continue;
                 }
 
-                $referencedPkType = $schema->table($fk->referencesTable)?->primaryKeyColumnType();
+                $referencedPkType = $context->schema->table($fk->referencesTable)?->primaryKeyColumnType();
 
                 if (! $referencedPkType instanceof ColumnMethod) {
                     continue;
@@ -82,6 +83,8 @@ final readonly class MismatchedForeignKeyRule extends Rule
             }
         }
 
-        return $findings;
+        $context = $context->withFindings($findings);
+
+        return $next($context);
     }
 }

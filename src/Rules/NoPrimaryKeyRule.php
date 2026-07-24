@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
+use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\Schema\Schema;
+use Closure;
 
 final readonly class NoPrimaryKeyRule extends Rule
 {
-    public function check(Schema $schema): array
+    public function handle(AuditContext $context, Closure $next): AuditContext
     {
         $findings = [];
 
-        foreach ($schema->tables() as $table) {
+        foreach ($context->schema->tables() as $table) {
             if (! $table->hasPrimaryKey()) {
                 $findings[] = $this->makeFinding(
                     table: $table->name,
@@ -23,6 +24,8 @@ final readonly class NoPrimaryKeyRule extends Rule
             }
         }
 
-        return $findings;
+        $context = $context->withFindings($findings);
+
+        return $next($context);
     }
 }

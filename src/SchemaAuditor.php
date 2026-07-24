@@ -4,32 +4,37 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit;
 
-use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Contracts\AuditRule;
+use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Schema\Schema;
+use Illuminate\Pipeline\Pipeline;
 
 final readonly class SchemaAuditor
 {
     /**
-     * @param  list<Rule>  $rules
+     * @param  list<AuditRule>  $rules
      */
-    public function __construct(private array $rules) {}
+    public function __construct(
+        private array $rules,
+        private Pipeline $pipeline
+    ) {}
 
     public function audit(Schema $schema): SchemaAudit
     {
-        if ($this->rules === []) {
-            return new SchemaAudit([]);
-        }
+        /** @var AuditContext $context */
+        $context = $this->pipeline
+            ->send(new AuditContext(schema: $schema))
+            ->through($this->rules)
+            ->thenReturn();
 
-        $findings = array_merge(...array_map(
-            fn (Rule $rule): array => $rule->check($schema),
-            $this->rules
-        ));
-
-        return new SchemaAudit($findings);
+        return $context->audit;
     }
 
-    public function ruleCount(): int
+    /**
+     * @return list<AuditRule> $rules
+     */
+    public function rules(): array
     {
-        return count($this->rules);
+        return $this->rules;
     }
 }

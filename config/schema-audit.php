@@ -46,7 +46,7 @@ return [
     | Rule classes to run. All five ship enabled by default. Remove an
     | entry to disable that rule without touching the service provider.
     | Custom rules can be added here too, as long as they implement
-    | Chr15k\SchemaAudit\Contracts\Rule.
+    | Chr15k\SchemaAudit\Contracts\AuditRule.
     |
     */
     'rules' => [

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\Data\AuditContext;
+use Closure;
 
 final readonly class UnindexedForeignKeyRule extends Rule
 {
@@ -12,15 +13,15 @@ final readonly class UnindexedForeignKeyRule extends Rule
 
     public function __construct(private string $driver) {}
 
-    public function check(Schema $schema): array
+    public function handle(AuditContext $context, Closure $next): AuditContext
     {
         if (in_array($this->driver, self::AUTO_INDEXING_DRIVERS, true)) {
-            return [];
+            return $next($context);
         }
 
         $findings = [];
 
-        foreach ($schema->tables() as $table) {
+        foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
                 if (! $table->isIndexed($fk->column)) {
                     $findings[] = $this->makeFinding(
@@ -32,6 +33,8 @@ final readonly class UnindexedForeignKeyRule extends Rule
             }
         }
 
-        return $findings;
+        $context = $context->withFindings($findings);
+
+        return $next($context);
     }
 }

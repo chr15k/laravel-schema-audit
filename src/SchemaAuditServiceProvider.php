@@ -11,6 +11,7 @@ use Chr15k\SchemaAudit\Schema\NameResolver;
 use Chr15k\SchemaAudit\Support\Config;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\ServiceProvider;
 
 final class SchemaAuditServiceProvider extends ServiceProvider
@@ -40,7 +41,10 @@ final class SchemaAuditServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(SchemaAuditor::class,
-            fn (Container $app): SchemaAuditor => new SchemaAuditor($app->make(Config::class)->rules())
+            fn (Container $app): SchemaAuditor => new SchemaAuditor(
+                $app->make(Config::class)->rules(),
+                $app->make(Pipeline::class)
+            )
         );
     }
 

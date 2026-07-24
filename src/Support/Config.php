@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Support;
 
-use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Contracts\AuditRule;
 use Illuminate\Config\Repository;
 use InvalidArgumentException;
 
@@ -25,7 +25,7 @@ final readonly class Config
     }
 
     /**
-     * @return list<Rule>
+     * @return list<AuditRule>
      */
     public function rules(): array
     {
@@ -45,9 +45,9 @@ final readonly class Config
                 );
             }
 
-            if (! is_subclass_of($class, Rule::class)) {
+            if (! is_subclass_of($class, AuditRule::class)) {
                 throw new InvalidArgumentException(
-                    sprintf('Configuration value for key [%s.rules] does not implement %s, %s given.', self::KEY, Rule::class, $class)
+                    sprintf('Configuration value for key [%s.rules] does not implement %s, %s given.', self::KEY, AuditRule::class, $class)
                 );
             }
 

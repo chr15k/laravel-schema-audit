@@ -90,7 +90,7 @@ final class AuditSchemaCommand extends Command
         $this->line(sprintf(
             '  <fg=green>%d</> tables audited    <fg=blue>%d</> rules executed    <fg=red>%d</> findings',
             $tableCount,
-            $this->auditor->ruleCount(),
+            count($this->auditor->rules()),
             $audit->count()
         ));
 

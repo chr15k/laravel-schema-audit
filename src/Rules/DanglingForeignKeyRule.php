@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
+use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\Schema\Schema;
+use Closure;
 
 final readonly class DanglingForeignKeyRule extends Rule
 {
-    public function check(Schema $schema): array
+    public function handle(AuditContext $context, Closure $next): AuditContext
     {
         $findings = [];
 
-        foreach ($schema->tables() as $table) {
+        foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
                 if ($fk->referencesTable === null) {
                     continue;
                 }
 
-                if ($schema->hasTable($fk->referencesTable)) {
+                if ($context->schema->hasTable($fk->referencesTable)) {
                     continue;
                 }
 
@@ -32,6 +33,8 @@ final readonly class DanglingForeignKeyRule extends Rule
             }
         }
 
-        return $findings;
+        $context = $context->withFindings($findings);
+
+        return $next($context);
     }
 }

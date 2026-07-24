@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
+use Closure;
 
 final readonly class RedundantSingleColumnIndexRule extends Rule
 {
-    public function check(Schema $schema): array
+    public function handle(AuditContext $context, Closure $next): AuditContext
     {
         $findings = [];
 
-        foreach ($schema->tables() as $table) {
+        foreach ($context->schema->tables() as $table) {
             $indexes = $table->indexes();
 
             $singleColumnIndexes = array_filter(
@@ -50,6 +51,8 @@ final readonly class RedundantSingleColumnIndexRule extends Rule
             }
         }
 
-        return $findings;
+        $context = $context->withFindings($findings);
+
+        return $next($context);
     }
 }

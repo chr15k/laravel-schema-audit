@@ -20,8 +20,16 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
      * @param  list<Finding>  $findings
      */
     public function __construct(
-        public array $findings
+        public array $findings = []
     ) {}
+
+    /**
+     * @param  list<Finding>  $findings
+     */
+    public function withFindings(array $findings): self
+    {
+        return new self([...$this->findings, ...$findings]);
+    }
 
     public function count(): int
     {

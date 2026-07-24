@@ -129,18 +129,18 @@ return [
 
 ## Writing custom rules
 
-Any class implementing `Chr15k\SchemaAudit\Contracts\Rule` can be added
+Any class implementing `Chr15k\SchemaAudit\Contracts\AuditRule` can be added
 to `config('schema-audit.rules')` alongside the built-in ones:
 
 ```php
 namespace App\SchemaRules;
 
-use Chr15k\SchemaAudit\Contracts\Rule;
+use Chr15k\SchemaAudit\Contracts\AuditRule;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 
 final class NoTextColumnsOnHighTrafficTablesRule implements Rule
 {
-    public function check(array $tables): array
+    public function handle(array $tables): array
     {
         $findings = [];
 

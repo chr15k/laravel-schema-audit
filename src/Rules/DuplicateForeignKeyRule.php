@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Rules;
 
-use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\Data\AuditContext;
+use Closure;
 
 final readonly class DuplicateForeignKeyRule extends Rule
 {
-    public function check(Schema $schema): array
+    public function handle(AuditContext $context, Closure $next): AuditContext
     {
         $findings = [];
 
-        foreach ($schema->tables() as $table) {
+        foreach ($context->schema->tables() as $table) {
             $seen = [];
 
             foreach ($table->foreignKeys() as $fk) {
@@ -30,6 +31,8 @@ final readonly class DuplicateForeignKeyRule extends Rule
             }
         }
 
-        return $findings;
+        $context = $context->withFindings($findings);
+
+        return $next($context);
     }
 }
