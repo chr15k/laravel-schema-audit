@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema;
 
-final readonly class NameResolver
+final readonly class LaravelConventions
 {
     public function tableNameFromModel(string $model): string
     {

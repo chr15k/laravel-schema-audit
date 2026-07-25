@@ -75,6 +75,15 @@ enum ColumnMethod: string
     case ForeignIdFor = 'foreignIdFor';
     case ForeignUuidFor = 'foreignUuidFor';
 
+    public function requiresModel(): bool
+    {
+        return match ($this) {
+            self::ForeignIdFor,
+            self::ForeignUuidFor => true,
+            default              => false,
+        };
+    }
+
     public function isForeignIdType(): bool
     {
         return match ($this) {

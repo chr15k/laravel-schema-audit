@@ -11,18 +11,23 @@ use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SchemaOperation;
-use Chr15k\SchemaAudit\Schema\NameResolver;
+use Chr15k\SchemaAudit\Schema\LaravelConventions;
+use Chr15k\SchemaAudit\Schema\Resolvers\ColumnResolver;
+use Chr15k\SchemaAudit\Schema\Resolvers\ForeignKeyResolver;
+use Chr15k\SchemaAudit\Schema\Resolvers\IndexResolver;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\TableSchema;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
 use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
-use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 
 final readonly class SchemaBuilder
 {
     public function __construct(
         private MigrationParser $parser,
-        private NameResolver $resolver
+        private IndexResolver $indexes,
+        private ForeignKeyResolver $foreignKeys,
+        private ColumnResolver $columns,
+        private LaravelConventions $conventions
     ) {}
 
     public function buildFromDirectory(string $migrationsPath): Schema
@@ -33,6 +38,7 @@ final readonly class SchemaBuilder
         /** @var array<string, TableSchema> $tables */
         $tables = [];
 
+        $files = (array) $files[0]; // temp to scan 1st table
         foreach ($files as $file) {
             foreach ($this->parser->parseFile($file) as $operation) {
                 $this->applyOperation($tables, $operation);
@@ -105,10 +111,10 @@ final readonly class SchemaBuilder
         }
 
         match (StructuralMethod::tryFrom($root->method)) {
+            StructuralMethod::Unique,
+            StructuralMethod::Index,
+            StructuralMethod::FullText                                => $this->indexes->resolveTableIndex($root, $table),
             StructuralMethod::Foreign                                 => $this->applyOldStyleForeign($table, $chain),
-            StructuralMethod::Unique                                  => $table->addIndex($this->buildTableLevelIndex($root, unique: true)),
-            StructuralMethod::Index                                   => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
-            StructuralMethod::FullText                                => $table->addIndex($this->buildTableLevelIndex($root, unique: false)),
             StructuralMethod::DropColumn                              => $this->applyDropColumn($table, $root),
             StructuralMethod::RenameColumn                            => $this->applyRenameColumn($table, $root),
             StructuralMethod::DropIndex, StructuralMethod::DropUnique => $this->applyDropIndex($table, $root),
@@ -123,7 +129,7 @@ final readonly class SchemaBuilder
         $index = $call->stringArgs[0] ?? $call->arrayArgs;
 
         if (is_array($index)) {
-            $index = $this->resolver->indexName($table->name, $index, 'foreign');
+            $index = $this->conventions->indexName($table->name, $index, 'foreign');
         }
 
         $table->dropForeignKey($index);
@@ -132,74 +138,40 @@ final readonly class SchemaBuilder
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
-        $method = ColumnMethod::tryFrom($root->method);
-        $impliedPrimaryKey = $method?->impliesAutoIncrementingPrimaryKey() ?? false;
 
-        $columnName = $root->stringArgs[0] ?? ($impliedPrimaryKey ? 'id' : null);
+        $column = $this->columns->resolve($root);
 
-        if ($columnName === null) {
+        if (! $column instanceof Column) {
             return;
         }
 
-        $method ??= ColumnMethod::tryFrom($columnName);
+        $table->addColumn($column);
 
-        if ($method === null) {
-            return;
-        }
-
-        if ($method->isForeignIdType() && str_contains($columnName, '::class')) {
-            $columnName = $root->stringArgs[1] ?? $this->resolver->foreignKeyColumnFromModel($columnName);
-        }
-
-        $table->addColumn(new Column($columnName, $method));
-
-        if ($chain->hasModifier('primary') || $impliedPrimaryKey) {
+        if ($chain->hasModifier('primary')) {
             $table->markPrimaryKey();
         }
 
-        if ($method->isForeignIdType() && $chain->hasModifier('constrained')) {
-            $constrained = $chain->modifier('constrained');
-
-            // $table->foreignId('user_id')->constrained();
-            // $table->foreignIdFor(User::class)->constrained();
-            // $table->foreignIdFor(User::class, 'owner_id')->constrained();
-
-            // $table->foreignId('user_id')->constrained('users');
-            // $table->foreignIdFor(User::class)->constrained('users');
-            // $table->foreignIdFor(User::class, 'owner_id')->constrained('users');
-
-            // $table->foreignId('user_id')->constrained(table: 'users');
-            // $table->foreignIdFor(User::class)->constrained(table: 'users');
-            // $table->foreignIdFor(User::class, 'owner_id')->constrained(table: 'users');
-
-            $fkTableName = $constrained->stringArgs['table']
-                ?? ($constrained->stringArgs[0] ?? $this->resolveForeignKeyReferenceTableFromRoot($root));
-
-            $fkColumnName = $constrained->stringArgs['column'] ?? ($constrained->stringArgs[1] ?? $columnName);
-
-            $fkIndexName = $constrained->stringArgs['indexName']
-                ?? ($constrained->stringArgs[2] ?? $this->resolver->indexName($table->name, [$columnName], 'foreign'));
-
+        if ($chain->hasModifier('constrained')) {
             $table->addForeignKey(
-                new ForeignKey(column: $fkColumnName, referencesTable: $fkTableName, name: $fkIndexName)
+                $this->foreignKeys->resolve(
+                    $chain,
+                    $table,
+                    $column->name
+                )
             );
         }
 
-        if ($chain->hasModifier('unique')) {
-            $table->addIndex(new Index(name: null, columns: [$columnName], unique: true));
+        foreach (['unique', 'index'] as $modifier) {
+            if ($chain->hasModifier($modifier)) {
+                $table->addIndex(
+                    $this->indexes->resolveColumnIndex(
+                        $chain->modifier($modifier),
+                        $table,
+                        $column->name
+                    )
+                );
+            }
         }
-
-        if ($chain->hasModifier('index')) {
-            $table->addIndex(new Index(name: null, columns: [$columnName], unique: false));
-        }
-    }
-
-    private function resolveForeignKeyReferenceTableFromRoot(ColumnCall $root): string
-    {
-        return match ($root->method) {
-            'foreignIdFor', 'foreignUuidFor' => $this->resolver->tableNameFromModel($root->stringArgs[0]),
-            default                          => $this->resolver->tableNameFromForeignKey($root->stringArgs[0])
-        };
     }
 
     private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain): void
@@ -221,21 +193,6 @@ final readonly class SchemaBuilder
             referencesTable: $referencesTable,
             name: $constraintName
         ));
-    }
-
-    private function buildTableLevelIndex(ColumnCall $call, bool $unique): Index
-    {
-        if ($call->arrayArgs !== []) {
-            $name = $call->stringArgs[0] ?? null;
-
-            return new Index(name: $name, columns: $call->arrayArgs, unique: $unique);
-        }
-
-        // $table->unique('col') or $table->unique('col', 'name')
-        $columns = $call->stringArgs !== [] ? [$call->stringArgs[0]] : [];
-        $name = $call->stringArgs[1] ?? null;
-
-        return new Index(name: $name, columns: $columns, unique: $unique);
     }
 
     private function applyDropColumn(TableSchema $table, ColumnCall $call): void
