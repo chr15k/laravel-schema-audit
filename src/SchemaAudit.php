@@ -28,7 +28,10 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
      */
     public function withFindings(array $findings): self
     {
-        return new self([...$this->findings, ...$findings]);
+        return new self([
+            ...$this->findings,
+            ...$findings,
+        ]);
     }
 
     public function count(): int
