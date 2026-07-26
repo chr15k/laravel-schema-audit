@@ -1,19 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Chr15k\SchemaAudit\Migrations;
+
+use Chr15k\SchemaAudit\Support\Config;
 
 final readonly class MigrationPathResolver
 {
+    public function __construct(private Config $config) {}
+
     /**
      * @param  list<string>  $cliPaths
      * @return list<string>
      */
     public function resolve(array $cliPaths): array
     {
-        $paths = array_merge(
-            config('schema-audit.paths', []),
-            $cliPaths
-        );
+        $paths = array_merge($this->config->paths(), $cliPaths);
 
         return array_values(array_unique(
             array_map($this->absolute(...), $paths)

@@ -14,9 +14,9 @@ final readonly class Config
 
     public function __construct(private Repository $config) {}
 
-    public function path(): string
+    public function paths(): array
     {
-        return $this->config->string(self::KEY.'.path', database_path('migrations'));
+        return $this->config->array(self::KEY.'.paths', [database_path('migrations')]);
     }
 
     public function driver(): string
