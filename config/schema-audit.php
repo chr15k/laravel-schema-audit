@@ -2,13 +2,7 @@
 
 declare(strict_types=1);
 
-use Chr15k\SchemaAudit\Rules\DanglingForeignKeyRule;
-use Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule;
-use Chr15k\SchemaAudit\Rules\DuplicateIndexRule;
-use Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule;
-use Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule;
-use Chr15k\SchemaAudit\Rules\RedundantIndexRule;
-use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
+use Chr15k\SchemaAudit\Rules;
 
 return [
 
@@ -17,8 +11,7 @@ return [
     | Migrations Paths
     |--------------------------------------------------------------------
     |
-    | Migration directories schema:audit scans when --path isn't passed on
-    | the command line. Relative to the application base path.
+    | Migration directories schema:audit scans.
     |
     */
     'paths' => [
@@ -52,13 +45,13 @@ return [
     |
     */
     'rules' => [
-        UnindexedForeignKeyRule::class,
-        DuplicateIndexRule::class,
-        DuplicateForeignKeyRule::class,
-        RedundantIndexRule::class,
-        DanglingForeignKeyRule::class,
-        NoPrimaryKeyRule::class,
-        MismatchedForeignKeyRule::class,
+        Rules\UnindexedForeignKeyRule::class,
+        Rules\DuplicateIndexRule::class,
+        Rules\DuplicateForeignKeyRule::class,
+        Rules\RedundantIndexRule::class,
+        Rules\DanglingForeignKeyRule::class,
+        Rules\NoPrimaryKeyRule::class,
+        Rules\MismatchedForeignKeyRule::class,
     ],
 
 ];
