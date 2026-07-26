@@ -16,6 +16,7 @@ use Chr15k\SchemaAudit\Schema\Resolvers\ForeignKeyResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\IndexResolver;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
 use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
+use Closure;
 
 final readonly class SchemaBuilder
 {
@@ -27,37 +28,23 @@ final readonly class SchemaBuilder
         private LaravelConventions $conventions
     ) {}
 
-    public function build(iterable $migrationPaths): Schema
+    /**
+     * @param  list<string>  $files
+     */
+    public function build(array $files, ?Closure $progress = null): Schema
     {
+        /** @var array<string, TableSchema> $tables */
         $tables = [];
 
-        foreach ($this->migrationFiles($migrationPaths) as $file) {
+        foreach ($files as $file) {
             foreach ($this->parser->parseFile($file) as $operation) {
                 $this->applyOperation($tables, $operation);
             }
+
+            $progress?->__invoke($file);
         }
 
         return new Schema($tables);
-    }
-
-    /**
-     * @param  iterable<string>  $paths
-     * @return list<string>
-     */
-    private function migrationFiles(iterable $paths): array
-    {
-        $files = [];
-
-        foreach ($paths as $path) {
-            $files = [
-                ...$files,
-                ...glob(mb_rtrim($path, '/').'/*.php') ?: [],
-            ];
-        }
-
-        sort($files);
-
-        return $files;
     }
 
     /**

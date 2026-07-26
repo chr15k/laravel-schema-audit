@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Console\Commands;
 
 use Chr15k\SchemaAudit\Enums\Severity;
+use Chr15k\SchemaAudit\Migrations\MigrationLocator;
+use Chr15k\SchemaAudit\Migrations\MigrationPathResolver;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\SchemaAudit;
@@ -23,8 +25,11 @@ final class AuditSchemaCommand extends Command
 
     protected $description = 'Audit migration-declared schema for unindexed foreign keys, duplicate/redundant indexes, dangling foreign keys, mismatched foreign keys, and missing primary keys';
 
-    public function __construct(private readonly SchemaAuditor $auditor)
-    {
+    public function __construct(
+        private readonly SchemaAuditor $auditor,
+        private readonly MigrationPathResolver $paths,
+        private readonly MigrationLocator $locator,
+    ) {
         parent::__construct();
     }
 
@@ -32,10 +37,19 @@ final class AuditSchemaCommand extends Command
     {
         $start = microtime(true);
 
-        $schema = $builder->build($this->resolvePaths());
+        $files = $this->locator->files(
+            $this->paths->resolve($this->option('path'))
+        );
+
+        $progress = $this->initProgress(count($files));
+
+        $schema = $builder->build($files, fn () => $progress->advance());
+
+        $progress->finish();
+        $this->newLine();
 
         if ($this->option('schema-only')) {
-            return $this->renderFindingschemaOnly($schema);
+            return $this->renderSchemaOnly($schema);
         }
 
         $findings = $this->auditor->audit($schema);
@@ -48,12 +62,25 @@ final class AuditSchemaCommand extends Command
         return $this->renderReport($findings, $schema->tableCount(), $duration);
     }
 
+    private function initProgress(int $max = 0)
+    {
+        $progress = $this->output->createProgressBar($max);
+
+        $progress->setFormat('%bar%');
+        $progress->setBarCharacter('.');
+        $progress->setEmptyBarCharacter(' ');
+
+        $progress->start();
+
+        return $progress;
+    }
+
     private function duration(float $start): string
     {
         return number_format(microtime(true) - $start, 2);
     }
 
-    private function renderFindingschemaOnly(Schema $schema): int
+    private function renderSchemaOnly(Schema $schema): int
     {
         $this->line($schema->toPrettyJson());
 
