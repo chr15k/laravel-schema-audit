@@ -14,9 +14,28 @@ final readonly class Config
 
     public function __construct(private Repository $config) {}
 
+    /**
+     * @return array<string>
+     */
     public function paths(): array
     {
-        return $this->config->array(self::KEY.'.paths', [database_path('migrations')]);
+        $config = $this->config->array(self::KEY.'.paths', [database_path('migrations')]);
+
+        foreach ($config as $path) {
+            if (! is_string($path)) {
+                throw new InvalidArgumentException(
+                    sprintf('Configuration value for key [%s.paths] must be a string, %s given.', self::KEY, gettype($path))
+                );
+            }
+
+            if (! is_dir($path)) {
+                throw new InvalidArgumentException(
+                    sprintf('Configuration value for key [%s.paths] is not a directory, %s given.', self::KEY, $path)
+                );
+            }
+        }
+
+        return $config;
     }
 
     public function driver(): string

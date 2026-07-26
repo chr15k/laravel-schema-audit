@@ -29,7 +29,7 @@ final readonly class SchemaBuilder
     ) {}
 
     /**
-     * @param  list<string>  $files
+     * @param  array<string>  $files
      */
     public function build(array $files, ?Closure $progress = null): Schema
     {
@@ -41,7 +41,7 @@ final readonly class SchemaBuilder
                 $this->applyOperation($tables, $operation);
             }
 
-            $progress?->__invoke($file);
+            $progress?->__invoke();
         }
 
         return new Schema($tables);
@@ -151,23 +151,18 @@ final readonly class SchemaBuilder
         }
 
         if ($chain->hasModifier('constrained')) {
-            $table->addForeignKey(
-                $this->foreignKeys->resolve(
-                    $chain,
-                    $table,
-                    $column->name
-                )
-            );
+            $resolved = $this->foreignKeys->resolve($chain, $table, $column->name);
+            if ($resolved instanceof ForeignKey) {
+                $table->addForeignKey($resolved);
+            }
         }
 
         foreach (['unique', 'index'] as $modifier) {
-            if ($chain->hasModifier($modifier)) {
+            $call = $chain->modifier($modifier);
+
+            if ($call instanceof ColumnCall) {
                 $table->addIndex(
-                    $this->indexes->resolveColumnIndex(
-                        $chain->modifier($modifier),
-                        $table,
-                        $column->name
-                    )
+                    $this->indexes->resolveColumnIndex($call, $table, $column->name)
                 );
             }
         }

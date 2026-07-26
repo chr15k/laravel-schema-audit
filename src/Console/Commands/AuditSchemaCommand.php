@@ -15,6 +15,7 @@ use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 final class AuditSchemaCommand extends Command
 {
@@ -37,8 +38,11 @@ final class AuditSchemaCommand extends Command
     {
         $start = microtime(true);
 
+        /** @var list<string> $path */
+        $path = $this->option('path');
+
         $files = $this->locator->files(
-            $this->paths->resolve($this->option('path'))
+            $this->paths->resolve($path)
         );
 
         $progress = $this->initProgress(count($files));
@@ -62,7 +66,7 @@ final class AuditSchemaCommand extends Command
         return $this->renderReport($findings, $schema->tableCount(), $duration);
     }
 
-    private function initProgress(int $max = 0)
+    private function initProgress(int $max = 0): ProgressBar
     {
         $progress = $this->output->createProgressBar($max);
 
@@ -190,19 +194,5 @@ final class AuditSchemaCommand extends Command
         );
         $this->components->bulletList([sprintf('%d schema %s found.', $count, $grammar)]);
         $this->newLine();
-    }
-
-    private function resolvePaths(): array
-    {
-        $paths = config('schema-audit.paths', []);
-
-        $paths = array_merge($paths, $this->option('path'));
-
-        return array_map(function ($path) {
-            $isAbsolute = str_starts_with($path, DIRECTORY_SEPARATOR)
-                || preg_match('#^[A-Za-z]:[\\\\/]#', $path) === 1;
-
-            return $isAbsolute ? $path : base_path($path);
-        }, $paths);
     }
 }

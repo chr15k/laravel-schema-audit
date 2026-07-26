@@ -11,7 +11,7 @@ final readonly class MigrationLocator
 {
     /**
      * @param  list<string>  $paths
-     * @return list<string>
+     * @return array<non-empty-string, string>
      */
     public function files(array $paths): array
     {
