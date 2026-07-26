@@ -7,15 +7,13 @@ namespace Chr15k\SchemaAudit;
 use Chr15k\SchemaAudit\Contracts\AuditRule;
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\Support\Config;
 use Illuminate\Pipeline\Pipeline;
 
 final readonly class SchemaAuditor
 {
-    /**
-     * @param  list<AuditRule>  $rules
-     */
     public function __construct(
-        private array $rules,
+        private Config $config,
         private Pipeline $pipeline
     ) {}
 
@@ -24,7 +22,7 @@ final readonly class SchemaAuditor
         /** @var AuditContext $context */
         $context = $this->pipeline
             ->send(new AuditContext(schema: $schema))
-            ->through($this->rules)
+            ->through($this->rules())
             ->thenReturn();
 
         return $context->audit;
@@ -35,6 +33,6 @@ final readonly class SchemaAuditor
      */
     public function rules(): array
     {
-        return $this->rules;
+        return $this->config->rules();
     }
 }

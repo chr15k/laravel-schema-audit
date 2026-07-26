@@ -8,7 +8,7 @@ use Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\DuplicateIndexRule;
 use Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule;
-use Chr15k\SchemaAudit\Rules\RedundantSingleColumnIndexRule;
+use Chr15k\SchemaAudit\Rules\RedundantIndexRule;
 use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\TableSchema;
@@ -44,7 +44,7 @@ it('flags a redundant single-column index when a composite index covers the same
     $table->addIndex(new Index(name: 'orders_user_id_index', columns: ['user_id']));
     $table->addIndex(new Index(name: 'orders_user_id_created_at_index', columns: ['user_id', 'created_at']));
 
-    $findings = (new RedundantSingleColumnIndexRule)->check(new Schema(['orders' => $table]));
+    $findings = (new RedundantIndexRule)->check(new Schema(['orders' => $table]));
 
     expect($findings)->toHaveCount(1);
     expect($findings[0]->code)->toBe('redundant_single_column_index');
@@ -56,7 +56,7 @@ it('flags a redundant non-unique single-column index when the same column alread
     $table->addIndex(new Index(name: 'users_email_unique', columns: ['email'], unique: true));
     $table->addIndex(new Index(name: 'users_email_index', columns: ['email']));
 
-    $findings = (new RedundantSingleColumnIndexRule)->check(new Schema(['users' => $table]));
+    $findings = (new RedundantIndexRule)->check(new Schema(['users' => $table]));
 
     expect($findings)->toHaveCount(1);
     expect($findings[0]->code)->toBe('redundant_single_column_index');

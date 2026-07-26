@@ -96,7 +96,7 @@ php artisan schema:audit --schema-only
 | `UnindexedForeignKeyRule` | A foreign key column with no covering index. Driver-aware — MySQL/MariaDB auto-index FK columns, PostgreSQL/SQLite/SQL Server do not, so this only fires where it's actually true for your configured driver. |
 | `DuplicateIndexRule` | The same index (same columns, same uniqueness) declared more than once. |
 | `DuplicateForeignKeyRule` | The same foreign key (same column, same referenced table) declared more than once. |
-| `RedundantSingleColumnIndexRule` | A single-column index already covered by a composite index's leading column. |
+| `RedundantIndexRule` | A single-column index already covered by a composite index's leading column. |
 | `DanglingForeignKeyRule` | A foreign key referencing a table that doesn't exist anywhere in the folded schema — a typo, or a table renamed/dropped without updating the reference. |
 | `MismatchedForeignKeyRule` | A foreign key whose column type doesn't match the type family of the referenced table's primary key (e.g. `foreignId()` pointing at a plain `increments()` primary key). |
 | `NoPrimaryKeyRule` | A table with no identifiable primary key — no `id()`/`increments()`-style column and no explicit `primary()` call. |
@@ -117,7 +117,7 @@ return [
         \Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule::class,
         \Chr15k\SchemaAudit\Rules\DuplicateIndexRule::class,
         \Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule::class,
-        \Chr15k\SchemaAudit\Rules\RedundantSingleColumnIndexRule::class,
+        \Chr15k\SchemaAudit\Rules\RedundantIndexRule::class,
         \Chr15k\SchemaAudit\Rules\DanglingForeignKeyRule::class,
         \Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule::class,
         \Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule::class,

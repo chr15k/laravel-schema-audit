@@ -31,8 +31,6 @@ final readonly class DuplicateForeignKeyRule extends Rule
             }
         }
 
-        $context = $context->withFindings($findings);
-
-        return $next($context);
+        return $next($context->withFindings($findings));
     }
 }

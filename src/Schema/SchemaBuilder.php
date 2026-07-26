@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit;
+namespace Chr15k\SchemaAudit\Schema;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
@@ -11,12 +11,9 @@ use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SchemaOperation;
-use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use Chr15k\SchemaAudit\Schema\Resolvers\ColumnResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\ForeignKeyResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\IndexResolver;
-use Chr15k\SchemaAudit\Schema\Schema;
-use Chr15k\SchemaAudit\Schema\TableSchema;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
 use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 
@@ -30,22 +27,37 @@ final readonly class SchemaBuilder
         private LaravelConventions $conventions
     ) {}
 
-    public function buildFromDirectory(string $migrationsPath): Schema
+    public function build(iterable $migrationPaths): Schema
     {
-        $files = glob(mb_rtrim($migrationsPath, '/').'/*.php') ?: [];
-        sort($files);
-
-        /** @var array<string, TableSchema> $tables */
         $tables = [];
 
-        $files = (array) $files[0]; // temp to scan 1st table
-        foreach ($files as $file) {
+        foreach ($this->migrationFiles($migrationPaths) as $file) {
             foreach ($this->parser->parseFile($file) as $operation) {
                 $this->applyOperation($tables, $operation);
             }
         }
 
         return new Schema($tables);
+    }
+
+    /**
+     * @param  iterable<string>  $paths
+     * @return list<string>
+     */
+    private function migrationFiles(iterable $paths): array
+    {
+        $files = [];
+
+        foreach ($paths as $path) {
+            $files = [
+                ...$files,
+                ...glob(mb_rtrim($path, '/').'/*.php') ?: [],
+            ];
+        }
+
+        sort($files);
+
+        return $files;
     }
 
     /**
@@ -113,7 +125,7 @@ final readonly class SchemaBuilder
         match (StructuralMethod::tryFrom($root->method)) {
             StructuralMethod::Unique,
             StructuralMethod::Index,
-            StructuralMethod::FullText                                => $this->indexes->resolveTableIndex($root, $table),
+            StructuralMethod::FullText                                => $table->addIndex($this->indexes->resolveTableIndex($root, $table)),
             StructuralMethod::Foreign                                 => $this->applyOldStyleForeign($table, $chain),
             StructuralMethod::DropColumn                              => $this->applyDropColumn($table, $root),
             StructuralMethod::RenameColumn                            => $this->applyRenameColumn($table, $root),

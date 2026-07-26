@@ -6,19 +6,18 @@ namespace Chr15k\SchemaAudit\Console\Commands;
 
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Schema\Schema;
+use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\SchemaAudit;
 use Chr15k\SchemaAudit\SchemaAuditor;
-use Chr15k\SchemaAudit\SchemaBuilder;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 final class AuditSchemaCommand extends Command
 {
     protected $signature = 'schema:audit
-        {--path=database/migrations : Directory to scan for migration files}
+        {--path=* : Additional migration directory to audit}
         {--schema-only : Print the raw folded schema instead of running rules}
         {--json : Print findings as JSON instead of the styled report}';
 
@@ -33,7 +32,7 @@ final class AuditSchemaCommand extends Command
     {
         $start = microtime(true);
 
-        $schema = $builder->buildFromDirectory($this->resolvePath());
+        $schema = $builder->build($this->resolvePaths());
 
         if ($this->option('schema-only')) {
             return $this->renderFindingschemaOnly($schema);
@@ -166,19 +165,17 @@ final class AuditSchemaCommand extends Command
         $this->newLine();
     }
 
-    private function resolvePath(): string
+    private function resolvePaths(): array
     {
-        $path = $this->option('path') ?? config('schema-audit.path');
+        $paths = config('schema-audit.paths', []);
 
-        if (! is_string($path)) {
-            throw new RuntimeException(
-                'The --path option must be a string, got '.get_debug_type($path).'.'
-            );
-        }
+        $paths = array_merge($paths, $this->option('path'));
 
-        $isAbsolute = str_starts_with($path, DIRECTORY_SEPARATOR)
-            || preg_match('#^[A-Za-z]:[\\\\/]#', $path) === 1;
+        return array_map(function ($path) {
+            $isAbsolute = str_starts_with($path, DIRECTORY_SEPARATOR)
+                || preg_match('#^[A-Za-z]:[\\\\/]#', $path) === 1;
 
-        return $isAbsolute ? $path : base_path($path);
+            return $isAbsolute ? $path : base_path($path);
+        }, $paths);
     }
 }

@@ -7,21 +7,23 @@ use Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\DuplicateIndexRule;
 use Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule;
-use Chr15k\SchemaAudit\Rules\RedundantSingleColumnIndexRule;
+use Chr15k\SchemaAudit\Rules\RedundantIndexRule;
 use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
 
 return [
 
     /*
     |--------------------------------------------------------------------
-    | Migrations Path
+    | Migrations Paths
     |--------------------------------------------------------------------
     |
-    | Default directory schema:audit scans when --path isn't passed on
+    | Migration directories schema:audit scans when --path isn't passed on
     | the command line. Relative to the application base path.
     |
     */
-    'path' => 'database/migrations',
+    'paths' => [
+        database_path('migrations'),
+    ],
 
     /*
     |--------------------------------------------------------------------
@@ -53,7 +55,7 @@ return [
         UnindexedForeignKeyRule::class,
         DuplicateIndexRule::class,
         DuplicateForeignKeyRule::class,
-        RedundantSingleColumnIndexRule::class,
+        RedundantIndexRule::class,
         DanglingForeignKeyRule::class,
         NoPrimaryKeyRule::class,
         MismatchedForeignKeyRule::class,

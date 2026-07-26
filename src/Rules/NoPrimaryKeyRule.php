@@ -24,8 +24,6 @@ final readonly class NoPrimaryKeyRule extends Rule
             }
         }
 
-        $context = $context->withFindings($findings);
-
-        return $next($context);
+        return $next($context->withFindings($findings));
     }
 }

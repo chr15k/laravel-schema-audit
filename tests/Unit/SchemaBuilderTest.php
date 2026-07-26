@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
-use Chr15k\SchemaAudit\SchemaBuilder;
 
 function writeTempMigration(string $directory, string $name, string $content): string
 {

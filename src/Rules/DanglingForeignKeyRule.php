@@ -33,8 +33,6 @@ final readonly class DanglingForeignKeyRule extends Rule
             }
         }
 
-        $context = $context->withFindings($findings);
-
-        return $next($context);
+        return $next($context->withFindings($findings));
     }
 }

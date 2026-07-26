@@ -8,7 +8,7 @@ use Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\DuplicateIndexRule;
 use Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule;
 use Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule;
-use Chr15k\SchemaAudit\Rules\RedundantSingleColumnIndexRule;
+use Chr15k\SchemaAudit\Rules\RedundantIndexRule;
 use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\TableSchema;
@@ -58,7 +58,7 @@ it('runs the full schema auditor rule set and returns every configured rule once
         new DuplicateIndexRule,
         new MismatchedForeignKeyRule,
         new NoPrimaryKeyRule,
-        new RedundantSingleColumnIndexRule,
+        new RedundantIndexRule,
         new UnindexedForeignKeyRule(driver: 'sqlite'),
     ]);
 
