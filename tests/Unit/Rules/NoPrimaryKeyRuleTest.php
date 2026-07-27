@@ -5,6 +5,7 @@ use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Schema\ValueObjects\PrimaryKey;
 
 it('passes context to the next pipeline stage', function (): void {
     $schema = new Schema([]);
@@ -55,7 +56,7 @@ it('reports a missing primary key', function (): void {
 
 it('does not report tables with a primary key', function (): void {
     $users = new TableSchema('users');
-    $users->setPrimaryKey(['id']);
+    $users->setPrimaryKey(new PrimaryKey(['id']));
 
     $schema = new Schema([
         'users' => $users,
@@ -71,7 +72,7 @@ it('does not report tables with a primary key', function (): void {
 
 it('reports every table missing a primary key', function (): void {
     $tableWithPrimaryKey = new TableSchema('comments');
-    $tableWithPrimaryKey->setPrimaryKey(['id']);
+    $tableWithPrimaryKey->setPrimaryKey(new PrimaryKey(['id']));
 
     $schema = new Schema([
         'users'    => new TableSchema('users'),

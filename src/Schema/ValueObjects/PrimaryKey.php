@@ -20,9 +20,7 @@ final readonly class PrimaryKey implements Arrayable, JsonSerializable
     ) {}
 
     /**
-     * @return array{
-     *     columns: list<string>
-     * }
+     * @return array{columns: list<string>}
      */
     public function jsonSerialize(): array
     {
@@ -30,9 +28,7 @@ final readonly class PrimaryKey implements Arrayable, JsonSerializable
     }
 
     /**
-     * @return array{
-     *     columns: list<string>
-     * }
+     * @return array{columns: list<string>}
      */
     public function toArray(): array
     {

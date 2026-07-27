@@ -28,8 +28,8 @@ final class SchemaAuditServiceProvider extends ServiceProvider
                 $connection = $config->connection();
 
                 return new LaravelConventions(
-                    prefixIndexes: $connection['prefix_indexes'] ?? true,
-                    tablePrefix: $connection['prefix'] ?? ''
+                    prefixIndexes: (bool) ($connection['prefix_indexes'] ?? true),
+                    tablePrefix: is_string($prefix = $connection['prefix'] ?? '') ? $prefix : ''
                 );
             }
         );

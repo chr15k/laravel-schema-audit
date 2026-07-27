@@ -148,10 +148,8 @@ final readonly class SchemaBuilder
 
         $table->addColumn($column);
 
-        if ($column->method->impliesPrimaryKey()
-            || $chain->hasModifier('primary')
-        ) {
-            $primaryKey = $this->primaryKeys->resolve($chain, $table, $column);
+        if ($column->method->impliesPrimaryKey() || $chain->hasModifier('primary')) {
+            $primaryKey = $this->primaryKeys->resolveColumnPrimaryKey($chain, $column);
             $table->setPrimaryKey($primaryKey);
         }
 

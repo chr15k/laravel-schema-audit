@@ -13,7 +13,7 @@ use JsonSerializable;
  */
 final class TableSchema implements Arrayable, JsonSerializable
 {
-    private ValueObjects\PrimaryKey $primaryKey;
+    private ?ValueObjects\PrimaryKey $primaryKey = null;
 
     /** @var array<string, ValueObjects\Column> */
     private array $columns = [];
@@ -33,14 +33,14 @@ final class TableSchema implements Arrayable, JsonSerializable
         $this->primaryKey = $primaryKey;
     }
 
-    public function primaryKey(): ValueObjects\PrimaryKey
+    public function primaryKey(): ?ValueObjects\PrimaryKey
     {
         return $this->primaryKey;
     }
 
     public function hasPrimaryKey(): bool
     {
-        return $this->primaryKey !== [];
+        return $this->primaryKey instanceof ValueObjects\PrimaryKey;
     }
 
     public function addColumn(ValueObjects\Column $column): void
