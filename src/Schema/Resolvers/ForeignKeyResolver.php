@@ -39,10 +39,6 @@ final readonly class ForeignKeyResolver
                     : $this->conventions->tableNameFromForeignKey($column)
             );
 
-        $columnName = $modifier->stringArgs['column']
-            ?? $modifier->stringArgs[1]
-            ?? $column;
-
         $name = $modifier->stringArgs['indexName']
             ?? $modifier->stringArgs[2]
             ?? $this->conventions->indexName(
@@ -52,7 +48,7 @@ final readonly class ForeignKeyResolver
             );
 
         return new ForeignKey(
-            column: $columnName,
+            column: $column,
             referencesTable: $tableName,
             name: $name
         );

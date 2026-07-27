@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table): void {
-            $table->unique('email');
-            $table->string('nickname')->nullable();
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('email')->unique();
+            $table->dropColumn('legacy_handle');
         });
     }
 };
