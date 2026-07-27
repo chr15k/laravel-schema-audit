@@ -11,7 +11,7 @@ return new class extends Migration
         // this table was never created in this fixture set (e.g. it exists
         // in a migration path this test doesn't include) — the builder
         // must not manufacture a phantom table out of a bare alter.
-        Schema::table('never_declared', function (Blueprint $table) {
+        Schema::table('never_declared', function (Blueprint $table): void {
             $table->string('anything');
         });
     }

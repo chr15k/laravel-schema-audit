@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit;
 
 use Chr15k\SchemaAudit\Console\Commands\AuditSchemaCommand;
+use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use Chr15k\SchemaAudit\Support\Config;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Container\Container;
@@ -18,6 +19,19 @@ final class SchemaAuditServiceProvider extends ServiceProvider
 
         $this->app->singleton(Config::class,
             fn (Container $app): Config => new Config($app->make(Repository::class))
+        );
+
+        $this->app->singleton(
+            LaravelConventions::class,
+            function (Container $app): LaravelConventions {
+                $config = $app->make(Config::class);
+                $connection = $config->connection();
+
+                return new LaravelConventions(
+                    prefixIndexes: $connection['prefix_indexes'] ?? true,
+                    tablePrefix: $connection['prefix'] ?? ''
+                );
+            }
         );
     }
 

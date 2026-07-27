@@ -44,12 +44,17 @@ final readonly class ForeignKeyResolver
             ?? $this->conventions->indexName(
                 $table->name,
                 [$column],
-                'foreign'
+                'foreign',
             );
+
+        $referencesColumn = $modifier->stringArgs['column']
+            ?? $modifier->stringArgs[1]
+            ?? 'id'; // constrained()'s own default when nothing is specified
 
         return new ForeignKey(
             column: $column,
             referencesTable: $tableName,
+            referencesColumn: $referencesColumn,
             name: $name
         );
     }

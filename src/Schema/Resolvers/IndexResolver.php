@@ -45,20 +45,6 @@ final readonly class IndexResolver
         TableSchema $table,
         string $column
     ): Index {
-        // Cases...
-        //
-        // 1. Auto generated index name
-        //   $table->string('email')->unique()
-        //   $table->string('email')->index()
-        //
-        // 2. Named parameter
-        //   $table->string('email')->unique(indexName: 'idx_unique_email')
-        //   $table->string('email')->index(indexName: 'idx_unique_email')
-        //
-        // 3. Parameter
-        //   $table->string('email')->unique('idx_unique_email')
-        //   $table->string('email')->index('idx_unique_email')
-
         return new Index(
             name: $call->stringArgs['indexName']
                 ?? $call->stringArgs[0]

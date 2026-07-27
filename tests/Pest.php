@@ -7,6 +7,7 @@ use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use Chr15k\SchemaAudit\Schema\Resolvers\ColumnResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\ForeignKeyResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\IndexResolver;
+use Chr15k\SchemaAudit\Schema\Resolvers\PrimaryKeyResolver;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\Tests\TestCase;
@@ -48,24 +49,6 @@ expect()->extend('toBeOne', fn () => $this->toBe(1));
 |
 */
 
-
-/*
-|--------------------------------------------------------------------------
-| SchemaBuilder test helpers
-|--------------------------------------------------------------------------
-|
-| SchemaBuilder and everything it depends on (MigrationParser, the three
-| Resolvers, LaravelConventions) are plain PHP with no container/framework
-| dependency — deliberately constructed by hand here rather than resolved
-| through Testbench, so this whole suite stays fast and Laravel-app-free.
-| Only reach for Testbench in tests that actually exercise the Artisan
-| command, service provider, or config binding.
-|
-*/
-
-/**
- * @return SchemaBuilder
- */
 function schemaBuilder(): SchemaBuilder
 {
     $conventions = new LaravelConventions;
@@ -75,19 +58,15 @@ function schemaBuilder(): SchemaBuilder
         new IndexResolver($conventions),
         new ForeignKeyResolver($conventions),
         new ColumnResolver($conventions),
+        new PrimaryKeyResolver,
         $conventions,
     );
 }
 
-/**
- * Build a folded Schema from every .php file in a fixture directory,
- * relative to tests/Fixtures/Migrations, sorted the same way real
- * migration filenames sort (timestamp-prefixed => chronological).
- */
 function buildSchemaFromFixtures(string $relativeDir): Schema
 {
-    $path = __DIR__.'/Fixtures/Migrations/'.trim($relativeDir, '/');
-    $files = glob(rtrim($path, '/').'/*.php') ?: [];
+    $path = __DIR__.'/Fixtures/Migrations/'.mb_trim($relativeDir, '/');
+    $files = glob(mb_rtrim($path, '/').'/*.php') ?: [];
     sort($files);
 
     return schemaBuilder()->build($files);

@@ -96,7 +96,7 @@ enum ColumnMethod: string
         };
     }
 
-    public function impliesAutoIncrementingPrimaryKey(): bool
+    public function impliesPrimaryKey(): bool
     {
         return match ($this) {
             self::Id,

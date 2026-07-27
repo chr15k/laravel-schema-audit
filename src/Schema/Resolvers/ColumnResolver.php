@@ -23,10 +23,9 @@ final readonly class ColumnResolver
             return null;
         }
 
-        $impliedPrimaryKey = $method->impliesAutoIncrementingPrimaryKey();
+        $impliedPrimaryKey = $method->impliesPrimaryKey();
 
-        $name = $call->stringArgs[0]
-            ?? ($impliedPrimaryKey ? 'id' : null);
+        $name = $call->stringArgs[0] ?? ($impliedPrimaryKey ? 'id' : null);
 
         if ($name === null) {
             return null;

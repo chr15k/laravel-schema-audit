@@ -6,6 +6,11 @@ namespace Chr15k\SchemaAudit\Schema;
 
 final readonly class LaravelConventions
 {
+    public function __construct(
+        private bool $prefixIndexes,
+        private string $tablePrefix,
+    ) {}
+
     public function tableNameFromModel(string $model): string
     {
         $baseName = $this->normalizeModelClass($model);
@@ -28,6 +33,12 @@ final readonly class LaravelConventions
     /** @param  list<string>  $columns */
     public function indexName(string $table, array $columns, string $type): string
     {
+        if ($this->prefixIndexes) {
+            $table = str_contains($table, '.')
+                ? substr_replace($table, '.'.$this->tablePrefix, mb_strrpos($table, '.'), 1)
+                : $this->tablePrefix.$table;
+        }
+
         $index = mb_strtolower($table.'_'.implode('_', $columns).'_'.$type);
 
         return str_replace(['-', '.'], '_', $index);

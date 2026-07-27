@@ -15,6 +15,14 @@ final readonly class Config
     public function __construct(private Repository $config) {}
 
     /**
+     * @return array<string, mixed>
+     */
+    public function connection(): array
+    {
+        return $this->config->array('database.connections.'.$this->driver(), 'mysql');
+    }
+
+    /**
      * @return array<string>
      */
     public function paths(): array

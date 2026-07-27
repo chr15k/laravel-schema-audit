@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('articles', function (Blueprint $table) {
+        Schema::create('articles', function (Blueprint $table): void {
             $table->id();
             $table->string('slug')->unique();
             $table->string('email')->index();

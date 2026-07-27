@@ -45,6 +45,8 @@ final class AuditSchemaCommand extends Command
             $this->paths->resolve($path)
         );
 
+        $files = (array) array_first($files); // temp
+
         $progress = $this->initProgress(count($files));
 
         $schema = $builder->build($files, fn () => $progress->advance());

@@ -14,6 +14,7 @@ use Chr15k\SchemaAudit\Parsers\ValueObjects\SchemaOperation;
 use Chr15k\SchemaAudit\Schema\Resolvers\ColumnResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\ForeignKeyResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\IndexResolver;
+use Chr15k\SchemaAudit\Schema\Resolvers\PrimaryKeyResolver;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
 use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 use Closure;
@@ -25,6 +26,7 @@ final readonly class SchemaBuilder
         private IndexResolver $indexes,
         private ForeignKeyResolver $foreignKeys,
         private ColumnResolver $columns,
+        private PrimaryKeyResolver $primaryKeys,
         private LaravelConventions $conventions
     ) {}
 
@@ -118,7 +120,7 @@ final readonly class SchemaBuilder
             StructuralMethod::RenameColumn                            => $this->applyRenameColumn($table, $root),
             StructuralMethod::DropIndex, StructuralMethod::DropUnique => $this->applyDropIndex($table, $root),
             StructuralMethod::DropForeign                             => $this->applyDropForeign($table, $root),
-            StructuralMethod::Primary                                 => $table->markPrimaryKey(),
+            StructuralMethod::Primary                                 => $table->setPrimaryKey($this->primaryKeys->resolveTablePrimaryKey($root)),
             null                                                      => null, // not a known structural method — dropPrimary(), timestamps(), etc.
         };
     }
@@ -146,8 +148,11 @@ final readonly class SchemaBuilder
 
         $table->addColumn($column);
 
-        if ($chain->hasModifier('primary')) {
-            $table->markPrimaryKey();
+        if ($column->method->impliesPrimaryKey()
+            || $chain->hasModifier('primary')
+        ) {
+            $primaryKey = $this->primaryKeys->resolve($chain, $table, $column);
+            $table->setPrimaryKey($primaryKey);
         }
 
         if ($chain->hasModifier('constrained')) {

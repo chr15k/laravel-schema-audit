@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('temp_import', function (Blueprint $table) {
+        Schema::create('temp_import', function (Blueprint $table): void {
             $table->id();
             $table->string('payload');
         });

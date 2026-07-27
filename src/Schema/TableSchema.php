@@ -13,6 +13,8 @@ use JsonSerializable;
  */
 final class TableSchema implements Arrayable, JsonSerializable
 {
+    private ValueObjects\PrimaryKey $primaryKey;
+
     /** @var array<string, ValueObjects\Column> */
     private array $columns = [];
 
@@ -22,11 +24,24 @@ final class TableSchema implements Arrayable, JsonSerializable
     /** @var list<ValueObjects\ForeignKey> */
     private array $foreignKeys = [];
 
-    private bool $hasExplicitPrimaryKey = false;
-
     public function __construct(
         public readonly string $name
     ) {}
+
+    public function setPrimaryKey(ValueObjects\PrimaryKey $primaryKey): void
+    {
+        $this->primaryKey = $primaryKey;
+    }
+
+    public function primaryKey(): ValueObjects\PrimaryKey
+    {
+        return $this->primaryKey;
+    }
+
+    public function hasPrimaryKey(): bool
+    {
+        return $this->primaryKey !== [];
+    }
 
     public function addColumn(ValueObjects\Column $column): void
     {
@@ -75,29 +90,15 @@ final class TableSchema implements Arrayable, JsonSerializable
         ));
     }
 
-    public function markPrimaryKey(): void
-    {
-        $this->hasExplicitPrimaryKey = true;
-    }
-
     public function primaryKeyColumnType(): ?ColumnMethod
     {
         foreach ($this->columns as $column) {
-            if ($column->method->impliesAutoIncrementingPrimaryKey()) {
+            if ($column->method->impliesPrimaryKey()) {
                 return $column->method;
             }
         }
 
         return null;
-    }
-
-    public function hasPrimaryKey(): bool
-    {
-        if ($this->primaryKeyColumnType() instanceof ColumnMethod) {
-            return true;
-        }
-
-        return $this->hasExplicitPrimaryKey;
     }
 
     public function addForeignKey(ValueObjects\ForeignKey $fk): void
@@ -191,6 +192,7 @@ final class TableSchema implements Arrayable, JsonSerializable
     {
         return [
             'table'        => $this->name,
+            'primary_key'  => $this->primaryKey,
             'columns'      => array_values($this->columns),
             'indexes'      => $this->indexes,
             'foreign_keys' => $this->foreignKeys,
