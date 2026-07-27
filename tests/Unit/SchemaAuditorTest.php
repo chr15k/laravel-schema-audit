@@ -3,13 +3,6 @@
 declare(strict_types=1);
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
-use Chr15k\SchemaAudit\Rules\DanglingForeignKeyRule;
-use Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule;
-use Chr15k\SchemaAudit\Rules\DuplicateIndexRule;
-use Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule;
-use Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule;
-use Chr15k\SchemaAudit\Rules\RedundantIndexRule;
-use Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\TableSchema;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
@@ -52,15 +45,7 @@ it('runs the full schema auditor rule set and returns every configured rule once
         'payments' => $payments,
     ];
 
-    $auditor = new SchemaAuditor([
-        new DanglingForeignKeyRule,
-        new DuplicateForeignKeyRule,
-        new DuplicateIndexRule,
-        new MismatchedForeignKeyRule,
-        new NoPrimaryKeyRule,
-        new RedundantIndexRule,
-        new UnindexedForeignKeyRule(driver: 'sqlite'),
-    ]);
+    $auditor = app(SchemaAuditor::class);
 
     $audit = $auditor->audit(new Schema($tables));
 

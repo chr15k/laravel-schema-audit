@@ -14,7 +14,7 @@ final readonly class MigrationPathResolver
      * @param  list<string>  $cliPaths
      * @return list<string>
      */
-    public function resolve(array $cliPaths): array
+    public function resolve(array $cliPaths = []): array
     {
         $paths = array_merge($this->config->paths(), $cliPaths);
 

@@ -82,8 +82,6 @@ final class ChainExtractor
             }
 
             if ($arg->value instanceof ClassConstFetch && $arg->value->class instanceof Name) {
-                // @todo - parse Models via a new parser to resolve
-                // the actual table name from this value otherwise we're guessing...
                 $stringArgs[] = sprintf('%s::class', $arg->value->class->toString());
             }
 

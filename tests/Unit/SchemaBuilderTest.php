@@ -2,8 +2,16 @@
 
 declare(strict_types=1);
 
+use Chr15k\SchemaAudit\Migrations\MigrationLocator;
+use Chr15k\SchemaAudit\Migrations\MigrationPathResolver;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
+
+beforeEach(function () {
+    $this->locator = app(MigrationLocator::class);
+    $this->paths = app(MigrationPathResolver::class);
+    $this->files = $this->locator->files([migrations_path()]);
+});
 
 function writeTempMigration(string $directory, string $name, string $content): string
 {
@@ -14,7 +22,7 @@ function writeTempMigration(string $directory, string $name, string $content): s
 }
 
 it('folds create and later alter migrations for the same table', function (): void {
-    $schema = app(SchemaBuilder::class)->buildFromDirectory(migrations_path());
+    $schema = app(SchemaBuilder::class)->build($this->files);
 
     expect($schema->tables())->toHaveKey('users');
     expect($schema->tables())->toHaveCount(1);
@@ -69,7 +77,7 @@ return new class extends Migration
 PHP);
 
     try {
-        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->build($this->files);
         $keys = $schema->tables()['keys'];
 
         expect($keys->hasPrimaryKey())->toBeTrue();
@@ -113,7 +121,7 @@ return new class extends Migration
 PHP);
 
     try {
-        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->build($this->files);
         $orders = $schema->tables()['orders'];
 
         expect($orders->hasPrimaryKey())->toBeTrue();
@@ -172,7 +180,7 @@ return new class extends Migration
 PHP);
 
     try {
-        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->build($this->files);
 
         expect($schema->tables())->toHaveKey('accounts');
         expect($schema->tables())->not->toHaveKey('profiles');
@@ -243,7 +251,7 @@ return new class extends Migration
 PHP);
 
     try {
-        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->build($this->files);
         $settings = $schema->tables()['settings'];
 
         expect($settings->hasColumn('nickname'))->toBeFalse();
@@ -301,7 +309,7 @@ return new class extends Migration
 PHP);
 
     try {
-        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->build($this->files);
 
         expect($schema->tables())->toBeEmpty();
     } finally {
@@ -339,7 +347,7 @@ return new class extends Migration
 PHP);
 
     try {
-        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->build($this->files);
         $notes = $schema->tables()['notes'];
 
         expect($notes->hasPrimaryKey())->toBeTrue();
@@ -356,7 +364,7 @@ it('returns an empty result set when no migration files exist', function (): voi
     mkdir($path, 0700, true);
 
     try {
-        $schema = app(SchemaBuilder::class)->buildFromDirectory($path);
+        $schema = app(SchemaBuilder::class)->build($this->files);
 
         expect($schema->tables())->toBeArray();
         expect($schema->tables())->toBeEmpty();
