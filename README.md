@@ -110,17 +110,22 @@ inconsistent, not because a pattern looked suspicious.
 
 ```php
 // config/schema-audit.php
+use Chr15k\SchemaAudit\Rules;
+
 return [
-    'path' => 'database/migrations',
+    'paths' => [
+        database_path('migrations'),
+    ],
     'driver' => env('DB_CONNECTION', 'mysql'),
     'rules' => [
-        \Chr15k\SchemaAudit\Rules\UnindexedForeignKeyRule::class,
-        \Chr15k\SchemaAudit\Rules\DuplicateIndexRule::class,
-        \Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule::class,
-        \Chr15k\SchemaAudit\Rules\RedundantIndexRule::class,
-        \Chr15k\SchemaAudit\Rules\DanglingForeignKeyRule::class,
-        \Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule::class,
-        \Chr15k\SchemaAudit\Rules\MissingPrimaryKeyRule::class,
+        Rules\UnindexedForeignKeyRule::class,
+        Rules\DuplicateIndexRule::class,
+        Rules\DuplicateForeignKeyRule::class,
+        Rules\RedundantIndexRule::class,
+        Rules\DanglingForeignKeyRule::class,
+        Rules\MissingPrimaryKeyRule::class,
+        Rules\MismatchedForeignKeyRule::class,
+        Rules\InvalidReferencedKeyRule::class,
     ],
 ];
 ```
