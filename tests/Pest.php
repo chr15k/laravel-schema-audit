@@ -65,7 +65,7 @@ function schemaBuilder(): SchemaBuilder
 
 function buildSchemaFromBuilderFixtures(string $relativeDir): Schema
 {
-    $path = __DIR__.'/Fixtures/Migrations/Builder/'.mb_trim($relativeDir, '/');
+    $path = __DIR__.'/Fixtures/Migrations/SchemaBuilder/'.mb_trim($relativeDir, '/');
     $files = glob(mb_rtrim($path, '/').'/*.php') ?: [];
     sort($files);
 

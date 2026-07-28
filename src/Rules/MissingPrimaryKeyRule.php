@@ -8,7 +8,7 @@ use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Closure;
 
-final readonly class NoPrimaryKeyRule extends Rule
+final readonly class MissingPrimaryKeyRule extends Rule
 {
     public function handle(AuditContext $context, Closure $next): AuditContext
     {

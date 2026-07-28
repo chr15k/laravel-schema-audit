@@ -50,7 +50,7 @@ return [
         Rules\DuplicateForeignKeyRule::class,
         Rules\RedundantIndexRule::class,
         Rules\DanglingForeignKeyRule::class,
-        Rules\NoPrimaryKeyRule::class,
+        Rules\MissingPrimaryKeyRule::class,
         Rules\MismatchedForeignKeyRule::class,
         Rules\MissingReferencedKeyRule::class,
     ],

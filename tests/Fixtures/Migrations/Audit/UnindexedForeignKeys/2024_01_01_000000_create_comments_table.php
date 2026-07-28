@@ -10,6 +10,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::create('posts', function (Blueprint $table): void {
+            $table->id();
+        });
+
         Schema::create('comments', function (Blueprint $table): void {
             $table->id();
 
@@ -24,5 +28,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('comments');
+        Schema::dropIfExists('posts');
     }
 };

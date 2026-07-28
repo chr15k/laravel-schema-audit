@@ -99,7 +99,7 @@ php artisan schema:audit --schema-only
 | `RedundantIndexRule` | A single-column index already covered by a composite index's leading column. |
 | `DanglingForeignKeyRule` | A foreign key referencing a table that doesn't exist anywhere in the folded schema — a typo, or a table renamed/dropped without updating the reference. |
 | `MismatchedForeignKeyRule` | A foreign key whose column type doesn't match the type family of the referenced table's primary key (e.g. `foreignId()` pointing at a plain `increments()` primary key). |
-| `NoPrimaryKeyRule` | A table with no identifiable primary key — no `id()`/`increments()`-style column and no explicit `primary()` call. |
+| `MissingPrimaryKeyRule` | A table with no identifiable primary key — no `id()`/`increments()`-style column and no explicit `primary()` call. |
 
 Every rule is a pure fact about the folded schema — no query usage, no
 runtime data, no heuristics about "is this a good index." If a rule
@@ -120,7 +120,7 @@ return [
         \Chr15k\SchemaAudit\Rules\RedundantIndexRule::class,
         \Chr15k\SchemaAudit\Rules\DanglingForeignKeyRule::class,
         \Chr15k\SchemaAudit\Rules\MismatchedForeignKeyRule::class,
-        \Chr15k\SchemaAudit\Rules\NoPrimaryKeyRule::class,
+        \Chr15k\SchemaAudit\Rules\MissingPrimaryKeyRule::class,
     ],
 ];
 ```

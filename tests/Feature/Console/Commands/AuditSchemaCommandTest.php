@@ -13,7 +13,7 @@ it('runs successfully against a valid migrations path', function (): void {
 
 it('outputs the folded schema as json', function (): void {
     config()->set('schema-audit.paths', [
-        __DIR__.'/../Fixtures/Migrations/Builder/Columns',
+        __DIR__.'/../../../Fixtures/Migrations/SchemaBuilder/Columns',
     ]);
 
     Artisan::call('schema:audit', [
@@ -27,7 +27,7 @@ it('outputs the folded schema as json', function (): void {
 
 it('outputs findings as json', function (): void {
     config()->set('schema-audit.paths', [
-        __DIR__.'/../Fixtures/Migrations/Audit/DuplicateIndexes',
+        __DIR__.'/../../../Fixtures/Migrations/Audit/DuplicateIndexes',
     ]);
 
     Artisan::call('schema:audit', [
@@ -42,7 +42,7 @@ it('outputs findings as json', function (): void {
 
 it('returns failure when schema issues are found', function (): void {
     config()->set('schema-audit.paths', [
-        __DIR__.'/../Fixtures/Migrations/Audit/DuplicateIndexes',
+        __DIR__.'/../../../Fixtures/Migrations/Audit/DuplicateIndexes',
     ]);
 
     $exitCode = Artisan::call('schema:audit');
@@ -53,7 +53,7 @@ it('returns failure when schema issues are found', function (): void {
 it('accepts additional migration paths', function (): void {
     $exitCode = Artisan::call('schema:audit', [
         '--path' => [
-            __DIR__.'/../Fixtures/Migrations/Builder/Columns',
+            __DIR__.'/../../../Fixtures/Migrations/SchemaBuilder/Columns',
         ],
     ]);
 
