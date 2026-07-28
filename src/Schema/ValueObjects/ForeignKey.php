@@ -19,6 +19,26 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
         public ?string $name = null,
     ) {}
 
+    public function withColumn(string $column): self
+    {
+        return new self(
+            column: $column,
+            referencesTable: $this->referencesTable,
+            referencesColumn: $this->referencesColumn,
+            name: $this->name,
+        );
+    }
+
+    public function withReferencesTable(string $table): self
+    {
+        return new self(
+            column: $this->column,
+            referencesTable: $table,
+            referencesColumn: $this->referencesColumn,
+            name: $this->name,
+        );
+    }
+
     /**
      * @return array{column: string, references_table: ?string, name: ?string}
      */

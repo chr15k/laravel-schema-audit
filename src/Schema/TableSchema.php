@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Schema;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 
@@ -70,10 +71,19 @@ final class TableSchema implements Arrayable, JsonSerializable
         $this->indexes = array_map(
             fn (ValueObjects\Index $index): ValueObjects\Index => new ValueObjects\Index(
                 name: $index->name,
-                columns: array_map(fn (string $column): string => $column === $from ? $to : $column, $index->columns),
+                columns: array_map(
+                    fn (string $column): string => $column === $from ? $to : $column,
+                    $index->columns
+                ),
                 unique: $index->unique,
             ),
             $this->indexes
+        );
+
+        $this->updateForeignKeys(
+            fn (ValueObjects\ForeignKey $fk): ValueObjects\ForeignKey => $fk->column === $from
+                ? $fk->withColumn($to)
+                : $fk
         );
     }
 
@@ -112,6 +122,14 @@ final class TableSchema implements Arrayable, JsonSerializable
             $this->foreignKeys,
             fn (ValueObjects\ForeignKey $fk): bool => $fk->name !== $index
         ));
+    }
+
+    /**
+     * @param Closure(ValueObjects\ForeignKey): ValueObjects\ForeignKey $callback
+     */
+    public function updateForeignKeys(Closure $callback): void
+    {
+        $this->foreignKeys = array_map($callback, $this->foreignKeys);
     }
 
     /** @return array<string,ValueObjects\Column> */

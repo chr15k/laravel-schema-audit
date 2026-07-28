@@ -71,26 +71,7 @@ final readonly class SchemaBuilder
 
         if ($operation->type === SchemaOperationType::Rename) {
             if ($declared && $operation->renameTo !== null) {
-                $renamed = $tables[$operation->tableName];
-                unset($tables[$operation->tableName]);
-
-                $tables[$operation->renameTo] = new TableSchema($operation->renameTo);
-
-                if ($pk = $renamed->primaryKey()) {
-                    $tables[$operation->renameTo]->setPrimaryKey($pk);
-                }
-
-                foreach ($renamed->columns() as $column) {
-                    $tables[$operation->renameTo]->addColumn($column);
-                }
-
-                foreach ($renamed->indexes() as $index) {
-                    $tables[$operation->renameTo]->addIndex($index);
-                }
-
-                foreach ($renamed->foreignKeys() as $fk) {
-                    $tables[$operation->renameTo]->addForeignKey($fk);
-                }
+                $this->applyRenameTable($tables, $operation->tableName, $operation->renameTo);
             }
 
             return;
@@ -103,6 +84,41 @@ final readonly class SchemaBuilder
         }
 
         $tables[$operation->tableName] = $table;
+    }
+
+    /**
+     * @param  array<string, TableSchema>  $tables
+     */
+    private function applyRenameTable(array &$tables, string $from, string $to): void
+    {
+        $renamed = $tables[$from];
+        unset($tables[$from]);
+
+        $tables[$to] = new TableSchema($to);
+
+        if ($pk = $renamed->primaryKey()) {
+            $tables[$to]->setPrimaryKey($pk);
+        }
+
+        foreach ($renamed->columns() as $column) {
+            $tables[$to]->addColumn($column);
+        }
+
+        foreach ($renamed->indexes() as $index) {
+            $tables[$to]->addIndex($index);
+        }
+
+        foreach ($renamed->foreignKeys() as $fk) {
+            $tables[$to]->addForeignKey($fk);
+        }
+
+        foreach ($tables as $table) {
+            $table->updateForeignKeys(
+                fn (ForeignKey $fk): ForeignKey => $fk->referencesTable === $from
+                    ? $fk->withReferencesTable($to)
+                    : $fk
+            );
+        }
     }
 
     private function applyChain(TableSchema $table, ColumnChain $chain): void

@@ -231,6 +231,18 @@ describe('folding across multiple migration files', function (): void {
 
         expect($schema->hasTable('posts'))->toBeTrue();
     });
+
+    it('updates foreign key references when a referenced table is renamed', function (): void {
+        $schema = buildSchemaFromBuilderFixtures('Folding');
+
+        $subscriptions = $schema->table('subscriptions');
+
+        $fk = collect($subscriptions->foreignKeys())
+            ->firstWhere('column', 'user_id');
+
+        expect($fk)->not->toBeNull()
+            ->and($fk->referencesTable)->toBe('members'); // users renamed to members
+    });
 });
 
 describe('dropping constraints across migrations', function (): void {
