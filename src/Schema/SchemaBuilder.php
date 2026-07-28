@@ -76,6 +76,8 @@ final readonly class SchemaBuilder
 
                 $tables[$operation->renameTo] = new TableSchema($operation->renameTo);
 
+                $tables[$operation->renameTo]->setPrimaryKey($renamed->primaryKey());
+
                 foreach ($renamed->columns() as $column) {
                     $tables[$operation->renameTo]->addColumn($column);
                 }
