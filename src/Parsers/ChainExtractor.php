@@ -46,13 +46,9 @@ final class ChainExtractor
      */
     private function unwind(MethodCall $call, int $depth = 0): ?array
     {
-        if ($depth > 20) {
-            return null; // safety valve against unexpectedly deep/cyclic ASTs
-        }
-
         $thisCall = $this->toColumnCall($call);
 
-        if ($call->var instanceof Variable && $call->var->name === 'table') {
+        if ($call->var instanceof Variable) {
             return [$thisCall];
         }
 

@@ -45,6 +45,8 @@ final class AuditSchemaCommand extends Command
             $this->paths->resolve($path)
         );
 
+        // $files = collect($files)->where
+
         $progress = null;
 
         if (! $this->option('schema-only') && ! $this->option('json')) {
