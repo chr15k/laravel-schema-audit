@@ -52,7 +52,7 @@ return [
         Rules\DanglingForeignKeyRule::class,
         Rules\MissingPrimaryKeyRule::class,
         Rules\MismatchedForeignKeyRule::class,
-        Rules\MissingReferencedKeyRule::class,
+        Rules\InvalidReferencedKeyRule::class,
     ],
 
 ];

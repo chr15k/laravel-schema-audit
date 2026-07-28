@@ -53,10 +53,7 @@ final class AuditSchemaCommand extends Command
             $progress = $this->initProgress(count($files));
         }
 
-        $schema = $builder->build(
-            $files,
-            fn () => $progress?->advance()
-        );
+        $schema = $builder->build($files, fn () => $progress?->advance());
 
         if ($progress instanceof ProgressBar) {
             $progress->finish();
