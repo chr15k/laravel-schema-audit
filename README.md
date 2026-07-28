@@ -130,7 +130,7 @@ return [
 ];
 ```
 
-- **`path`** — default migrations directory; `--path` overrides it per run.
+- **`paths`** — migration directories to audit; use `--path` to include additional paths per run.
 - **`driver`** — defaults to your app's configured connection
   (`DB_CONNECTION`); override with `--driver` to audit against a
   different target database than the one currently configured.
