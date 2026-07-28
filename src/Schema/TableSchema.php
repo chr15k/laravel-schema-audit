@@ -125,7 +125,7 @@ final class TableSchema implements Arrayable, JsonSerializable
     }
 
     /**
-     * @param Closure(ValueObjects\ForeignKey): ValueObjects\ForeignKey $callback
+     * @param  Closure(ValueObjects\ForeignKey): ValueObjects\ForeignKey  $callback
      */
     public function updateForeignKeys(Closure $callback): void
     {
