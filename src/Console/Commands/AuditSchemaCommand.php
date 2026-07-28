@@ -45,14 +45,21 @@ final class AuditSchemaCommand extends Command
             $this->paths->resolve($path)
         );
 
-        $files = (array) array_first($files); // temp
+        $progress = null;
 
-        $progress = $this->initProgress(count($files));
+        if (! $this->option('schema-only') && ! $this->option('json')) {
+            $progress = $this->initProgress(count($files));
+        }
 
-        $schema = $builder->build($files, fn () => $progress->advance());
+        $schema = $builder->build(
+            $files,
+            fn () => $progress?->advance()
+        );
 
-        $progress->finish();
-        $this->newLine();
+        if ($progress instanceof ProgressBar) {
+            $progress->finish();
+            $this->newLine();
+        }
 
         if ($this->option('schema-only')) {
             return $this->renderSchemaOnly($schema);

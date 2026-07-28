@@ -6,7 +6,7 @@ use Chr15k\SchemaAudit\Enums\ColumnMethod;
 
 describe('column resolution', function (): void {
     it('resolves basic column types and tracks their Blueprint method', function (): void {
-        $schema = buildSchemaFromFixtures('Columns');
+        $schema = buildSchemaFromBuilderFixtures('Columns');
         $posts = $schema->table('posts');
 
         expect($posts)->not->toBeNull();
@@ -20,21 +20,21 @@ describe('column resolution', function (): void {
     });
 
     it('defaults id() with no explicit name to a column named id', function (): void {
-        $posts = buildSchemaFromFixtures('Columns')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('Columns')->table('posts');
 
         expect($posts->hasColumn('id'))->toBeTrue()
             ->and($posts->columns()['id']->method)->toBe(ColumnMethod::Id);
     });
 
     it('does not track column-less structural calls like timestamps() as a column', function (): void {
-        $posts = buildSchemaFromFixtures('Columns')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('Columns')->table('posts');
 
         expect($posts->hasColumn('created_at'))->toBeFalse()
             ->and($posts->hasColumn('updated_at'))->toBeFalse();
     });
 
     it('treats id()/increments()-style columns as an implicit primary key', function (): void {
-        $posts = buildSchemaFromFixtures('Columns')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('Columns')->table('posts');
 
         expect($posts->hasPrimaryKey())->toBeTrue()
             ->and($posts->primaryKeyColumnType())->toBe(ColumnMethod::Id);
@@ -43,7 +43,7 @@ describe('column resolution', function (): void {
 
 describe('foreign key resolution', function (): void {
     it('infers the referenced table from the column name by convention', function (): void {
-        $posts = buildSchemaFromFixtures('ForeignKeys')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
         $fk = collect($posts->foreignKeys())->firstWhere('column', 'user_id');
 
@@ -53,7 +53,7 @@ describe('foreign key resolution', function (): void {
     });
 
     it('honours an explicit table name passed positionally to constrained()', function (): void {
-        $posts = buildSchemaFromFixtures('ForeignKeys')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
         $fk = collect($posts->foreignKeys())->firstWhere('column', 'editor_id');
 
@@ -61,7 +61,7 @@ describe('foreign key resolution', function (): void {
     });
 
     it('honours an explicit table name passed as a named argument to constrained()', function (): void {
-        $posts = buildSchemaFromFixtures('ForeignKeys')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
         $fk = collect($posts->foreignKeys())->firstWhere('column', 'category_id');
 
@@ -69,7 +69,7 @@ describe('foreign key resolution', function (): void {
     });
 
     it('resolves old-style foreign()->references()->on() chains', function (): void {
-        $posts = buildSchemaFromFixtures('ForeignKeys')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
         $fk = collect($posts->foreignKeys())->firstWhere('column', 'legacy_owner_id');
 
@@ -83,7 +83,7 @@ describe('foreign key resolution', function (): void {
         // the legacy foreign()->references()->on() chain does not. If
         // this ever changes deliberately, update this test rather than
         // being surprised by it.
-        $posts = buildSchemaFromFixtures('ForeignKeys')->table('posts');
+        $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
         $fk = collect($posts->foreignKeys())->firstWhere('column', 'legacy_owner_id');
 
@@ -91,7 +91,7 @@ describe('foreign key resolution', function (): void {
     });
 
     it('resolves the referenced table from a model class passed to foreignIdFor()', function (): void {
-        $comments = buildSchemaFromFixtures('ForeignKeys')->table('comments');
+        $comments = buildSchemaFromBuilderFixtures('ForeignKeys')->table('comments');
 
         expect($comments->hasColumn('post_id'))->toBeTrue();
 
@@ -108,7 +108,7 @@ describe('foreign key resolution', function (): void {
         // ForeignKeyResolver incorrectly overwrote ForeignKey::$column
         // with that referenced-column value instead of leaving it as the
         // actual child column ('assigned_to').
-        $comments = buildSchemaFromFixtures('ForeignKeys')->table('comments');
+        $comments = buildSchemaFromBuilderFixtures('ForeignKeys')->table('comments');
 
         $fk = collect($comments->foreignKeys())->firstWhere('referencesTable', 'users');
 
@@ -120,7 +120,7 @@ describe('foreign key resolution', function (): void {
 
 describe('index resolution', function (): void {
     it('resolves a column-level ->unique() modifier with a conventional name', function (): void {
-        $articles = buildSchemaFromFixtures('Indexes')->table('articles');
+        $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
         $index = collect($articles->indexes())->firstWhere('columns', ['slug']);
 
@@ -130,7 +130,7 @@ describe('index resolution', function (): void {
     });
 
     it('resolves a column-level ->index() modifier with a conventional name', function (): void {
-        $articles = buildSchemaFromFixtures('Indexes')->table('articles');
+        $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
         $index = collect($articles->indexes())->firstWhere('columns', ['email']);
 
@@ -140,7 +140,7 @@ describe('index resolution', function (): void {
     });
 
     it('honours an explicit index name passed to a column-level modifier', function (): void {
-        $articles = buildSchemaFromFixtures('Indexes')->table('articles');
+        $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
         $index = collect($articles->indexes())->firstWhere('columns', ['reference']);
 
@@ -148,7 +148,7 @@ describe('index resolution', function (): void {
     });
 
     it('resolves a table-level composite index with a conventional name', function (): void {
-        $articles = buildSchemaFromFixtures('Indexes')->table('articles');
+        $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
         $index = collect($articles->indexes())
             ->first(fn ($i): bool => $i->columns === ['category_id', 'author_id'] && ! $i->unique);
@@ -158,7 +158,7 @@ describe('index resolution', function (): void {
     });
 
     it('honours an explicit name on a table-level composite unique index', function (): void {
-        $articles = buildSchemaFromFixtures('Indexes')->table('articles');
+        $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
         $index = collect($articles->indexes())
             ->first(fn ($i): bool => $i->columns === ['category_id', 'author_id'] && $i->unique);
@@ -170,19 +170,19 @@ describe('index resolution', function (): void {
 
 describe('folding across multiple migration files', function (): void {
     it('adds a column declared in a later Schema::table() alter', function (): void {
-        $members = buildSchemaFromFixtures('Folding')->table('members');
+        $members = buildSchemaFromBuilderFixtures('Folding')->table('members');
 
         expect($members->hasColumn('email'))->toBeTrue();
     });
 
     it('removes a column dropped in a later migration', function (): void {
-        $members = buildSchemaFromFixtures('Folding')->table('members');
+        $members = buildSchemaFromBuilderFixtures('Folding')->table('members');
 
         expect($members->hasColumn('legacy_handle'))->toBeFalse();
     });
 
     it('renames the table and carries its columns, indexes, and foreign keys forward', function (): void {
-        $schema = buildSchemaFromFixtures('Folding');
+        $schema = buildSchemaFromBuilderFixtures('Folding');
 
         expect($schema->hasTable('users'))->toBeFalse()
             ->and($schema->hasTable('members'))->toBeTrue();
@@ -200,7 +200,7 @@ describe('folding across multiple migration files', function (): void {
         // was still called `users`. This is a genuine footgun worth
         // knowing about, not a bug to "fix" — the tool is correctly
         // reflecting what the database actually does.
-        $members = buildSchemaFromFixtures('Folding')->table('members');
+        $members = buildSchemaFromBuilderFixtures('Folding')->table('members');
 
         $index = collect($members->indexes())->firstWhere('columns', ['email']);
 
@@ -209,7 +209,7 @@ describe('folding across multiple migration files', function (): void {
     });
 
     it('does not resurrect a table that was created and dropped within the same migration set', function (): void {
-        $schema = buildSchemaFromFixtures('Folding');
+        $schema = buildSchemaFromBuilderFixtures('Folding');
 
         expect($schema->hasTable('temp_import'))->toBeFalse();
     });
@@ -218,7 +218,7 @@ describe('folding across multiple migration files', function (): void {
         // Schema::table('never_declared', ...) appears in the fixture set
         // with no matching Schema::create() anywhere before it — this
         // must not cause the builder to invent a phantom table.
-        $schema = buildSchemaFromFixtures('Folding');
+        $schema = buildSchemaFromBuilderFixtures('Folding');
 
         expect($schema->hasTable('never_declared'))->toBeFalse();
     });
@@ -227,7 +227,7 @@ describe('folding across multiple migration files', function (): void {
         // The Columns fixture's down() calls Schema::dropIfExists('posts')
         // — if that were parsed, 'posts' would never appear in the schema
         // at all. Its presence here proves down() was correctly skipped.
-        $schema = buildSchemaFromFixtures('Columns');
+        $schema = buildSchemaFromBuilderFixtures('Columns');
 
         expect($schema->hasTable('posts'))->toBeTrue();
     });
@@ -235,13 +235,13 @@ describe('folding across multiple migration files', function (): void {
 
 describe('dropping constraints across migrations', function (): void {
     it('drops a foreign key by column-array form, matching the conventionally-generated name', function (): void {
-        $orders = buildSchemaFromFixtures('DropForeign')->table('orders');
+        $orders = buildSchemaFromBuilderFixtures('DropForeign')->table('orders');
 
         expect($orders->foreignKeys())->toBeEmpty();
     });
 
     it('drops a unique index by its explicit string name', function (): void {
-        $products = buildSchemaFromFixtures('DropIndex')->table('products');
+        $products = buildSchemaFromBuilderFixtures('DropIndex')->table('products');
 
         expect($products->indexes())->toBeEmpty();
     });
