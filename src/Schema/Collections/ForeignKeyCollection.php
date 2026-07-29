@@ -5,6 +5,9 @@ namespace Chr15k\SchemaAudit\Schema\Collections;
 use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 use Illuminate\Support\Collection;
 
+/**
+ * @extends Collection<int, ForeignKey>
+ */
 final class ForeignKeyCollection extends Collection
 {
     public function withoutName(string $name): static

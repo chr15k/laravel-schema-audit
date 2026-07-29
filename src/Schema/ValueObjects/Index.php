@@ -34,6 +34,41 @@ final readonly class Index implements Arrayable, JsonSerializable
     }
 
     /**
+     * Determines whether this index is made redundant by another index.
+     */
+    public function isCoveredBy(self $other): bool
+    {
+        if ($this->name === $other->name) {
+            return false;
+        }
+
+        // A unique index cannot be replaced by a non-unique index.
+        if ($this->unique && ! $other->unique) {
+            return false;
+        }
+
+        // Equivalent columns, but unique index covers non-unique index.
+        if (
+            ! $this->unique &&
+            $other->unique &&
+            $this->columns === $other->columns
+        ) {
+            return true;
+        }
+
+        // Left-prefix rule.
+        if (count($this->columns) >= count($other->columns)) {
+            return false;
+        }
+
+        return $this->columns === array_slice(
+            $other->columns,
+            0,
+            count($this->columns),
+        );
+    }
+
+    /**
      * @return array{
      *     name: ?string,
      *     columns: list<string>,

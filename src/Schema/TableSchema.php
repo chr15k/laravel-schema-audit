@@ -20,9 +20,9 @@ final class TableSchema implements Arrayable, JsonSerializable
     private ?ValueObjects\PrimaryKey $primaryKey = null;
 
     /**
-     * @param  IndexCollection<ValueObjects\Index>  $indexes
-     * @param  ForeignKeyCollection<ValueObjects\ForeignKey>  $foreignKeys
-     * @param  ColumnCollection<ValueObjects\Column>  $columns
+     * @param  IndexCollection<int, ValueObjects\Index>  $indexes
+     * @param  ForeignKeyCollection<int, ValueObjects\ForeignKey>  $foreignKeys
+     * @param  ColumnCollection<string, ValueObjects\Column>  $columns
      */
     public function __construct(
         public readonly string $name,
@@ -173,6 +173,7 @@ final class TableSchema implements Arrayable, JsonSerializable
         ValueObjects\ForeignKey $foreignKey,
         self $referencedTable,
     ): bool {
+        /** @var ?ValueObjects\Column $column */
         $column = $this->columns->get($foreignKey->column);
 
         if ($column === null) {
@@ -203,9 +204,9 @@ final class TableSchema implements Arrayable, JsonSerializable
      * @return array{
      *     table: string,
      *     primary_key: ?ValueObjects\PrimaryKey,
-     *     columns: list<ValueObjects\Column>,
-     *     indexes: list<ValueObjects\Index>,
-     *     foreign_keys: list<ValueObjects\ForeignKey>,
+     *     columns: ColumnCollection<string, ValueObjects\Column>,
+     *     indexes: IndexCollection<int, ValueObjects\Index>,
+     *     foreign_keys: ForeignKeyCollection<int, ValueObjects\ForeignKey>,
      * }
      */
     public function jsonSerialize(): array
@@ -217,9 +218,9 @@ final class TableSchema implements Arrayable, JsonSerializable
      * @return array{
      *     table: string,
      *     primary_key: ?ValueObjects\PrimaryKey,
-     *     columns: list<ValueObjects\Column>,
-     *     indexes: list<ValueObjects\Index>,
-     *     foreign_keys: list<ValueObjects\ForeignKey>,
+     *     columns: ColumnCollection<string, ValueObjects\Column>,
+     *     indexes: IndexCollection<int, ValueObjects\Index>,
+     *     foreign_keys: ForeignKeyCollection<int, ValueObjects\ForeignKey>,
      * }
      */
     public function toArray(): array

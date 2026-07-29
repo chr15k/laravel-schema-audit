@@ -3,13 +3,15 @@
 declare(strict_types=1);
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Schema\TableSchema;
 
 describe('column resolution', function (): void {
     it('resolves basic column types and tracks their Blueprint method', function (): void {
         $schema = buildSchemaFromBuilderFixtures('Columns');
+
         $posts = $schema->table('posts');
 
-        expect($posts)->not->toBeNull();
+        assert($posts instanceof TableSchema);
 
         $columns = $posts->columns();
 

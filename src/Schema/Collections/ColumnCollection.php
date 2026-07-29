@@ -6,6 +6,9 @@ use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
 use Illuminate\Support\Collection;
 
+/**
+ * @extends Collection<string, Column>
+ */
 final class ColumnCollection extends Collection
 {
     public function primaryKeyColumnMethod(): ?ColumnMethod
@@ -17,11 +20,9 @@ final class ColumnCollection extends Collection
 
     public function rename(string $from, string $to): void
     {
-        if (! $this->has($from)) {
+        if (! $column = $this->get($from)) {
             return;
         }
-
-        $column = $this->get($from);
 
         $this->put($to, $column);
         $this->forget($from);

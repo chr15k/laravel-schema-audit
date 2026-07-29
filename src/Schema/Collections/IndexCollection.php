@@ -6,6 +6,9 @@ use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 use Chr15k\SchemaAudit\Schema\ValueObjects\RedundantIndex;
 use Illuminate\Support\Collection;
 
+/**
+ * @extends Collection<int, Index>
+ */
 final class IndexCollection extends Collection
 {
     public function indexesColumn(string $column): bool
@@ -72,48 +75,17 @@ final class IndexCollection extends Collection
 
         foreach ($this as $candidate) {
             foreach ($this as $other) {
-                if (! $candidate->isCoveredBy($other)) {
-                    continue;
+                if ($candidate->isCoveredBy($other)) {
+                    $redundant->push(new RedundantIndex(
+                        index: $candidate,
+                        coveredBy: $other,
+                    ));
+
+                    break;
                 }
-
-                $redundant->push(new RedundantIndex(
-                    index: $candidate,
-                    coveredBy: $other,
-                ));
-
-                break;
             }
         }
 
         return $redundant;
-    }
-
-    public function isCoveredBy(Index $other): bool
-    {
-        if ($this->name === $other->name) {
-            return false;
-        }
-
-        if ($this->unique && ! $other->unique) {
-            return false;
-        }
-
-        if (
-            ! $this->unique &&
-            $other->unique &&
-            $this->columns === $other->columns
-        ) {
-            return true;
-        }
-
-        if (count($this->columns) >= count($other->columns)) {
-            return false;
-        }
-
-        return $this->columns === array_slice(
-            $other->columns,
-            0,
-            count($this->columns),
-        );
     }
 }
