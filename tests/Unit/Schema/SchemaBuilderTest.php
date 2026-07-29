@@ -166,6 +166,28 @@ describe('index resolution', function (): void {
         expect($index)->not->toBeNull()
             ->and($index->name)->toBe('articles_category_author_unique');
     });
+
+    it('does not create a redundant index when unique and index are chained on the same column', function (): void {
+        $articles = buildSchemaFromBuilderFixtures('Indexes')
+            ->table('articles');
+
+        $indexes = collect($articles->indexes())
+            ->where('columns', ['slug']);
+
+        expect($indexes)
+            ->toHaveCount(1)
+            ->and($indexes->first()->unique)->toBeTrue();
+    });
+
+    it('preserves explicit unique and non-unique indexes on the same column', function (): void {
+        $articles = buildSchemaFromBuilderFixtures('Indexes')
+            ->table('articles');
+
+        $indexes = collect($articles->indexes())
+            ->where('columns', ['email']);
+
+        expect($indexes)->toHaveCount(2);
+    });
 });
 
 describe('folding across multiple migration files', function (): void {

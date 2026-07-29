@@ -180,14 +180,21 @@ final readonly class SchemaBuilder
             }
         }
 
-        foreach (['unique', 'index'] as $modifier) {
-            $call = $chain->modifier($modifier);
+        $this->applyColumnIndex($table, $chain, $column->name);
+    }
 
-            if ($call instanceof ColumnCall) {
-                $table->addIndex(
-                    $this->indexes->resolveColumnIndex($call, $table, $column->name)
-                );
-            }
+    private function applyColumnIndex(TableSchema $table, ColumnChain $chain, string $column): void
+    {
+        // Laravel materialises unique()->index() as a unique index only.
+        // Do not model the chained index() call separately.
+        $modifier = $chain->hasModifier('unique') ? 'unique' : 'index';
+
+        $call = $chain->modifier($modifier);
+
+        if ($call instanceof ColumnCall) {
+            $table->addIndex(
+                $this->indexes->resolveColumnIndex($call, $table, $column)
+            );
         }
     }
 

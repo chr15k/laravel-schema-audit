@@ -7,11 +7,13 @@ use Chr15k\SchemaAudit\Rules;
 return [
 
     /*
-    |--------------------------------------------------------------------
-    | Migrations Paths
-    |--------------------------------------------------------------------
+    |--------------------------------------------------------------------------
+    | Migration Paths
+    |--------------------------------------------------------------------------
     |
-    | Migration directories schema:audit scans.
+    | Directories containing migration files to analyse. The audit command
+    | will scan these paths and build the final schema state before running
+    | the configured rules.
     |
     */
     'paths' => [
@@ -19,29 +21,24 @@ return [
     ],
 
     /*
-    |--------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     | Database Driver
-    |--------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     |
-    | Affects which rules apply — most notably UnindexedForeignKeyRule,
-    | since MySQL/MariaDB auto-index foreign key columns and Postgres/
-    | SQLite/SQL Server do not. Defaults to the app's configured
-    | connection so this stays correct without duplicating it here;
-    | override with --driver on the command line for a one-off check
-    | against a different target database.
+    | The target database driver affects database-specific behaviour and
+    | which rules are applicable. Defaults to the application's configured
+    | connection driver.
     |
     */
     'driver' => env('DB_CONNECTION', 'mysql'),
 
     /*
-    |--------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     | Enabled Rules
-    |--------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     |
-    | Rule classes to run. All five ship enabled by default. Remove an
-    | entry to disable that rule without touching the service provider.
-    | Custom rules can be added here too, as long as they implement
-    | Chr15k\SchemaAudit\Contracts\AuditRule.
+    | Rule classes that will be executed during schema audits. Remove a rule
+    | to disable it, or add custom rules that implement the AuditRule contract.
     |
     */
     'rules' => [

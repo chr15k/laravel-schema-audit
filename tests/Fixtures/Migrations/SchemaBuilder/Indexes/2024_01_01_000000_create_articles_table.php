@@ -10,13 +10,14 @@ return new class extends Migration
     {
         Schema::create('articles', function (Blueprint $table): void {
             $table->id();
-            $table->string('slug')->unique();
+            $table->string('slug')->unique()->index();
             $table->string('email')->index();
             $table->string('reference')->unique('custom_reference_unique');
             $table->integer('category_id');
             $table->integer('author_id');
             $table->index(['category_id', 'author_id']);
             $table->unique(['category_id', 'author_id'], 'articles_category_author_unique');
+            $table->unique('email');
         });
     }
 };
