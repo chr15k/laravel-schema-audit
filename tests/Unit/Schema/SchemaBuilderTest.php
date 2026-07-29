@@ -11,7 +11,7 @@ describe('column resolution', function (): void {
 
         expect($posts)->not->toBeNull();
 
-        $columns = $posts->columns();
+        $columns = $posts?->columns() ?? [];
 
         expect($columns)->toHaveKeys(['id', 'title', 'body', 'published'])
             ->and($columns['title']->method)->toBe(ColumnMethod::String)
@@ -22,22 +22,22 @@ describe('column resolution', function (): void {
     it('defaults id() with no explicit name to a column named id', function (): void {
         $posts = buildSchemaFromBuilderFixtures('Columns')->table('posts');
 
-        expect($posts->hasColumn('id'))->toBeTrue()
-            ->and($posts->columns()['id']->method)->toBe(ColumnMethod::Id);
+        expect($posts?->hasColumn('id'))->toBeTrue()
+            ->and($posts?->columns()['id']->method)->toBe(ColumnMethod::Id);
     });
 
     it('does not track column-less structural calls like timestamps() as a column', function (): void {
         $posts = buildSchemaFromBuilderFixtures('Columns')->table('posts');
 
-        expect($posts->hasColumn('created_at'))->toBeFalse()
-            ->and($posts->hasColumn('updated_at'))->toBeFalse();
+        expect($posts?->hasColumn('created_at'))->toBeFalse()
+            ->and($posts?->hasColumn('updated_at'))->toBeFalse();
     });
 
     it('treats id()/increments()-style columns as an implicit primary key', function (): void {
         $posts = buildSchemaFromBuilderFixtures('Columns')->table('posts');
 
-        expect($posts->hasPrimaryKey())->toBeTrue()
-            ->and($posts->primaryKeyColumnType())->toBe(ColumnMethod::Id);
+        expect($posts?->hasPrimaryKey())->toBeTrue()
+            ->and($posts?->primaryKeyColumnType())->toBe(ColumnMethod::Id);
     });
 });
 
@@ -45,36 +45,36 @@ describe('foreign key resolution', function (): void {
     it('infers the referenced table from the column name by convention', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts->foreignKeys())->firstWhere('column', 'user_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'user_id');
 
         expect($fk)->not->toBeNull()
-            ->and($fk->referencesTable)->toBe('users')
-            ->and($fk->name)->toBe('posts_user_id_foreign');
+            ->and($fk?->referencesTable)->toBe('users')
+            ->and($fk?->name)->toBe('posts_user_id_foreign');
     });
 
     it('honours an explicit table name passed positionally to constrained()', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts->foreignKeys())->firstWhere('column', 'editor_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'editor_id');
 
-        expect($fk->referencesTable)->toBe('users');
+        expect($fk?->referencesTable)->toBe('users');
     });
 
     it('honours an explicit table name passed as a named argument to constrained()', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts->foreignKeys())->firstWhere('column', 'category_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'category_id');
 
-        expect($fk->referencesTable)->toBe('categories');
+        expect($fk?->referencesTable)->toBe('categories');
     });
 
     it('resolves old-style foreign()->references()->on() chains', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts->foreignKeys())->firstWhere('column', 'legacy_owner_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'legacy_owner_id');
 
         expect($fk)->not->toBeNull()
-            ->and($fk->referencesTable)->toBe('users');
+            ->and($fk?->referencesTable)->toBe('users');
     });
 
     it('does NOT auto-generate a constraint name for old-style foreign() — unlike constrained()', function (): void {
@@ -85,20 +85,20 @@ describe('foreign key resolution', function (): void {
         // being surprised by it.
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts->foreignKeys())->firstWhere('column', 'legacy_owner_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'legacy_owner_id');
 
-        expect($fk->name)->toBeNull();
+        expect($fk?->name)->toBeNull();
     });
 
     it('resolves the referenced table from a model class passed to foreignIdFor()', function (): void {
         $comments = buildSchemaFromBuilderFixtures('ForeignKeys')->table('comments');
 
-        expect($comments->hasColumn('post_id'))->toBeTrue();
+        expect($comments?->hasColumn('post_id'))->toBeTrue();
 
-        $fk = collect($comments->foreignKeys())->firstWhere('column', 'post_id');
+        $fk = collect($comments?->foreignKeys())->firstWhere('column', 'post_id');
 
         expect($fk)->not->toBeNull()
-            ->and($fk->referencesTable)->toBe('posts');
+            ->and($fk?->referencesTable)->toBe('posts');
     });
 
     it('keeps the CHILD table column name even when constrained() is given an explicit referenced column', function (): void {
@@ -110,11 +110,11 @@ describe('foreign key resolution', function (): void {
         // actual child column ('assigned_to').
         $comments = buildSchemaFromBuilderFixtures('ForeignKeys')->table('comments');
 
-        $fk = collect($comments->foreignKeys())->firstWhere('referencesTable', 'users');
+        $fk = collect($comments?->foreignKeys())->firstWhere('referencesTable', 'users');
 
         expect($fk)->not->toBeNull()
-            ->and($fk->column)->toBe('assigned_to')
-            ->and($fk->name)->toBe('comments_assigned_to_custom_fk');
+            ->and($fk?->column)->toBe('assigned_to')
+            ->and($fk?->name)->toBe('comments_assigned_to_custom_fk');
     });
 });
 
@@ -122,68 +122,68 @@ describe('index resolution', function (): void {
     it('resolves a column-level ->unique() modifier with a conventional name', function (): void {
         $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
-        $index = collect($articles->indexes())->firstWhere('columns', ['slug']);
+        $index = collect($articles?->indexes())->firstWhere('columns', ['slug']);
 
         expect($index)->not->toBeNull()
-            ->and($index->unique)->toBeTrue()
-            ->and($index->name)->toBe('articles_slug_unique');
+            ->and($index?->unique)->toBeTrue()
+            ->and($index?->name)->toBe('articles_slug_unique');
     });
 
     it('resolves a column-level ->index() modifier with a conventional name', function (): void {
         $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
-        $index = collect($articles->indexes())->firstWhere('columns', ['email']);
+        $index = collect($articles?->indexes())->firstWhere('columns', ['email']);
 
         expect($index)->not->toBeNull()
-            ->and($index->unique)->toBeFalse()
-            ->and($index->name)->toBe('articles_email_index');
+            ->and($index?->unique)->toBeFalse()
+            ->and($index?->name)->toBe('articles_email_index');
     });
 
     it('honours an explicit index name passed to a column-level modifier', function (): void {
         $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
-        $index = collect($articles->indexes())->firstWhere('columns', ['reference']);
+        $index = collect($articles?->indexes())->firstWhere('columns', ['reference']);
 
-        expect($index->name)->toBe('custom_reference_unique');
+        expect($index?->name)->toBe('custom_reference_unique');
     });
 
     it('resolves a table-level composite index with a conventional name', function (): void {
         $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
-        $index = collect($articles->indexes())
+        $index = collect($articles?->indexes())
             ->first(fn ($i): bool => $i->columns === ['category_id', 'author_id'] && ! $i->unique);
 
         expect($index)->not->toBeNull()
-            ->and($index->name)->toBe('articles_category_id_author_id_index');
+            ->and($index?->name)->toBe('articles_category_id_author_id_index');
     });
 
     it('honours an explicit name on a table-level composite unique index', function (): void {
         $articles = buildSchemaFromBuilderFixtures('Indexes')->table('articles');
 
-        $index = collect($articles->indexes())
+        $index = collect($articles?->indexes())
             ->first(fn ($i): bool => $i->columns === ['category_id', 'author_id'] && $i->unique);
 
         expect($index)->not->toBeNull()
-            ->and($index->name)->toBe('articles_category_author_unique');
+            ->and($index?->name)->toBe('articles_category_author_unique');
     });
 
     it('does not create a redundant index when unique and index are chained on the same column', function (): void {
         $articles = buildSchemaFromBuilderFixtures('Indexes')
             ->table('articles');
 
-        $indexes = collect($articles->indexes())
+        $indexes = collect($articles?->indexes())
             ->where('columns', ['slug']);
 
         expect($indexes)
             ->toHaveCount(1)
-            ->and($indexes->first()->unique)->toBeTrue();
+            ->and($indexes->first()?->unique)->toBeTrue();
     });
 
     it('preserves explicit unique and non-unique indexes on the same column', function (): void {
         $articles = buildSchemaFromBuilderFixtures('Indexes')
             ->table('articles');
 
-        $indexes = collect($articles->indexes())
+        $indexes = collect($articles?->indexes())
             ->where('columns', ['email']);
 
         expect($indexes)->toHaveCount(2);
@@ -194,13 +194,13 @@ describe('folding across multiple migration files', function (): void {
     it('adds a column declared in a later Schema::table() alter', function (): void {
         $members = buildSchemaFromBuilderFixtures('Folding')->table('members');
 
-        expect($members->hasColumn('email'))->toBeTrue();
+        expect($members?->hasColumn('email'))->toBeTrue();
     });
 
     it('removes a column dropped in a later migration', function (): void {
         $members = buildSchemaFromBuilderFixtures('Folding')->table('members');
 
-        expect($members->hasColumn('legacy_handle'))->toBeFalse();
+        expect($members?->hasColumn('legacy_handle'))->toBeFalse();
     });
 
     it('renames the table and carries its columns, indexes, and foreign keys forward', function (): void {
@@ -211,8 +211,8 @@ describe('folding across multiple migration files', function (): void {
 
         $members = $schema->table('members');
 
-        expect($members->hasColumn('name'))->toBeTrue()
-            ->and($members->hasColumn('email'))->toBeTrue();
+        expect($members?->hasColumn('name'))->toBeTrue()
+            ->and($members?->hasColumn('email'))->toBeTrue();
     });
 
     it('does NOT rename an index carried over from before a table rename', function (): void {
@@ -224,10 +224,10 @@ describe('folding across multiple migration files', function (): void {
         // reflecting what the database actually does.
         $members = buildSchemaFromBuilderFixtures('Folding')->table('members');
 
-        $index = collect($members->indexes())->firstWhere('columns', ['email']);
+        $index = collect($members?->indexes())->firstWhere('columns', ['email']);
 
         expect($index)->not->toBeNull()
-            ->and($index->name)->toBe('users_email_unique');
+            ->and($index?->name)->toBe('users_email_unique');
     });
 
     it('does not resurrect a table that was created and dropped within the same migration set', function (): void {
@@ -259,11 +259,11 @@ describe('folding across multiple migration files', function (): void {
 
         $subscriptions = $schema->table('subscriptions');
 
-        $fk = collect($subscriptions->foreignKeys())
+        $fk = collect($subscriptions?->foreignKeys())
             ->firstWhere('column', 'user_id');
 
         expect($fk)->not->toBeNull()
-            ->and($fk->referencesTable)->toBe('members'); // users renamed to members
+            ->and($fk?->referencesTable)->toBe('members'); // users renamed to members
     });
 });
 
@@ -271,12 +271,12 @@ describe('dropping constraints across migrations', function (): void {
     it('drops a foreign key by column-array form, matching the conventionally-generated name', function (): void {
         $orders = buildSchemaFromBuilderFixtures('DropForeign')->table('orders');
 
-        expect($orders->foreignKeys())->toBeEmpty();
+        expect($orders?->foreignKeys())->toBeEmpty();
     });
 
     it('drops a unique index by its explicit string name', function (): void {
         $products = buildSchemaFromBuilderFixtures('DropIndex')->table('products');
 
-        expect($products->indexes())->toBeEmpty();
+        expect($products?->indexes())->toBeEmpty();
     });
 });

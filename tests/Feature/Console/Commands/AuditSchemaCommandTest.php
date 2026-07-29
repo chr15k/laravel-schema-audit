@@ -34,10 +34,10 @@ it('outputs findings as json', function (): void {
         '--json' => true,
     ]);
 
-    $audit = json_decode(Artisan::output(), true);
+    /** @var array<int, array{code: string}> $audit */
+    $audit = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
 
-    expect($audit)->toBeArray()
-        ->and($audit[0]['code'])->toBe('duplicate_index');
+    expect($audit[0]['code'])->toBe('duplicate_index');
 });
 
 it('returns failure when schema issues are found', function (): void {
