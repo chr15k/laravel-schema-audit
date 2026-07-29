@@ -15,15 +15,7 @@ final readonly class DanglingForeignKeyRule extends Rule
         $findings = [];
 
         foreach ($context->schema->tables() as $table) {
-            foreach ($table->foreignKeys() as $fk) {
-                if ($fk->referencesTable === null) {
-                    continue;
-                }
-
-                if ($context->schema->hasTable($fk->referencesTable)) {
-                    continue;
-                }
-
+            foreach ($table->danglingForeignKeys($context->schema) as $fk) {
                 $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf("Foreign key '%s' references missing table '%s'. Ensure the referenced table exists or update the foreign key.", $fk->column, $fk->referencesTable),

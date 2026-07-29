@@ -38,10 +38,10 @@ it('does nothing when there are no tables', function (): void {
 });
 
 it('reports a foreignId() foreign key pointing at a plain increments() primary key', function (): void {
-    $categories = new TableSchema('categories');
+    $categories = TableSchema::make('categories');
     $categories->addColumn(new Column('id', ColumnMethod::Increments));
 
-    $posts = new TableSchema('posts');
+    $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('category_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(column: 'category_id', referencesTable: 'categories', name: 'posts_category_id_foreign'));
@@ -62,10 +62,10 @@ it('reports a foreignId() foreign key pointing at a plain increments() primary k
 });
 
 it('does not report a foreignId() foreign key pointing at an id() primary key of the same family', function (): void {
-    $authors = new TableSchema('authors');
+    $authors = TableSchema::make('authors');
     $authors->addColumn(new Column('id', ColumnMethod::Id));
 
-    $posts = new TableSchema('posts');
+    $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('author_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(column: 'author_id', referencesTable: 'authors', name: 'posts_author_id_foreign'));
@@ -84,7 +84,7 @@ it('does not report a foreign key whose referenced table does not exist', functi
     // A dangling reference is DanglingForeignKeyRule's job, not this
     // one's — MismatchedForeignKeyRule must stay silent rather than
     // guess at a type match against a table it can't find.
-    $posts = new TableSchema('posts');
+    $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('ghost_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(column: 'ghost_id', referencesTable: 'ghosts', name: 'x'));
@@ -101,11 +101,11 @@ it('does not report a foreign key whose referenced table does not exist', functi
 
 it('does not report when the referenced table has no auto-incrementing primary key column to compare against', function (): void {
     // No id()/increments()-style column on the referenced table means
-    // primaryKeyColumnType() can't resolve — the rule must skip rather
+    // primaryKeyColumnMethod() can't resolve — the rule must skip rather
     // than guess, since a wrong guess here is worse than staying silent.
-    $noAutoIncrementTable = new TableSchema('legacy_table');
+    $noAutoIncrementTable = TableSchema::make('legacy_table');
 
-    $posts = new TableSchema('posts');
+    $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('legacy_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(column: 'legacy_id', referencesTable: 'legacy_table', name: 'x'));
@@ -123,10 +123,10 @@ it('does not report when the referenced table has no auto-incrementing primary k
 it('does not report a foreign key column that is not tracked on the table at all', function (): void {
     // The FK references a column name that was never added via addColumn()
     // — resolve() can't find its type, so it must skip rather than error.
-    $categories = new TableSchema('categories');
+    $categories = TableSchema::make('categories');
     $categories->addColumn(new Column('id', ColumnMethod::Increments));
 
-    $posts = new TableSchema('posts');
+    $posts = TableSchema::make('posts');
     $posts->addForeignKey(new ForeignKey(column: 'category_id', referencesTable: 'categories', name: 'x'));
 
     $schema = new Schema(['categories' => $categories, 'posts' => $posts]);

@@ -44,6 +44,36 @@ final readonly class Schema implements Arrayable, Jsonable, JsonSerializable
     }
 
     /**
+     * @return iterable<ValueObjects\ForeignKeyMismatch>
+     */
+    public function mismatchedForeignKeys(): iterable
+    {
+        foreach ($this->tables as $table) {
+            foreach ($table->foreignKeys() as $foreignKey) {
+                if ($foreignKey->referencesTable === null) {
+                    continue;
+                }
+
+                $referencedTable = $this->table($foreignKey->referencesTable);
+
+                if (! $referencedTable instanceof TableSchema) {
+                    continue;
+                }
+
+                if ($table->hasMatchingForeignKeyType($foreignKey, $referencedTable)) {
+                    continue;
+                }
+
+                yield new ValueObjects\ForeignKeyMismatch(
+                    table: $table,
+                    foreignKey: $foreignKey,
+                    referencedTable: $referencedTable,
+                );
+            }
+        }
+    }
+
+    /**
      * @return list<array{name: string, schema: TableSchema}>
      */
     public function jsonSerialize(): array

@@ -24,7 +24,7 @@ final readonly class UnindexedForeignKeyRule extends Rule
 
         foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
-                if (! $table->isIndexed($fk->column)) {
+                if (! $table->indexesColumn($fk->column)) {
                     $findings[] = $this->makeFinding(
                         table: $table->name,
                         message: sprintf("Foreign key '%s' has no covering index. %s does not auto-index foreign key columns; add an index to improve lookup and join performance.", $fk->column, $this->config->driver()),

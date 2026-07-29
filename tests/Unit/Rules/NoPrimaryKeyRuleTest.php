@@ -36,7 +36,7 @@ it('does nothing when there are no tables', function (): void {
 });
 
 it('reports a missing primary key', function (): void {
-    $users = new TableSchema('users');
+    $users = TableSchema::make('users');
 
     $schema = new Schema([
         'users' => $users,
@@ -55,7 +55,7 @@ it('reports a missing primary key', function (): void {
 });
 
 it('does not report tables with a primary key', function (): void {
-    $users = new TableSchema('users');
+    $users = TableSchema::make('users');
     $users->setPrimaryKey(new PrimaryKey(['id']));
 
     $schema = new Schema([
@@ -71,12 +71,12 @@ it('does not report tables with a primary key', function (): void {
 });
 
 it('reports every table missing a primary key', function (): void {
-    $tableWithPrimaryKey = new TableSchema('comments');
+    $tableWithPrimaryKey = TableSchema::make('comments');
     $tableWithPrimaryKey->setPrimaryKey(new PrimaryKey(['id']));
 
     $schema = new Schema([
-        'users'    => new TableSchema('users'),
-        'posts'    => new TableSchema('posts'),
+        'users'    => TableSchema::make('users'),
+        'posts'    => TableSchema::make('posts'),
         'comments' => $tableWithPrimaryKey,
     ]);
 

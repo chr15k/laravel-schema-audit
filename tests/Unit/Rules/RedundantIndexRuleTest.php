@@ -36,7 +36,7 @@ it('does nothing when there are no tables', function (): void {
 });
 
 it('flags a non-unique index as redundant when an equivalent unique index exists', function (): void {
-    $users = new TableSchema('users');
+    $users = TableSchema::make('users');
     $users->addIndex(new Index(name: 'users_email_index', columns: ['email'], unique: false));
     $users->addIndex(new Index(name: 'users_email_unique', columns: ['email'], unique: true));
 
@@ -61,7 +61,7 @@ it('does NOT flag a unique index as redundant just because a non-unique one exis
     // A unique constraint can't be safely replaced by a non-unique index
     // — the uniqueness guarantee would be lost — so this direction must
     // never be flagged, only the reverse.
-    $users = new TableSchema('users');
+    $users = TableSchema::make('users');
     $users->addIndex(new Index(name: 'users_email_unique', columns: ['email'], unique: true));
     $users->addIndex(new Index(name: 'users_email_index', columns: ['email'], unique: false));
 
@@ -81,7 +81,7 @@ it('does NOT flag a unique index as redundant just because a non-unique one exis
 });
 
 it('flags a single-column index covered by the leading column of a composite index', function (): void {
-    $articles = new TableSchema('articles');
+    $articles = TableSchema::make('articles');
     $articles->addIndex(new Index(name: 'articles_category_id_index', columns: ['category_id'], unique: false));
     $articles->addIndex(new Index(name: 'articles_category_id_author_id_index', columns: ['category_id', 'author_id'], unique: false));
 
@@ -98,7 +98,7 @@ it('flags a single-column index covered by the leading column of a composite ind
 });
 
 it('does not flag two composite indexes of equal length as redundant, even with overlapping columns', function (): void {
-    $articles = new TableSchema('articles');
+    $articles = TableSchema::make('articles');
     $articles->addIndex(new Index(name: 'articles_a_b_index', columns: ['a', 'b'], unique: false));
     $articles->addIndex(new Index(name: 'articles_b_a_index', columns: ['b', 'a'], unique: false));
 
@@ -113,7 +113,7 @@ it('does not flag two composite indexes of equal length as redundant, even with 
 });
 
 it('does not flag unrelated indexes on different columns', function (): void {
-    $articles = new TableSchema('articles');
+    $articles = TableSchema::make('articles');
     $articles->addIndex(new Index(name: 'articles_a_index', columns: ['a'], unique: false));
     $articles->addIndex(new Index(name: 'articles_b_index', columns: ['b'], unique: false));
 
@@ -128,7 +128,7 @@ it('does not flag unrelated indexes on different columns', function (): void {
 });
 
 it('does not treat an index as redundant with itself', function (): void {
-    $users = new TableSchema('users');
+    $users = TableSchema::make('users');
     $users->addIndex(new Index(name: 'users_email_index', columns: ['email'], unique: false));
 
     $schema = new Schema(['users' => $users]);

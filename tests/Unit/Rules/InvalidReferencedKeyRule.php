@@ -39,11 +39,11 @@ it('does nothing when there are no tables', function (): void {
 });
 
 it('reports an invalid foreign key refernce whose referenced column has no unique constraint on the parent table', function (): void {
-    $users = new TableSchema('users');
+    $users = TableSchema::make('users');
     $users->addColumn(new Column('id', ColumnMethod::Id));
     $users->addIndex(new Index(name: null, columns: ['id'], unique: false));
 
-    $transactions = new TableSchema('transactions');
+    $transactions = TableSchema::make('transactions');
     $transactions->addColumn(new Column('user_id', ColumnMethod::ForeignId));
     $transactions->addForeignKey(new ForeignKey('user_id', 'users', 'id'));
 
@@ -65,11 +65,11 @@ it('reports an invalid foreign key refernce whose referenced column has no uniqu
 });
 
 it('does not report when referenced column has a unique constraint on the parent table', function (): void {
-    $users = new TableSchema('users');
+    $users = TableSchema::make('users');
     $users->addColumn(new Column('id', ColumnMethod::Id));
     $users->addIndex(new Index(name: null, columns: ['id'], unique: true));
 
-    $transactions = new TableSchema('transactions');
+    $transactions = TableSchema::make('transactions');
     $transactions->addColumn(new Column('user_id', ColumnMethod::ForeignId));
     $transactions->addForeignKey(new ForeignKey('user_id', 'users', 'id'));
 

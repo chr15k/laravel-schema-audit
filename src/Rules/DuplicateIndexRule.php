@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
+use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
+use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
 final readonly class DuplicateIndexRule extends Rule
@@ -14,23 +16,22 @@ final readonly class DuplicateIndexRule extends Rule
         $findings = [];
 
         foreach ($context->schema->tables() as $table) {
-            $seen = [];
-
-            foreach ($table->indexes() as $index) {
-                if (isset($seen[$index->signature()])) {
-                    $findings[] = $this->makeFinding(
-                        table: $table->name,
-                        message: sprintf("Duplicate index on columns '%s' - declared more than once. Remove the redundant index.", implode(', ', $index->columns)),
-                        column: implode(',', $index->columns),
-                    );
-
-                    continue;
-                }
-
-                $seen[$index->signature()] = true;
+            foreach ($table->indexes()->duplicated() as $index) {
+                $findings[] = $this->duplicateIndexFinding($table->name, $index);
             }
         }
 
         return $next($context->withFindings($findings));
+    }
+
+    private function duplicateIndexFinding(string $table, Index $index): Finding
+    {
+        $columns = implode(', ', $index->columns);
+
+        return $this->makeFinding(
+            table: $table,
+            message: sprintf("Duplicate index on columns '%s' - declared more than once. Remove the redundant index.", $columns),
+            column: $columns,
+        );
     }
 }

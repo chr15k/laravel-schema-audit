@@ -7,7 +7,6 @@ namespace Chr15k\SchemaAudit\Rules;
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Schema\TableSchema;
-use Chr15k\SchemaAudit\Schema\ValueObjects\PrimaryKey;
 use Closure;
 
 /**
@@ -25,18 +24,18 @@ final readonly class InvalidReferencedKeyRule extends Rule
         foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
                 if ($fk->referencesTable === null) {
-                    continue; // no target table at all — DanglingForeignKeyRule's concern
+                    continue;
                 }
 
                 $referencedTable = $context->schema->table($fk->referencesTable);
 
                 if (! $referencedTable instanceof TableSchema) {
-                    continue; // target table doesn't exist — DanglingForeignKeyRule's concern
+                    continue;
                 }
 
                 $referencedColumn = $fk->referencesColumn ?? 'id';
 
-                if ($this->hasUniqueConstraintOn($referencedTable, $referencedColumn)) {
+                if ($referencedTable->hasValidReferencedKey($referencedColumn)) {
                     continue;
                 }
 
@@ -55,22 +54,5 @@ final readonly class InvalidReferencedKeyRule extends Rule
         }
 
         return $next($context->withFindings($findings));
-    }
-
-    private function hasUniqueConstraintOn(TableSchema $table, string $column): bool
-    {
-        $primaryKey = $table->primaryKey();
-
-        if ($primaryKey instanceof PrimaryKey && $primaryKey->columns === [$column]) {
-            return true;
-        }
-
-        foreach ($table->indexes() as $index) {
-            if ($index->unique && $index->columns === [$column]) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

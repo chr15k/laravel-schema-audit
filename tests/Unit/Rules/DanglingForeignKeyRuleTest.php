@@ -38,7 +38,7 @@ it('does nothing when there are no tables', function (): void {
 });
 
 it('detects a dangling foreign key when the referenced table does not exist', function (): void {
-    $table = new TableSchema('transactions');
+    $table = TableSchema::make('transactions');
     $table->addColumn(new Column('user_id', ColumnMethod::ForeignId));
     $table->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
 
@@ -59,13 +59,13 @@ it('detects a dangling foreign key when the referenced table does not exist', fu
 });
 
 it('does not report dangling foreign key when the referenced table exists', function (): void {
-    $table = new TableSchema('transactions');
+    $table = TableSchema::make('transactions');
     $table->addColumn(new Column('user_id', ColumnMethod::ForeignId));
     $table->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
 
     $schema = new Schema([
         'transactions' => $table,
-        'users'        => new TableSchema('users'),
+        'users'        => TableSchema::make('users'),
     ]);
 
     $result = (new DanglingForeignKeyRule)->handle(
@@ -77,15 +77,15 @@ it('does not report dangling foreign key when the referenced table exists', func
 });
 
 it('reports every table with a dandling foreign key', function (): void {
-    $transactions = new TableSchema('transactions');
+    $transactions = TableSchema::make('transactions');
     $transactions->addColumn(new Column('user_id', ColumnMethod::ForeignId));
     $transactions->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
 
-    $orders = new TableSchema('orders');
+    $orders = TableSchema::make('orders');
     $orders->addColumn(new Column('user_id', ColumnMethod::ForeignId));
     $orders->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
 
-    $items = new TableSchema('order_items');
+    $items = TableSchema::make('order_items');
     $items->addColumn(new Column('order_id', ColumnMethod::ForeignId));
     $items->addForeignKey(new ForeignKey(column: 'id', referencesTable: 'orders'));
 

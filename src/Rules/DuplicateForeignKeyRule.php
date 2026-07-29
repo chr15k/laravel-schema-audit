@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
+use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
+use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
 final readonly class DuplicateForeignKeyRule extends Rule
@@ -14,23 +16,20 @@ final readonly class DuplicateForeignKeyRule extends Rule
         $findings = [];
 
         foreach ($context->schema->tables() as $table) {
-            $seen = [];
-
-            foreach ($table->foreignKeys() as $fk) {
-                if (isset($seen[$fk->column])) {
-                    $findings[] = $this->makeFinding(
-                        table: $table->name,
-                        message: sprintf("Duplicate foreign key on column '%s' - defined more than once. Remove the redundant constraint.", $fk->column),
-                        column: $fk->column,
-                    );
-
-                    continue;
-                }
-
-                $seen[$fk->column] = true;
+            foreach ($table->foreignKeys()->duplicated() as $fk) {
+                $findings[] = $this->duplicateForeignKeyFinding($table->name, $fk);
             }
         }
 
         return $next($context->withFindings($findings));
+    }
+
+    private function duplicateForeignKeyFinding(string $table, ForeignKey $fk): Finding
+    {
+        return $this->makeFinding(
+            table: $table,
+            message: sprintf("Duplicate foreign key on column '%s' - defined more than once. Remove the redundant constraint.", $fk->column),
+            column: $fk->column,
+        );
     }
 }

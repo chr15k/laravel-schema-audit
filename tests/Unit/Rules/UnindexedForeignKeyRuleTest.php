@@ -50,7 +50,7 @@ it('does nothing when there are no tables', function (): void {
 });
 
 it('reports a foreign key with no covering index on a driver that does not auto-index them', function (): void {
-    $orders = new TableSchema('orders');
+    $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
 
     $schema = new Schema(['orders' => $orders]);
@@ -70,7 +70,7 @@ it('reports a foreign key with no covering index on a driver that does not auto-
 });
 
 it('does not report anything at all on mysql, which auto-indexes foreign key columns', function (): void {
-    $orders = new TableSchema('orders');
+    $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
 
     $schema = new Schema(['orders' => $orders]);
@@ -84,7 +84,7 @@ it('does not report anything at all on mysql, which auto-indexes foreign key col
 });
 
 it('does not report anything on mariadb either', function (): void {
-    $orders = new TableSchema('orders');
+    $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
 
     $schema = new Schema(['orders' => $orders]);
@@ -98,7 +98,7 @@ it('does not report anything on mariadb either', function (): void {
 });
 
 it('does not report a foreign key that already has a covering index, regardless of driver', function (): void {
-    $orders = new TableSchema('orders');
+    $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
     $orders->addIndex(new Index(name: 'orders_customer_id_index', columns: ['customer_id'], unique: false));
 
@@ -113,7 +113,7 @@ it('does not report a foreign key that already has a covering index, regardless 
 });
 
 it('defaults to mysql (auto-indexing) when no driver is configured', function (): void {
-    $orders = new TableSchema('orders');
+    $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'x'));
 
     $schema = new Schema(['orders' => $orders]);

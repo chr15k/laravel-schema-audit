@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
-use Chr15k\SchemaAudit\Enums\ColumnFamily;
-use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Closure;
 
@@ -31,56 +29,19 @@ final readonly class MismatchedForeignKeyRule extends Rule
     {
         $findings = [];
 
-        foreach ($context->schema->tables() as $table) {
-            foreach ($table->foreignKeys() as $fk) {
-                if ($fk->referencesTable === null) {
-                    continue;
-                }
+        foreach ($context->schema->mismatchedForeignKeys() as $mismatch) {
+            $fk = $mismatch->foreignKey;
 
-                if (! $context->schema->hasTable($fk->referencesTable)) {
-                    continue;
-                }
-
-                $referencedPkType = $context->schema->table($fk->referencesTable)?->primaryKeyColumnType();
-
-                if (! $referencedPkType instanceof ColumnMethod) {
-                    continue;
-                }
-
-                $fkColumnType = $table->columns()[$fk->column] ?? null;
-
-                if ($fkColumnType === null) {
-                    continue;
-                }
-
-                $fkFamily = $fkColumnType->method->family();
-                $pkFamily = $referencedPkType->family();
-
-                if ($fkFamily === null) {
-                    continue;
-                }
-
-                if (! $pkFamily instanceof ColumnFamily) {
-                    continue;
-                }
-
-                if ($fkFamily === $pkFamily) {
-                    continue;
-                }
-
-                $findings[] = $this->makeFinding(
-                    table: $table->name,
-                    message: sprintf(
-                        "Foreign key on '%s' (%s) does not match key type '%s' on '%s'.",
-                        $fk->column,
-                        $fkColumnType->method->toType(),
-                        $referencedPkType->toType(),
-                        $fk->referencesTable
-                    ),
-                    column: $fk->column,
-                    severity: Severity::Error,
-                );
-            }
+            $findings[] = $this->makeFinding(
+                table: $mismatch->table->name,
+                message: sprintf(
+                    "Foreign key on '%s' does not match key type on '%s'.",
+                    $fk->column,
+                    $mismatch->referencedTable->name,
+                ),
+                column: $fk->column,
+                severity: Severity::Error,
+            );
         }
 
         return $next($context->withFindings($findings));

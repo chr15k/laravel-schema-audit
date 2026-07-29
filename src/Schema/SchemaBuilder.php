@@ -77,7 +77,7 @@ final readonly class SchemaBuilder
             return;
         }
 
-        $table = $tables[$operation->tableName] ?? new TableSchema($operation->tableName);
+        $table = $tables[$operation->tableName] ?? TableSchema::make($operation->tableName);
 
         foreach ($operation->chains as $chain) {
             $this->applyChain($table, $chain);
@@ -94,7 +94,7 @@ final readonly class SchemaBuilder
         $renamed = $tables[$from];
         unset($tables[$from]);
 
-        $tables[$to] = new TableSchema($to);
+        $tables[$to] = TableSchema::make($to);
 
         if ($pk = $renamed->primaryKey()) {
             $tables[$to]->setPrimaryKey($pk);
@@ -113,11 +113,7 @@ final readonly class SchemaBuilder
         }
 
         foreach ($tables as $table) {
-            $table->updateForeignKeys(
-                fn (ForeignKey $fk): ForeignKey => $fk->referencesTable === $from
-                    ? $fk->withReferencesTable($to)
-                    : $fk
-            );
+            $table->renameReferencedTable($from, $to);
         }
     }
 
@@ -153,7 +149,7 @@ final readonly class SchemaBuilder
             $index = $this->conventions->indexName($table->name, $index, 'foreign');
         }
 
-        $table->dropForeignKey($index);
+        $table->removeForeignKey($index);
     }
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
@@ -241,7 +237,7 @@ final readonly class SchemaBuilder
     private function applyDropIndex(TableSchema $table, ColumnCall $call): void
     {
         foreach ($call->stringArgs as $name) {
-            $table->dropIndex($name);
+            $table->removeIndex($name);
         }
     }
 }

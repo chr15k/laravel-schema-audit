@@ -11,7 +11,7 @@ describe('column resolution', function (): void {
 
         expect($posts)->not->toBeNull();
 
-        $columns = $posts?->columns() ?? [];
+        $columns = $posts->columns();
 
         expect($columns)->toHaveKeys(['id', 'title', 'body', 'published'])
             ->and($columns['title']->method)->toBe(ColumnMethod::String)
@@ -37,7 +37,7 @@ describe('column resolution', function (): void {
         $posts = buildSchemaFromBuilderFixtures('Columns')->table('posts');
 
         expect($posts?->hasPrimaryKey())->toBeTrue()
-            ->and($posts?->primaryKeyColumnType())->toBe(ColumnMethod::Id);
+            ->and($posts?->primaryKeyColumnMethod())->toBe(ColumnMethod::Id);
     });
 });
 

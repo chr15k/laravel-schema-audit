@@ -21,6 +21,18 @@ final readonly class Index implements Arrayable, JsonSerializable
         public bool $unique = false,
     ) {}
 
+    public function renameColumn(string $from, string $to): self
+    {
+        return new self(
+            name: $this->name,
+            columns: array_map(
+                fn (string $column): string => $column === $from ? $to : $column,
+                $this->columns,
+            ),
+            unique: $this->unique,
+        );
+    }
+
     /**
      * @return array{
      *     name: ?string,

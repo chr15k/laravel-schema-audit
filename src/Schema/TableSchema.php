@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema;
 
+use Chr15k\SchemaAudit\Enums\ColumnFamily;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
-use Closure;
+use Chr15k\SchemaAudit\Schema\Collections\ColumnCollection;
+use Chr15k\SchemaAudit\Schema\Collections\ForeignKeyCollection;
+use Chr15k\SchemaAudit\Schema\Collections\IndexCollection;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 
@@ -16,18 +19,22 @@ final class TableSchema implements Arrayable, JsonSerializable
 {
     private ?ValueObjects\PrimaryKey $primaryKey = null;
 
-    /** @var array<string, ValueObjects\Column> */
-    private array $columns = [];
-
-    /** @var list<ValueObjects\Index> */
-    private array $indexes = [];
-
-    /** @var list<ValueObjects\ForeignKey> */
-    private array $foreignKeys = [];
-
+    /**
+     * @param  IndexCollection<ValueObjects\Index>  $indexes
+     * @param  ForeignKeyCollection<ValueObjects\ForeignKey>  $foreignKeys
+     * @param  ColumnCollection<ValueObjects\Column>  $columns
+     */
     public function __construct(
-        public readonly string $name
+        public readonly string $name,
+        private IndexCollection $indexes,
+        private ForeignKeyCollection $foreignKeys,
+        private readonly ColumnCollection $columns
     ) {}
+
+    public static function make(string $name): self
+    {
+        return app(self::class, ['name' => $name]);
+    }
 
     public function setPrimaryKey(ValueObjects\PrimaryKey $primaryKey): void
     {
@@ -46,148 +53,156 @@ final class TableSchema implements Arrayable, JsonSerializable
 
     public function addColumn(ValueObjects\Column $column): void
     {
-        $this->columns[$column->name] = $column;
+        $this->columns->put($column->name, $column);
     }
 
     public function dropColumn(string $name): void
     {
-        unset($this->columns[$name]);
+        $this->columns->forget($name);
 
-        $this->indexes = array_values(array_filter(
-            $this->indexes,
-            fn (ValueObjects\Index $index): bool => $index->columns !== [$name]
-        ));
-    }
-
-    public function renameColumn(string $from, string $to): void
-    {
-        if (! array_key_exists($from, $this->columns)) {
-            return;
-        }
-
-        $this->columns[$to] = $this->columns[$from];
-        unset($this->columns[$from]);
-
-        $this->indexes = array_map(
-            fn (ValueObjects\Index $index): ValueObjects\Index => new ValueObjects\Index(
-                name: $index->name,
-                columns: array_map(
-                    fn (string $column): string => $column === $from ? $to : $column,
-                    $index->columns
-                ),
-                unique: $index->unique,
-            ),
-            $this->indexes
-        );
-
-        $this->updateForeignKeys(
-            fn (ValueObjects\ForeignKey $fk): ValueObjects\ForeignKey => $fk->column === $from
-                ? $fk->withColumn($to)
-                : $fk
-        );
-    }
-
-    public function addIndex(ValueObjects\Index $index): void
-    {
-        $this->indexes[] = $index;
-    }
-
-    public function dropIndex(string $indexName): void
-    {
-        $this->indexes = array_values(array_filter(
-            $this->indexes,
-            fn (ValueObjects\Index $index): bool => $index->name !== $indexName
-        ));
-    }
-
-    public function primaryKeyColumnType(): ?ColumnMethod
-    {
-        foreach ($this->columns as $column) {
-            if ($column->method->impliesPrimaryKey()) {
-                return $column->method;
-            }
-        }
-
-        return null;
-    }
-
-    public function addForeignKey(ValueObjects\ForeignKey $fk): void
-    {
-        $this->foreignKeys[] = $fk;
-    }
-
-    public function dropForeignKey(string $index): void
-    {
-        $this->foreignKeys = array_values(array_filter(
-            $this->foreignKeys,
-            fn (ValueObjects\ForeignKey $fk): bool => $fk->name !== $index
-        ));
-    }
-
-    /**
-     * @param  Closure(ValueObjects\ForeignKey): ValueObjects\ForeignKey  $callback
-     */
-    public function updateForeignKeys(Closure $callback): void
-    {
-        $this->foreignKeys = array_map($callback, $this->foreignKeys);
-    }
-
-    /** @return array<string,ValueObjects\Column> */
-    public function columns(): array
-    {
-        return $this->columns;
-    }
-
-    /** @return list<ValueObjects\Index> */
-    public function indexes(): array
-    {
-        return $this->indexes;
-    }
-
-    /** @return list<ValueObjects\ForeignKey> */
-    public function foreignKeys(): array
-    {
-        return $this->foreignKeys;
+        $this->indexes = $this->indexes->withoutColumn($name);
     }
 
     public function hasColumn(string $name): bool
     {
-        return array_key_exists($name, $this->columns);
+        return $this->columns->has($name);
     }
 
-    public function isIndexed(string $column): bool
+    public function renameColumn(string $from, string $to): void
     {
-        foreach ($this->indexes as $index) {
-            if (($index->columns[0] ?? null) === $column) {
-                return true;
-            }
-        }
+        $this->columns->rename($from, $to);
 
+        $this->indexes = $this->indexes->renameColumn($from, $to);
+
+        $this->foreignKeys = $this->foreignKeys->renameColumn($from, $to);
+    }
+
+    public function addIndex(ValueObjects\Index $index): void
+    {
+        $this->indexes->push($index);
+    }
+
+    public function removeIndex(string $indexName): void
+    {
+        $this->indexes = $this->indexes->withoutName($indexName);
+    }
+
+    public function primaryKeyColumnMethod(): ?ColumnMethod
+    {
+        return $this->columns->primaryKeyColumnMethod();
+    }
+
+    public function addForeignKey(ValueObjects\ForeignKey $fk): void
+    {
+        $this->foreignKeys->push($fk);
+    }
+
+    public function removeForeignKey(string $name): void
+    {
+        $this->foreignKeys = $this->foreignKeys->withoutName($name);
+    }
+
+    public function renameReferencedTable(string $from, string $to): void
+    {
+        $this->foreignKeys = $this->foreignKeys->renameReferencedTable($from, $to);
+    }
+
+    /**
+     * @return ColumnCollection<ValueObjects\Column>
+     */
+    public function columns(): ColumnCollection
+    {
+        return $this->columns;
+    }
+
+    /**
+     * @return IndexCollection<ValueObjects\Index>
+     */
+    public function indexes(): IndexCollection
+    {
+        return $this->indexes;
+    }
+
+    /**
+     * @return ForeignKeyCollection<ValueObjects\ForeignKey>
+     */
+    public function foreignKeys(): ForeignKeyCollection
+    {
+        return $this->foreignKeys;
+    }
+
+    public function indexesColumn(string $column): bool
+    {
         // Laravel's foreignId()->constrained() does NOT auto-index
         // on all DB drivers/versions, so we deliberately do not
         // treat "is a foreign key" as "is indexed" here - that gap
         // is exactly what rule UnindexedForeignKey checks for.
-
-        return false;
+        return $this->indexes->indexesColumn($column);
     }
 
     /**
      * @param  list<string>  $columns
      */
-    public function hasExactCompositeIndex(array $columns): bool
+    public function hasExactColumns(array $columns): bool
     {
-        foreach ($this->indexes as $index) {
-            if ($index->columns === $columns) {
-                return true;
-            }
+        return $this->indexes->hasExactColumns($columns);
+    }
+
+    public function hasValidReferencedKey(string $column): bool
+    {
+        $primaryKey = $this->primaryKey;
+
+        if ($primaryKey instanceof ValueObjects\PrimaryKey && $primaryKey->columns === [$column]) {
+            return true;
         }
 
-        return false;
+        return $this->indexes->contains(
+            fn (ValueObjects\Index $index): bool => $index->unique && $index->columns === [$column]
+        );
+    }
+
+    public function danglingForeignKeys(Schema $schema): ForeignKeyCollection
+    {
+        return $this->foreignKeys->filter(
+            fn (ValueObjects\ForeignKey $fk): bool => $fk->referencesTable !== null
+                && ! $schema->hasTable($fk->referencesTable)
+        );
+    }
+
+    public function hasMatchingForeignKeyType(
+        ValueObjects\ForeignKey $foreignKey,
+        self $referencedTable,
+    ): bool {
+        $column = $this->columns->get($foreignKey->column);
+
+        if ($column === null) {
+            return true;
+        }
+
+        $referencedPkType = $referencedTable->primaryKeyColumnMethod();
+
+        if (! $referencedPkType instanceof ColumnMethod) {
+            return true;
+        }
+
+        $columnFamily = $column->method->family();
+        $primaryKeyFamily = $referencedPkType->family();
+
+        if (! $columnFamily instanceof ColumnFamily) {
+            return true;
+        }
+
+        if (! $primaryKeyFamily instanceof ColumnFamily) {
+            return true;
+        }
+
+        return $columnFamily === $primaryKeyFamily;
     }
 
     /**
      * @return array{
      *     table: string,
+     *     primary_key: ?ValueObjects\PrimaryKey,
      *     columns: list<ValueObjects\Column>,
      *     indexes: list<ValueObjects\Index>,
      *     foreign_keys: list<ValueObjects\ForeignKey>,
@@ -201,6 +216,7 @@ final class TableSchema implements Arrayable, JsonSerializable
     /**
      * @return array{
      *     table: string,
+     *     primary_key: ?ValueObjects\PrimaryKey,
      *     columns: list<ValueObjects\Column>,
      *     indexes: list<ValueObjects\Index>,
      *     foreign_keys: list<ValueObjects\ForeignKey>,
@@ -211,7 +227,7 @@ final class TableSchema implements Arrayable, JsonSerializable
         return [
             'table'        => $this->name,
             'primary_key'  => $this->primaryKey,
-            'columns'      => array_values($this->columns),
+            'columns'      => $this->columns->values(),
             'indexes'      => $this->indexes,
             'foreign_keys' => $this->foreignKeys,
         ];
