@@ -169,9 +169,8 @@ final class TableSchema implements Arrayable, JsonSerializable
 
     public function danglingForeignKeys(Schema $schema): ForeignKeyCollection
     {
-        return $this->foreignKeys->filter(
-            fn (ValueObjects\ForeignKey $fk): bool => $fk->referencesTable !== null
-                && ! $schema->hasTable($fk->referencesTable)
+        return $this->foreignKeys->reject(
+            fn (ValueObjects\ForeignKey $fk): bool => $schema->hasTable($fk->referencesTable)
         );
     }
 
@@ -182,10 +181,6 @@ final class TableSchema implements Arrayable, JsonSerializable
         $column = $this->column($foreignKey->column);
 
         if (! $column instanceof Column) {
-            return true;
-        }
-
-        if ($foreignKey->referencesColumn === null) {
             return true;
         }
 

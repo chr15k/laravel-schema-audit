@@ -207,7 +207,12 @@ final readonly class SchemaBuilder
         $referencesCall = $chain->modifier('references');
 
         $referencesTable = $onCall?->stringArgs[0] ?? null;
-        $referencesColumn = $referencesCall?->stringArgs[0] ?? 'id';
+        $referencesColumn = $referencesCall?->stringArgs[0] ?? null;
+
+        if ($referencesTable === null || $referencesColumn === null) {
+            return;
+        }
+
         $constraintName = $root->stringArgs[1] ?? null;
 
         $table->addForeignKey(new ForeignKey(

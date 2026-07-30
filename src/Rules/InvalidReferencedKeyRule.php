@@ -23,19 +23,13 @@ final readonly class InvalidReferencedKeyRule extends Rule
 
         foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
-                if ($fk->referencesTable === null) {
-                    continue;
-                }
-
                 $referencedTable = $context->schema->table($fk->referencesTable);
 
                 if (! $referencedTable instanceof TableSchema) {
                     continue;
                 }
 
-                $referencedColumn = $fk->referencesColumn ?? 'id';
-
-                if ($referencedTable->hasValidReferencedKey($referencedColumn)) {
+                if ($referencedTable->hasValidReferencedKey($fk->referencesColumn)) {
                     continue;
                 }
 
@@ -45,7 +39,7 @@ final readonly class InvalidReferencedKeyRule extends Rule
                         "Foreign key on '%s' references '%s.%s', which has no unique key or primary key — MySQL/MariaDB will reject this constraint at migrate time.",
                         $fk->column,
                         $fk->referencesTable,
-                        $referencedColumn,
+                        $fk->referencesColumn,
                     ),
                     column: $fk->column,
                     severity: Severity::Error,

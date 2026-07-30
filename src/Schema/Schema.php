@@ -50,10 +50,6 @@ final readonly class Schema implements Arrayable, Jsonable, JsonSerializable
     {
         foreach ($this->tables as $table) {
             foreach ($table->foreignKeys() as $foreignKey) {
-                if ($foreignKey->referencesTable === null) {
-                    continue;
-                }
-
                 $referencedTable = $this->table($foreignKey->referencesTable);
 
                 if (! $referencedTable instanceof TableSchema) {

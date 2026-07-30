@@ -123,12 +123,12 @@ describe('foreign key resolution', function (): void {
         $table = buildSchemaFromBuilderFixtures('ForeignKeys')
             ->table('telescope_entries_tags');
 
-        $fk = collect($table->foreignKeys())
+        $fk = collect($table?->foreignKeys() ?? [])
             ->firstWhere('column', 'entry_uuid');
 
         expect($fk)->not->toBeNull()
-            ->and($fk->referencesTable)->toBe('telescope_entries')
-            ->and($fk->referencesColumn)->toBe('uuid');
+            ->and($fk?->referencesTable)->toBe('telescope_entries')
+            ->and($fk?->referencesColumn)->toBe('uuid');
     });
 });
 
