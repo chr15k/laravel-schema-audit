@@ -129,7 +129,6 @@ enum ColumnMethod: string
             self::Id,
             self::BigIncrements,
             self::ForeignId,
-            self::ForeignIdFor,
             self::UnsignedBigInteger => ColumnFamily::BigUnsigned,
 
             // Signed Big Integer
@@ -165,7 +164,6 @@ enum ColumnMethod: string
             // UUID
             self::Uuid,
             self::ForeignUuid,
-            self::ForeignUuidFor,
             self::UuidMorphs => ColumnFamily::Uuid,
 
             // ULID
@@ -207,6 +205,10 @@ enum ColumnMethod: string
             self::Year => ColumnFamily::DateTime,
 
             self::Binary => ColumnFamily::Binary,
+
+            // Depends on the referenced model's primary key type (int, UUID, ULID,
+            // etc.), which cannot be inferred statically without parsing the model.
+            self::ForeignUuidFor, self::ForeignIdFor => ColumnFamily::Other,
 
             // Spatial, Enums, Morphs, or unrecognized fallback
             default => ColumnFamily::Other,
