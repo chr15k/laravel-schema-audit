@@ -18,7 +18,7 @@ final readonly class MissingPrimaryKeyRule extends Rule
             if (! $table->hasPrimaryKey()) {
                 $findings[] = $this->makeFinding(
                     table: $table->name,
-                    message: 'Missing primary key. Add <fg=white>id()</> or define a <fg=white>primary()</> key',
+                    message: 'Table has no primary key',
                     severity: Severity::Error,
                 );
             }
