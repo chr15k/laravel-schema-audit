@@ -11,12 +11,14 @@ final readonly class MigrationPathResolver
     public function __construct(private Config $config) {}
 
     /**
-     * @param  list<string>  $cliPaths
+     * Provide paths to resolve; defaults to configured paths.
+     *
+     * @param  list<string>  $paths
      * @return list<string>
      */
-    public function resolve(array $cliPaths = []): array
+    public function resolve(array $paths = []): array
     {
-        $paths = array_merge($this->config->paths(), $cliPaths);
+        $paths = $paths !== [] ? $paths : $this->config->paths();
 
         return array_values(array_unique(
             array_map($this->absolute(...), $paths)

@@ -20,7 +20,7 @@ use Symfony\Component\Console\Terminal;
 final class AuditSchemaCommand extends Command
 {
     protected $signature = 'schema:audit
-        {--path=* : Additional migration directory to audit}
+        {--path=* : Migration paths to audit (overrides configured paths)}
         {--schema-only : Print the raw folded schema instead of running rules}
         {--json : Print findings as JSON instead of the styled report}';
 
@@ -44,8 +44,6 @@ final class AuditSchemaCommand extends Command
         $files = $this->locator->files(
             $this->paths->resolve($path)
         );
-
-        // $files = collect($files)->where
 
         $progress = null;
 

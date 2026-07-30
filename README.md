@@ -89,6 +89,10 @@ php artisan schema:audit --json
 php artisan schema:audit --schema-only
 ```
 
+> [!IMPORTANT]
+> Schema Audit treats all provided migration paths as belonging to a single database schema.
+> Use separate audit runs for applications or connections with independent databases.
+
 ## What this package checks
 
 | Rule | What it flags |
@@ -100,6 +104,7 @@ php artisan schema:audit --schema-only
 | `DanglingForeignKeyRule` | A foreign key referencing a table that doesn't exist anywhere in the folded schema — a typo, or a table renamed/dropped without updating the reference. |
 | `MismatchedForeignKeyRule` | A foreign key whose column type doesn't match the type family of the referenced table's primary key (e.g. `foreignId()` pointing at a plain `increments()` primary key). |
 | `MissingPrimaryKeyRule` | A table with no identifiable primary key — no `id()`/`increments()`-style column and no explicit `primary()` call. |
+| `InvalidReferenceKeyRule` | Flags a foreign key whose referenced column has no unique constraint on the parent table. |
 
 Every rule is a pure fact about the folded schema — no query usage, no
 runtime data, no heuristics about "is this a good index." If a rule
