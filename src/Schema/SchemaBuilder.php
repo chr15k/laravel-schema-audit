@@ -204,13 +204,16 @@ final readonly class SchemaBuilder
         }
 
         $onCall = $chain->modifier('on');
+        $referencesCall = $chain->modifier('references');
+
         $referencesTable = $onCall?->stringArgs[0] ?? null;
+        $referencesColumn = $referencesCall?->stringArgs[0] ?? 'id';
         $constraintName = $root->stringArgs[1] ?? null;
 
-        // @todo - check name here is correct
         $table->addForeignKey(new ForeignKey(
             column: $column,
             referencesTable: $referencesTable,
+            referencesColumn: $referencesColumn,
             name: $constraintName
         ));
     }

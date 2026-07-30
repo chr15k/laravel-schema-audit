@@ -40,7 +40,7 @@ it('does nothing when there are no tables', function (): void {
 it('detects a dangling foreign key when the referenced table does not exist', function (): void {
     $table = TableSchema::make('transactions');
     $table->addColumn(new Column('user_id', ColumnMethod::ForeignId));
-    $table->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
+    $table->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users', referencesColumn: 'id'));
 
     $schema = new Schema([
         'transactions' => $table,
@@ -61,7 +61,7 @@ it('detects a dangling foreign key when the referenced table does not exist', fu
 it('does not report dangling foreign key when the referenced table exists', function (): void {
     $table = TableSchema::make('transactions');
     $table->addColumn(new Column('user_id', ColumnMethod::ForeignId));
-    $table->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
+    $table->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users', referencesColumn: 'id'));
 
     $schema = new Schema([
         'transactions' => $table,
@@ -79,15 +79,15 @@ it('does not report dangling foreign key when the referenced table exists', func
 it('reports every table with a dandling foreign key', function (): void {
     $transactions = TableSchema::make('transactions');
     $transactions->addColumn(new Column('user_id', ColumnMethod::ForeignId));
-    $transactions->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
+    $transactions->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users', referencesColumn: 'id'));
 
     $orders = TableSchema::make('orders');
     $orders->addColumn(new Column('user_id', ColumnMethod::ForeignId));
-    $orders->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users'));
+    $orders->addForeignKey(new ForeignKey(column: 'user_id', referencesTable: 'users', referencesColumn: 'id'));
 
     $items = TableSchema::make('order_items');
     $items->addColumn(new Column('order_id', ColumnMethod::ForeignId));
-    $items->addForeignKey(new ForeignKey(column: 'id', referencesTable: 'orders'));
+    $items->addForeignKey(new ForeignKey(column: 'id', referencesTable: 'orders', referencesColumn: 'id'));
 
     $schema = new Schema([
         'transactions' => $transactions,

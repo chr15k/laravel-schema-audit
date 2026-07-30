@@ -44,7 +44,11 @@ it('reports a foreignId() foreign key pointing at a plain increments() primary k
     $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('category_id', ColumnMethod::ForeignId));
-    $posts->addForeignKey(new ForeignKey(column: 'category_id', referencesTable: 'categories', name: 'posts_category_id_foreign'));
+    $posts->addForeignKey(new ForeignKey(
+        column: 'category_id',
+        referencesTable: 'categories',
+        referencesColumn: 'id',
+        name: 'posts_category_id_foreign'));
 
     $schema = new Schema(['categories' => $categories, 'posts' => $posts]);
 
@@ -68,7 +72,12 @@ it('does not report a foreignId() foreign key pointing at an id() primary key of
     $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('author_id', ColumnMethod::ForeignId));
-    $posts->addForeignKey(new ForeignKey(column: 'author_id', referencesTable: 'authors', name: 'posts_author_id_foreign'));
+    $posts->addForeignKey(new ForeignKey(
+        column: 'author_id',
+        referencesTable: 'authors',
+        referencesColumn: 'id',
+        name: 'posts_author_id_foreign')
+    );
 
     $schema = new Schema(['authors' => $authors, 'posts' => $posts]);
 
@@ -87,7 +96,12 @@ it('does not report a foreign key whose referenced table does not exist', functi
     $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('ghost_id', ColumnMethod::ForeignId));
-    $posts->addForeignKey(new ForeignKey(column: 'ghost_id', referencesTable: 'ghosts', name: 'x'));
+    $posts->addForeignKey(new ForeignKey(
+        column: 'ghost_id',
+        referencesTable: 'ghosts',
+        referencesColumn: 'id',
+        name: 'x'
+    ));
 
     $schema = new Schema(['posts' => $posts]);
 
@@ -108,7 +122,12 @@ it('does not report when the referenced table has no auto-incrementing primary k
     $posts = TableSchema::make('posts');
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('legacy_id', ColumnMethod::ForeignId));
-    $posts->addForeignKey(new ForeignKey(column: 'legacy_id', referencesTable: 'legacy_table', name: 'x'));
+    $posts->addForeignKey(new ForeignKey(
+        column: 'legacy_id',
+        referencesTable: 'legacy_table',
+        referencesColumn: 'id',
+        name: 'x'
+    ));
 
     $schema = new Schema(['legacy_table' => $noAutoIncrementTable, 'posts' => $posts]);
 
@@ -127,9 +146,45 @@ it('does not report a foreign key column that is not tracked on the table at all
     $categories->addColumn(new Column('id', ColumnMethod::Increments));
 
     $posts = TableSchema::make('posts');
-    $posts->addForeignKey(new ForeignKey(column: 'category_id', referencesTable: 'categories', name: 'x'));
+    $posts->addForeignKey(new ForeignKey(
+        column: 'category_id',
+        referencesTable: 'categories',
+        referencesColumn: 'id',
+        name: 'x'
+    ));
 
     $schema = new Schema(['categories' => $categories, 'posts' => $posts]);
+
+    $result = (new MismatchedForeignKeyRule)->handle(
+        new AuditContext($schema),
+        fn (AuditContext $context): AuditContext => $context,
+    );
+
+    expect($result->audit->findings)->toBeEmpty();
+});
+
+it('does not report a foreign key referencing a compatible non-primary unique column', function (): void {
+    // Regression: a foreign key may reference a unique column other than
+    // the parent table's primary key. Compare against that referenced
+    // column's type rather than assuming the primary key is always the
+    // target.
+    $countries = TableSchema::make('countries');
+    $countries->addColumn(new Column('uuid', ColumnMethod::Uuid));
+    $countries->addColumn(new Column('iso_code', ColumnMethod::String));
+
+    $users = TableSchema::make('users');
+    $users->addColumn(new Column('id', ColumnMethod::Id));
+    $users->addColumn(new Column('country_uuid', ColumnMethod::Uuid));
+    $users->addForeignKey(new ForeignKey(
+        column: 'country_uuid',
+        referencesTable: 'countries',
+        referencesColumn: 'uuid',
+    ));
+
+    $schema = new Schema([
+        'countries' => $countries,
+        'users'     => $users,
+    ]);
 
     $result = (new MismatchedForeignKeyRule)->handle(
         new AuditContext($schema),

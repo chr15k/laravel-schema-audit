@@ -118,6 +118,18 @@ describe('foreign key resolution', function (): void {
             ->and($fk?->column)->toBe('assigned_to')
             ->and($fk?->name)->toBe('comments_assigned_to_custom_fk');
     });
+
+    it('tracks the referenced column when a foreign key targets a non-primary unique column', function (): void {
+        $table = buildSchemaFromBuilderFixtures('ForeignKeys')
+            ->table('telescope_entries_tags');
+
+        $fk = collect($table->foreignKeys())
+            ->firstWhere('column', 'entry_uuid');
+
+        expect($fk)->not->toBeNull()
+            ->and($fk->referencesTable)->toBe('telescope_entries')
+            ->and($fk->referencesColumn)->toBe('uuid');
+    });
 });
 
 describe('index resolution', function (): void {

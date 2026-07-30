@@ -14,8 +14,8 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
 {
     public function __construct(
         public string $column,
-        public ?string $referencesTable,
-        public ?string $referencesColumn = null,
+        public string $referencesTable,
+        public string $referencesColumn,
         public ?string $name = null,
     ) {}
 

@@ -10,12 +10,6 @@ use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 use Chr15k\SchemaAudit\Support\Config;
 use Illuminate\Config\Repository;
 
-/**
- * Config wraps a plain Illuminate\Config\Repository — constructed by hand
- * here rather than via Testbench/the container, since UnindexedForeignKeyRule's
- * only dependency is the driver string, and building the whole app for
- * that would slow this suite down for no benefit.
- */
 function configWithDriver(string $driver): Config
 {
     return new Config(new Repository(['schema-audit' => ['driver' => $driver]]));
@@ -51,7 +45,7 @@ it('does nothing when there are no tables', function (): void {
 
 it('reports a foreign key with no covering index on a driver that does not auto-index them', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'orders_customer_id_foreign'));
 
     $schema = new Schema(['orders' => $orders]);
 
@@ -71,7 +65,7 @@ it('reports a foreign key with no covering index on a driver that does not auto-
 
 it('does not report anything at all on mysql, which auto-indexes foreign key columns', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'orders_customer_id_foreign'));
 
     $schema = new Schema(['orders' => $orders]);
 
@@ -85,7 +79,7 @@ it('does not report anything at all on mysql, which auto-indexes foreign key col
 
 it('does not report anything on mariadb either', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'orders_customer_id_foreign'));
 
     $schema = new Schema(['orders' => $orders]);
 
@@ -99,7 +93,7 @@ it('does not report anything on mariadb either', function (): void {
 
 it('does not report a foreign key that already has a covering index, regardless of driver', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'orders_customer_id_foreign'));
     $orders->addIndex(new Index(name: 'orders_customer_id_index', columns: ['customer_id'], unique: false));
 
     $schema = new Schema(['orders' => $orders]);
@@ -114,7 +108,7 @@ it('does not report a foreign key that already has a covering index, regardless 
 
 it('defaults to mysql (auto-indexing) when no driver is configured', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'x'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'x'));
 
     $schema = new Schema(['orders' => $orders]);
 

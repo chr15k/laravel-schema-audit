@@ -37,7 +37,7 @@ it('does nothing when there are no tables', function (): void {
 
 it('does not report a single foreign key on a column', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'orders_customer_id_foreign'));
 
     $schema = new Schema(['orders' => $orders]);
 
@@ -51,8 +51,8 @@ it('does not report a single foreign key on a column', function (): void {
 
 it('reports a foreign key declared more than once on the same column', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign'));
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'orders_customer_id_foreign_2'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'orders_customer_id_foreign'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'orders_customer_id_foreign_2'));
 
     $schema = new Schema(['orders' => $orders]);
 
@@ -71,11 +71,11 @@ it('reports a foreign key declared more than once on the same column', function 
 
 it('reports duplicates independently across multiple tables', function (): void {
     $orders = TableSchema::make('orders');
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'a'));
-    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', name: 'b'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'a'));
+    $orders->addForeignKey(new ForeignKey(column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'b'));
 
     $invoices = TableSchema::make('invoices');
-    $invoices->addForeignKey(new ForeignKey(column: 'order_id', referencesTable: 'orders', name: 'c'));
+    $invoices->addForeignKey(new ForeignKey(column: 'order_id', referencesTable: 'orders', referencesColumn: 'id', name: 'c'));
 
     $schema = new Schema(['orders' => $orders, 'invoices' => $invoices]);
 
