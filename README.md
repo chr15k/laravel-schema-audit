@@ -49,7 +49,7 @@ structurally can't:
   schema-internal-consistency questions, not query-performance questions.
 
 This package deliberately does **not** attempt N+1 detection, query
-timing, or execution-plan analysis — see [Honest limitations](#honest-limitations).
+timing, or execution-plan analysis — see [Limitations](#limitations).
 
 ## Requirements
 
