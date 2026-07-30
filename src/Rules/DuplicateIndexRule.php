@@ -30,7 +30,11 @@ final readonly class DuplicateIndexRule extends Rule
 
         return $this->makeFinding(
             table: $table,
-            message: sprintf("Duplicate index on columns '%s' - declared more than once. Remove the redundant index.", $columns),
+            message: sprintf(
+                "Duplicate index <fg=default>%s</> on <fg=default>%s</>",
+                $index->name,
+                $columns
+            ),
             column: $columns,
         );
     }

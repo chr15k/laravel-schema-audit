@@ -36,7 +36,7 @@ final readonly class InvalidReferencedKeyRule extends Rule
                 $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf(
-                        "Foreign key on '%s' references '%s.%s', which has no unique key or primary key — MySQL/MariaDB will reject this constraint at migrate time.",
+                        "Foreign key on <fg=default>%s</> references <fg=default>%s.%s</>, which has no unique key or primary key",
                         $fk->column,
                         $fk->referencesTable,
                         $fk->referencesColumn,

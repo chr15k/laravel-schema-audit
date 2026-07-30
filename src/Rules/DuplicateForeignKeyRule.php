@@ -28,7 +28,7 @@ final readonly class DuplicateForeignKeyRule extends Rule
     {
         return $this->makeFinding(
             table: $table,
-            message: sprintf("Duplicate foreign key on column '%s' - defined more than once. Remove the redundant constraint.", $fk->column),
+            message: sprintf("Duplicate foreign key <fg=default>%s</> on <fg=default>%s</>", $fk->column, $fk->name ?: '?'),
             column: $fk->column,
         );
     }

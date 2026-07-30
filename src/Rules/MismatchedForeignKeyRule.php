@@ -38,7 +38,7 @@ final readonly class MismatchedForeignKeyRule extends Rule
             $findings[] = $this->makeFinding(
                 table: $mismatch->table->name,
                 message: sprintf(
-                    '<fg=white>%s</> → %s.%s <fg=white>(%s)</>',
+                    'Type <fg=default>%s</> does not match %s.%s <fg=default>(%s)</>',
                     $family ?: '?',
                     $mismatch->referencedTable->name,
                     $fk->referencesColumn,

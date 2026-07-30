@@ -27,7 +27,12 @@ final readonly class UnindexedForeignKeyRule extends Rule
                 if (! $table->indexesColumn($fk->column)) {
                     $findings[] = $this->makeFinding(
                         table: $table->name,
-                        message: sprintf("Foreign key '%s' has no covering index. %s does not auto-index foreign key columns; add an index to improve lookup and join performance.", $fk->column, $this->config->driver()),
+                        message: sprintf(
+                            "<fg=default>%s</> does not auto-index foreign key columns; add index on <fg=default>%s.%s</>",
+                            $this->config->driver(),
+                            $table->name,
+                            $fk->column,
+                        ),
                         column: $fk->column,
                     );
                 }

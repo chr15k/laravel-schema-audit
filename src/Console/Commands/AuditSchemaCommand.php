@@ -14,7 +14,6 @@ use Chr15k\SchemaAudit\SchemaAuditor;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Terminal;
 
@@ -109,8 +108,10 @@ final class AuditSchemaCommand extends Command
 
     private function renderReport(SchemaAudit $audit, int $tableCount, string $duration): int
     {
+        $this->renderStats($audit, $tableCount);
+
         if ($audit->hasIssues()) {
-            $this->renderFindings($audit, $tableCount);
+            $this->renderFindings($audit);
             $this->renderFail($duration, $audit->count());
 
             return self::FAILURE;
@@ -121,7 +122,7 @@ final class AuditSchemaCommand extends Command
         return self::SUCCESS;
     }
 
-    private function renderFindings(SchemaAudit $audit, int $tableCount): void
+    private function renderStats(SchemaAudit $audit, int $tableCount)
     {
         $this->newLine();
         $this->line('  <options=bold>Schema Audit Results</>');
@@ -132,13 +133,16 @@ final class AuditSchemaCommand extends Command
             count($this->auditor->rules()),
             $audit->count()
         ));
+    }
 
+    private function renderFindings(SchemaAudit $audit): void
+    {
         collect($audit->findings)
             ->sortBy('table')
             ->groupBy('table')
             ->each(function (Collection $items, string $table): void {
                 $count = $items->count();
-                $grammar = Str::plural('issue', $count);
+                $grammar = str('issue')->plural($count);
                 $worst = $this->worstSeverity($items);
 
                 $this->newLine();
@@ -161,7 +165,7 @@ final class AuditSchemaCommand extends Command
 
         $this->components->twoColumnDetail(
             sprintf('  <fg=%s>%s</> %s', $severity->color(), $severity->glyph(), (string) $finding),
-            sprintf('<fg=white>%s</>', $column)
+            sprintf('<fg=default;options=bold>%s</>', $column)
         );
 
         $width = (new Terminal)->getWidth() - 20;
@@ -191,19 +195,21 @@ final class AuditSchemaCommand extends Command
     private function renderPass(string $duration, int $tableCount): void
     {
         $this->newLine();
-        $this->components->info(sprintf('No schema issues found across %d table(s).', $tableCount));
-        $this->line(sprintf('  <fg=gray>Duration: %ss</>', $duration));
+        $this->components->twoColumnDetail(
+            '<fg=green;options=bold>PASS</>',
+            sprintf('<fg=default>%ss</>', $duration)
+        );
         $this->newLine();
     }
 
     private function renderFail(string $duration, int $count): void
     {
-        $grammar = Str::plural('issue', $count);
+        $grammar = str('issue')->plural($count);
 
         $this->newLine();
         $this->components->twoColumnDetail(
             '<fg=red;options=bold>FAIL</>',
-            sprintf('<fg=gray>%ss</>', $duration)
+            sprintf('<fg=default>%ss</>', $duration)
         );
         $this->components->bulletList([sprintf('%d schema %s found.', $count, $grammar)]);
         $this->newLine();
