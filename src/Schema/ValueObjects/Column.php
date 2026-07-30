@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
-use Chr15k\SchemaAudit\Enums\ColumnFamily;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
