@@ -137,10 +137,10 @@ return [
 
 > [!NOTE]
 > **`paths`** — migration directories to audit; use `--path` to include additional paths per run.
-> **`driver`** — defaults to your app's configured connection (`DB_CONNECTION`); override with `--driver`
->   to audit against a different target database than the one currently configured.
-> **`rules`** — remove an entry to disable that rule without touching any package code.
-> Add your own class here too — see below.
+>
+> **`driver`** — defaults to your app's configured connection (`DB_CONNECTION`); override with `--driver` to audit against a different target database than the one currently configured.
+>
+> **`rules`** — remove an entry to disable that rule without touching any package code. Add your own class here too — see below.
 
 ---
 
