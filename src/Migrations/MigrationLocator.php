@@ -11,7 +11,7 @@ final readonly class MigrationLocator
 {
     /**
      * @param  list<string>  $paths
-     * @return array<non-empty-string, string>
+     * @return list<string>
      */
     public function files(array $paths): array
     {
@@ -28,12 +28,16 @@ final readonly class MigrationLocator
                         ->getIterator()
                 )
             ),
-            fn (string $file): bool => $this->isMigration($file)
+            $this->isMigration(...)
         ));
     }
 
     private function isMigration(string $file): bool
     {
-        return str_contains(file_get_contents($file), 'Schema::');
+        if (! $contents = file_get_contents($file)) {
+            return false;
+        }
+
+        return str_contains($contents, 'Schema::');
     }
 }
