@@ -106,10 +106,10 @@ php artisan schema:audit --schema-only
 | `MissingPrimaryKeyRule` | A table with no identifiable primary key — no `id()`/`increments()`-style column and no explicit `primary()` call. |
 | `InvalidReferenceKeyRule` | Flags a foreign key whose referenced column has no unique constraint on the parent table. |
 
-Every rule is a pure fact about the folded schema — no query usage, no
-runtime data, no heuristics about "is this a good index." If a rule
-fires, it's because something in your migration history is verifiably
-inconsistent, not because a pattern looked suspicious.
+> [!NOTE]
+> Every rule is a pure fact about the folded schema - no query usage, no runtime data,
+> no heuristics about "is this a good index." If a rule fires, it's because something
+> in your migration history is verifiably inconsistent, not because a pattern looked suspicious.
 
 ## Configuration
 
@@ -135,12 +135,12 @@ return [
 ];
 ```
 
-- **`paths`** — migration directories to audit; use `--path` to include additional paths per run.
-- **`driver`** — defaults to your app's configured connection
-  (`DB_CONNECTION`); override with `--driver` to audit against a
-  different target database than the one currently configured.
-- **`rules`** — remove an entry to disable that rule without touching
-  any package code. Add your own class here too — see below.
+> [!NOTE]
+> **`paths`** — migration directories to audit; use `--path` to include additional paths per run.
+> **`driver`** — defaults to your app's configured connection (`DB_CONNECTION`); override with `--driver`
+>   to audit against a different target database than the one currently configured.
+> **`rules`** — remove an entry to disable that rule without touching any package code.
+> Add your own class here too — see below.
 
 ---
 
@@ -238,23 +238,66 @@ return [
 
 ---
 
-## Honest limitations
+## Limitations
 
-- **Works entirely from source** — it does not run your migrations or
-  connect to a database. A manual `ALTER TABLE`, a seeder-driven schema
-  change, or anything done outside a migration won't be seen.
-- **Composite (multi-column) foreign keys are not currently parsed.**
-  `$table->foreign(['a', 'b'])->references(['x', 'y'])->on(...)` is
-  silently skipped by all foreign-key rules. Single-column foreign keys
-  — including `foreignId()`, by far the more common case — are fully
-  supported, as are composite **indexes** (`$table->index(['a', 'b'])`),
-  which are a separate, already-working feature.
-- **Conditional migration logic is read as written.** `if
-  (DB::getDriverName() === 'mysql') { ... }` in a migration is parsed
-  literally — the tool can't resolve which branch is "true" for your
-  environment.
-- **Not a replacement for `EXPLAIN`, query profiling, or a DBA review.**
-  It catches a specific, narrow class of static schema mismatch —
-  nothing about query performance or data-dependent behavior.
-- **No N+1 or query-usage detection**, by design — see
-  [Why this over a runtime query monitor?](#why-this-over-a-runtime-query-monitor).
+Schema Audit performs static analysis of Laravel migrations without connecting to your database or executing migration code.
+
+This means it analyzes schema declarations made through Laravel's Schema Builder:
+
+- `Schema::create()`
+- `Schema::table()`
+- Blueprint column definitions
+- Index definitions
+- Foreign key definitions
+
+It does not execute migrations, so it cannot determine the result of arbitrary PHP logic or runtime conditions.
+
+### Unsupported Operations
+
+The following are not currently analyzed:
+
+- Raw SQL schema changes:
+  - `DB::statement()`
+  - `DB::unprepared()`
+- Dynamically generated schema changes
+- Schema changes hidden behind application logic or service calls
+
+For example:
+
+```php
+DB::statement('ALTER TABLE users MODIFY COLUMN name TEXT');
+```
+
+cannot be reliably analyzed without implementing a database-specific SQL parser.
+
+### Conditional Schema Changes
+
+Common Laravel schema guards such as:
+
+```php
+if (! Schema::hasTable('users')) {
+    Schema::create('users', function (Blueprint $table) {
+        // ...
+    });
+}
+```
+
+are supported where possible.
+
+However, Schema Audit cannot fully evaluate arbitrary conditional logic:
+
+```php
+if (config('features.new_schema')) {
+    Schema::table('users', function (Blueprint $table) {
+        // ...
+    });
+}
+```
+
+because the final schema depends on runtime state.
+
+### Multiple Database Connections
+
+Schema Audit assumes all provided migration paths belong to the same database schema.
+
+If your application manages multiple databases or connections, run separate audits for each schema.
