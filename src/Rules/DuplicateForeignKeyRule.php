@@ -28,7 +28,7 @@ final readonly class DuplicateForeignKeyRule extends Rule
     {
         return $this->makeFinding(
             table: $table,
-            message: sprintf("Duplicate foreign key <fg=default>%s</> on <fg=default>%s</>", $fk->column, $fk->name ?: '?'),
+            message: sprintf('Duplicate foreign key <fg=default>%s</> on <fg=default>%s</>', $fk->column, $fk->name ?: '?'),
             column: $fk->column,
         );
     }

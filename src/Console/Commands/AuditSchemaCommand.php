@@ -117,12 +117,12 @@ final class AuditSchemaCommand extends Command
             return self::FAILURE;
         }
 
-        $this->renderPass($duration, $tableCount);
+        $this->renderPass($duration);
 
         return self::SUCCESS;
     }
 
-    private function renderStats(SchemaAudit $audit, int $tableCount)
+    private function renderStats(SchemaAudit $audit, int $tableCount): void
     {
         $this->newLine();
         $this->line('  <options=bold>Schema Audit Results</>');
@@ -192,7 +192,7 @@ final class AuditSchemaCommand extends Command
             ->firstOrFail();
     }
 
-    private function renderPass(string $duration, int $tableCount): void
+    private function renderPass(string $duration): void
     {
         $this->newLine();
         $this->components->twoColumnDetail(
