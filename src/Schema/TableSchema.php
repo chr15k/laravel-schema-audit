@@ -193,11 +193,8 @@ final class TableSchema implements Arrayable, JsonSerializable
         $columnFamily = $column->method->family();
         $referencedFamily = $referencedColumn->method->family();
 
-        if (! $columnFamily instanceof ColumnFamily) {
-            return true;
-        }
-
-        if (! $referencedFamily instanceof ColumnFamily) {
+        // Skip mismatch detection when either column type is unrecognized.
+        if ($columnFamily === ColumnFamily::Other || $referencedFamily === ColumnFamily::Other) {
             return true;
         }
 

@@ -16,6 +16,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Terminal;
 
 final class AuditSchemaCommand extends Command
 {
@@ -160,10 +161,14 @@ final class AuditSchemaCommand extends Command
 
         $this->components->twoColumnDetail(
             sprintf('  <fg=%s>%s</> %s', $severity->color(), $severity->glyph(), (string) $finding),
-            sprintf('<fg=gray>%s</>', $column)
+            sprintf('<fg=white>%s</>', $column)
         );
 
-        $this->line(sprintf('    <fg=gray>↳ %s</>', $finding->message));
+        $width = (new Terminal)->getWidth() - 20;
+
+        $message = wordwrap($finding->message, $width ?: 80, "\n      ");
+
+        $this->line(sprintf('    <fg=gray>↳ %s</>', $message));
     }
 
     /**

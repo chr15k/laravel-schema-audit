@@ -18,7 +18,7 @@ final readonly class RedundantIndexRule extends Rule
                 $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf(
-                        "Index '%s' is redundant because it is covered by index '%s'. Consider removing it.",
+                        "Index '<fg=white>%s</>' is already fully covered by index '<fg=white>%s</>'",
                         $redundant->index->name,
                         $redundant->coveredBy->name,
                     ),

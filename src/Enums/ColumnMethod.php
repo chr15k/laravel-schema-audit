@@ -122,30 +122,94 @@ enum ColumnMethod: string
         return $type->value;
     }
 
-    public function family(): ?ColumnFamily
+    public function family(): ColumnFamily
     {
         return match ($this) {
+            // Unsigned Big Integer (e.g., $table->id(), $table->foreignId())
             self::Id,
             self::BigIncrements,
             self::ForeignId,
-            self::UnsignedBigInteger => ColumnFamily::Big,
+            self::ForeignIdFor,
+            self::UnsignedBigInteger => ColumnFamily::BigUnsigned,
 
+            // Signed Big Integer
+            self::BigInteger => ColumnFamily::BigSigned,
+
+            // Unsigned Integer
             self::Increments,
-            self::UnsignedInteger => ColumnFamily::Int,
+            self::UnsignedInteger => ColumnFamily::IntUnsigned,
 
-            self::SmallIncrements,
-            self::UnsignedSmallInteger => ColumnFamily::Small,
+            // Signed Integer (e.g., $table->integer())
+            self::Integer => ColumnFamily::IntSigned,
 
+            // Unsigned Medium Integer
             self::MediumIncrements,
-            self::UnsignedMediumInteger => ColumnFamily::Medium,
+            self::UnsignedMediumInteger => ColumnFamily::MediumUnsigned,
 
+            // Signed Medium Integer
+            self::MediumInteger => ColumnFamily::MediumSigned,
+
+            // Unsigned Small Integer
+            self::SmallIncrements,
+            self::UnsignedSmallInteger => ColumnFamily::SmallUnsigned,
+
+            // Signed Small Integer
+            self::SmallInteger => ColumnFamily::SmallSigned,
+
+            // Unsigned Tiny Integer
+            self::UnsignedTinyInteger => ColumnFamily::TinyUnsigned,
+
+            // Signed Tiny Integer
+            self::TinyInteger => ColumnFamily::TinySigned,
+
+            // UUID
             self::Uuid,
-            self::ForeignUuid => ColumnFamily::Uuid,
+            self::ForeignUuid,
+            self::ForeignUuidFor,
+            self::UuidMorphs => ColumnFamily::Uuid,
 
+            // ULID
             self::Ulid,
-            self::ForeignUlid => ColumnFamily::Ulid,
+            self::ForeignUlid,
+            self::UlidMorphs => ColumnFamily::Ulid,
 
-            default => null,
+            // String & Text
+            self::String,
+            self::Char,
+            self::IpAddress,
+            self::MacAddress => ColumnFamily::String,
+
+            self::Text,
+            self::TinyText,
+            self::MediumText,
+            self::LongText => ColumnFamily::Text,
+
+            // Numbers
+            self::Float,
+            self::Double => ColumnFamily::Float,
+            self::Decimal,
+            self::UnsignedDecimal => ColumnFamily::Decimal,
+
+            // Boolean, JSON, Dates
+            self::Boolean => ColumnFamily::Boolean,
+            self::Json,
+            self::Jsonb => ColumnFamily::Json,
+
+            self::Date,
+            self::DateTime,
+            self::DateTimeTz,
+            self::Time,
+            self::TimeTz,
+            self::Timestamp,
+            self::TimestampTz,
+            self::SoftDeletes,
+            self::SoftDeletesTz,
+            self::Year => ColumnFamily::DateTime,
+
+            self::Binary => ColumnFamily::Binary,
+
+            // Spatial, Enums, Morphs, or unrecognized fallback
+            default => ColumnFamily::Other,
         };
     }
 }

@@ -32,12 +32,17 @@ final readonly class MismatchedForeignKeyRule extends Rule
         foreach ($context->schema->mismatchedForeignKeys() as $mismatch) {
             $fk = $mismatch->foreignKey;
 
+            $family = $mismatch->table->column($fk->column)?->method->family()->value;
+            $referencesFamily = $mismatch->referencedTable->column($fk->referencesColumn)?->method->family()->value;
+
             $findings[] = $this->makeFinding(
                 table: $mismatch->table->name,
                 message: sprintf(
-                    "Foreign key on '%s' does not match key type on '%s'.",
-                    $fk->column,
+                    '<fg=white>%s</> → %s.%s <fg=white>(%s)</>',
+                    $family ?: '?',
                     $mismatch->referencedTable->name,
+                    $fk->referencesColumn,
+                    $referencesFamily ?: '?'
                 ),
                 column: $fk->column,
                 severity: Severity::Error,

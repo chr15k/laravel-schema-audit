@@ -77,7 +77,8 @@ it('does NOT flag a unique index as redundant just because a non-unique one exis
         ->and($result->audit->findings[0]->column)->toBe('email');
 
     // Confirm it's specifically the non-unique one flagged, not the unique one.
-    expect($result->audit->findings[0]->message)->toContain("'users_email_index' is redundant");
+    expect($result->audit->findings[0]->message)
+        ->toContain("Index '<fg=white>users_email_index</>' is already fully covered by index '<fg=white>users_email_unique</>'");
 });
 
 it('flags a single-column index covered by the leading column of a composite index', function (): void {
