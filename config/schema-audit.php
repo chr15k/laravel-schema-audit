@@ -54,16 +54,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Uncertainty Handling
+    | Report Conditional Findings
     |--------------------------------------------------------------------------
     |
     | Some migration logic cannot be resolved statically, such as schema
     | changes inside runtime conditionals. Findings affected by these cases
-    | are marked as uncertain and may represent false positives.
+    | are marked as conditional and may represent false positives.
     |
     */
-    'uncertainty' => [
-        'report' => true,
-    ],
+    'report_conditional_findings' => true,
 
 ];

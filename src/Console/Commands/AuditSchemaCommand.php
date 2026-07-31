@@ -64,8 +64,8 @@ final class AuditSchemaCommand extends Command
 
         $audit = $this->auditor->audit($schema);
 
-        if (! config('schema-audit.uncertainty.report')) {
-            $audit = $audit->withoutUncertainFindings();
+        if (! config('schema-audit.report_conditional_findings')) {
+            $audit = $audit->withoutConditionalFindings();
         }
 
         $duration = $this->duration($start);
@@ -178,7 +178,7 @@ final class AuditSchemaCommand extends Command
         $this->line(sprintf('    <fg=gray>↳ %s</>', $message));
 
         if ($finding->conditional) {
-            $this->line(sprintf('    <fg=yellow>↳ %s</>', 'This finding may be a false-positive due to conditional migration logic that could not be resolved'));
+            $this->line(sprintf('    <fg=yellow>↳ %s</>', 'This finding may be a false positive due to conditional migration logic that could not be resolved'));
         }
     }
 
