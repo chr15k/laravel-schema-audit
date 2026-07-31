@@ -13,27 +13,23 @@ final readonly class PrimaryKeyResolver
 {
     public function resolveTablePrimaryKey(ColumnCall $call): PrimaryKey
     {
-        $columns = $call->arrayArgs === []
-            ? ($call->stringArgs['columns']
-                ?? $call->stringArgs[0]
-                ?? [])
-            : $call->arrayArgs;
+        $columns = $call->argument('columns')
+            ?? $call->argument(0)
+            ?? [];
 
-        $columns = (array) $columns;
-
-        return new PrimaryKey(columns: $columns);
+        return new PrimaryKey(
+            columns: (array) $columns
+        );
     }
 
     public function resolveColumnPrimaryKey(ColumnChain $chain, Column $column): PrimaryKey
     {
         $root = $chain->root();
 
-        // 1. implied  ($table->id() | $table->increments('id') etc.)
         if ($column->method->impliesPrimaryKey()) {
-            return new PrimaryKey([$root->stringArgs[0] ?? 'id']);
+            return new PrimaryKey([$root->argument(0) ?? 'id']);
         }
 
-        // 2. modifier ($table->string('uuid')->primary())
         if ($chain->hasModifier('primary')) {
             return new PrimaryKey([$column->name]);
         }

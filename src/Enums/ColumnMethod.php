@@ -96,6 +96,18 @@ enum ColumnMethod: string
         };
     }
 
+    public function unsignable(): bool
+    {
+        return match ($this) {
+            self::Integer,
+            self::TinyInteger,
+            self::SmallInteger,
+            self::MediumInteger,
+            self::BigInteger => true,
+            default          => false,
+        };
+    }
+
     public function impliesPrimaryKey(): bool
     {
         return match ($this) {

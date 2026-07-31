@@ -19,17 +19,15 @@ final readonly class IndexResolver
         ColumnCall $call,
         TableSchema $table
     ): Index {
-        $columns = $call->arrayArgs === []
-            ? ($call->stringArgs['columns']
-                ?? $call->stringArgs[0]
-                ?? [])
-            : $call->arrayArgs;
+        $columns = $call->argument('columns')
+            ?? $call->argument(0)
+            ?? [];
 
         $columns = (array) $columns;
 
         return new Index(
-            name: $call->stringArgs['name']
-                ?? $call->stringArgs[1]
+            name: $call->argument('name')
+                ?? $call->argument(1)
                 ?? $this->conventions->indexName(
                     $table->name,
                     $columns,
@@ -46,8 +44,8 @@ final readonly class IndexResolver
         string $column
     ): Index {
         return new Index(
-            name: $call->stringArgs['indexName']
-                ?? $call->stringArgs[0]
+            name: $call->argument('indexName')
+                ?? $call->argument(0)
                 ?? $this->conventions->indexName(
                     $table->name,
                     [$column],

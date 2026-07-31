@@ -63,37 +63,65 @@ final class ChainExtractor
 
     private function toColumnCall(MethodCall $node): ValueObjects\ColumnCall
     {
-        $methodName = $node->name instanceof Node\Identifier ? $node->name->toString() : '';
+        $methodName = $node->name instanceof Node\Identifier
+            ? $node->name->toString()
+            : '';
 
-        $stringArgs = [];
-        $arrayArgs = [];
+        $arguments = [];
 
         foreach ($node->args as $i => $arg) {
             if (! $arg instanceof Node\Arg) {
                 continue;
             }
 
-            if ($arg->value instanceof String_) {
-                $stringArgs[$arg->name instanceof Node\Identifier ? $arg->name->toString() : $i] = $arg->value->value;
-            }
+            $key = $arg->name instanceof Node\Identifier
+                ? $arg->name->toString()
+                : $i;
 
-            if ($arg->value instanceof ClassConstFetch && $arg->value->class instanceof Name) {
-                $stringArgs[] = sprintf('%s::class', $arg->value->class->toString());
-            }
-
-            if ($arg->value instanceof Node\Expr\Array_) {
-                foreach ($arg->value->items as $item) {
-                    if ($item->value instanceof String_) {
-                        $arrayArgs[] = $item->value->value;
-                    }
-                }
-            }
+            $arguments[$key] = $this->resolveValue($arg->value);
         }
 
         return new ValueObjects\ColumnCall(
             method: $methodName,
-            stringArgs: $stringArgs,
-            arrayArgs: $arrayArgs
+            arguments: $arguments,
         );
+    }
+
+    private function resolveValue(Node $node): mixed
+    {
+        return match (true) {
+            $node instanceof String_ => $node->value,
+
+            $node instanceof Node\Expr\Array_ => $this->resolveArray($node),
+
+            $node instanceof Node\Expr\ConstFetch => $node->name->toString() === 'true'
+                    ? true
+                    : ($node->name->toString() === 'false' ? false : null),
+
+            $node instanceof Node\Scalar\Int_ => $node->value,
+
+            $node instanceof Node\Scalar\Float_ => $node->value,
+
+            $node instanceof ClassConstFetch => $node->class instanceof Name
+                    ? $node->class->toString().'::'.$node->name->toString()
+                    : null,
+
+            default => null,
+        };
+    }
+
+    private function resolveArray(Node\Expr\Array_ $node): array
+    {
+        $values = [];
+
+        foreach ($node->items as $item) {
+            if ($item === null) {
+                continue;
+            }
+
+            $values[] = $this->resolveValue($item->value);
+        }
+
+        return $values;
     }
 }

@@ -7,12 +7,15 @@ namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 final readonly class ColumnCall
 {
     /**
-     * @param  array<int|string, string>  $stringArgs
-     * @param  list<string>  $arrayArgs
+     * @param  array<int|string, string>  $arguments
      */
     public function __construct(
         public string $method,
-        public array $stringArgs,
-        public array $arrayArgs,
+        public array $arguments = []
     ) {}
+
+    public function argument(int|string $key, mixed $default = null): mixed
+    {
+        return $this->arguments[$key] ?? $default;
+    }
 }

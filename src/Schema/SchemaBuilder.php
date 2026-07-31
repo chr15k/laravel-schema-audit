@@ -175,20 +175,24 @@ final readonly class SchemaBuilder
 
     private function applyDropForeign(TableSchema $table, ColumnCall $call): void
     {
-        $index = $call->stringArgs[0] ?? $call->arrayArgs;
+        $index = $call->argument(0);
 
         if (is_array($index)) {
-            $index = $this->conventions->indexName($table->name, $index, 'foreign');
+            $index = $this->conventions->indexName(
+                $table->name,
+                $index,
+                'foreign'
+            );
         }
 
-        $table->removeForeignKey($index);
+        if (is_string($index)) {
+            $table->removeForeignKey($index);
+        }
     }
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
     {
-        $root = $chain->root();
-
-        $column = $this->columns->resolve($root);
+        $column = $this->columns->resolve($chain);
 
         if (! $column instanceof Column) {
             return;
@@ -236,7 +240,7 @@ final readonly class SchemaBuilder
     private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain): void
     {
         $root = $chain->root();
-        $column = $root->stringArgs[0] ?? null;
+        $column = $root->argument(0);
 
         if ($column === null) {
             return;
@@ -245,14 +249,14 @@ final readonly class SchemaBuilder
         $onCall = $chain->modifier('on');
         $referencesCall = $chain->modifier('references');
 
-        $referencesTable = $onCall?->stringArgs[0] ?? null;
-        $referencesColumn = $referencesCall?->stringArgs[0] ?? null;
+        $referencesTable = $onCall?->arguments[0] ?? null;
+        $referencesColumn = $referencesCall?->arguments[0] ?? null;
 
         if ($referencesTable === null || $referencesColumn === null) {
             return;
         }
 
-        $constraintName = $root->stringArgs[1] ?? null;
+        $constraintName = $root->arguments[1] ?? null;
 
         $table->addForeignKey(new ForeignKey(
             column: $column,
@@ -264,15 +268,23 @@ final readonly class SchemaBuilder
 
     private function applyDropColumn(TableSchema $table, ColumnCall $call): void
     {
-        foreach (($call->stringArgs !== [] ? $call->stringArgs : $call->arrayArgs) as $name) {
-            $table->dropColumn($name);
+        $columns = $call->argument(0);
+
+        if (! is_array($columns)) {
+            $columns = [$columns];
+        }
+
+        foreach ($columns as $column) {
+            if (is_string($column)) {
+                $table->dropColumn($column);
+            }
         }
     }
 
     private function applyRenameColumn(TableSchema $table, ColumnCall $call): void
     {
-        $from = $call->stringArgs[0] ?? null;
-        $to = $call->stringArgs[1] ?? null;
+        $from = $call->argument(0);
+        $to = $call->argument(1);
 
         if ($from === null || $to === null) {
             return;
@@ -283,8 +295,16 @@ final readonly class SchemaBuilder
 
     private function applyDropIndex(TableSchema $table, ColumnCall $call): void
     {
-        foreach ($call->stringArgs as $name) {
-            $table->removeIndex($name);
+        $index = $call->argument(0);
+
+        if (! is_array($index)) {
+            $index = [$index];
+        }
+
+        foreach ($index as $name) {
+            if (is_string($name)) {
+                $table->removeIndex($name);
+            }
         }
     }
 }
