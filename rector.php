@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Pest\Rector\Set\PestSetList;
 use Rector\Config\RectorConfig;
+use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 return RectorConfig::configure()
     ->withPaths([
@@ -21,4 +22,7 @@ return RectorConfig::configure()
         earlyReturn: true,
         codingStyle: true
     )
+    ->withRules([
+        DeclareStrictTypesRector::class,
+    ])
     ->withPhpSets();

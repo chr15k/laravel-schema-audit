@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Chr15k\SchemaAudit\Schema;
 
 use Chr15k\SchemaAudit\Exceptions\JsonEncodingException;
