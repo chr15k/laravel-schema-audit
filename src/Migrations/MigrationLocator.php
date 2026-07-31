@@ -15,29 +15,17 @@ final readonly class MigrationLocator
      */
     public function files(array $paths): array
     {
-        return array_values(array_filter(
-            array_map(
-                fn (SplFileInfo $file): string => $file->getRealPath(),
-                iterator_to_array(
-                    Finder::create()
-                        ->files()
-                        ->ignoreVCS(true)
-                        ->name('*.php')
-                        ->in($paths)
-                        ->sortByName()
-                        ->getIterator()
-                )
-            ),
-            $this->isMigration(...)
+        return array_values(array_map(
+            fn (SplFileInfo $file): string => $file->getRealPath(),
+            iterator_to_array(Finder::create()
+                ->files()
+                ->contains('Schema::')
+                ->ignoreVCS(true)
+                ->name('*.php')
+                ->in($paths)
+                ->sortByName()
+                ->getIterator()
+            )
         ));
-    }
-
-    private function isMigration(string $file): bool
-    {
-        if (! $contents = file_get_contents($file)) {
-            return false;
-        }
-
-        return str_contains($contents, 'Schema::');
     }
 }

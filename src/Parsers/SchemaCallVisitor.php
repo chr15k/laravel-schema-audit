@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
@@ -15,6 +16,9 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 {
     /** @var list<ValueObjects\SchemaOperation> */
     private array $operations = [];
+
+    /** @var list<SchemaGuard> */
+    private array $guardStack = [];
 
     public function __construct(
         private readonly ChainExtractor $chainExtractor = new ChainExtractor,
@@ -28,8 +32,25 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         return $this->operations;
     }
 
+    public function leaveNode(Node $node): ?int
+    {
+        if ($node instanceof Node\Stmt\If_) {
+            if ($this->guard($node->cond) instanceof SchemaGuard) {
+                array_pop($this->guardStack);
+            }
+        }
+
+        return null;
+    }
+
     public function enterNode(Node $node): ?int
     {
+        if ($node instanceof Node\Stmt\If_) {
+            if (($guard = $this->guard($node->cond)) instanceof SchemaGuard) {
+                $this->guardStack[] = $guard;
+            }
+        }
+
         if ($node instanceof Node\Stmt\ClassMethod && $node->name->toString() === 'down') {
             return NodeVisitor::DONT_TRAVERSE_CHILDREN;
         }
@@ -54,6 +75,42 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         };
     }
 
+    private function currentGuard(): ?SchemaGuard
+    {
+        return end($this->guardStack) ?: null;
+    }
+
+    private function guard(Node $node): ?SchemaGuard
+    {
+        $negated = $node instanceof Node\Expr\BooleanNot;
+
+        if ($negated) {
+            $node = $node->expr;
+        }
+
+        if (! $node instanceof StaticCall) {
+            return null;
+        }
+
+        if (! $node->class instanceof Node\Name || $node->class->toString() !== 'Schema') {
+            return null;
+        }
+
+        $method = $node->name instanceof Node\Identifier
+            ? $node->name->toString()
+            : null;
+
+        return match ([$method, $negated]) {
+            ['hasTable', false] => SchemaGuard::HasTable,
+            ['hasTable', true]  => SchemaGuard::MissingTable,
+
+            ['hasColumn', false] => SchemaGuard::HasColumn,
+            ['hasColumn', true]  => SchemaGuard::MissingColumn,
+
+            default => null,
+        };
+    }
+
     private function recordDrop(StaticCall $node): null
     {
         if ($name = ArgReader::stringArgAt($node->args, 0)) {
@@ -70,13 +127,14 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         SchemaOperationType $type,
         string $tableName,
         ?string $renameTo = null,
-        array $chains = [],
+        array $chains = []
     ): void {
         $this->operations[] = new ValueObjects\SchemaOperation(
             type: $type,
             tableName: $tableName,
             chains: $chains,
             renameTo: $renameTo,
+            guard: $this->currentGuard()
         );
     }
 

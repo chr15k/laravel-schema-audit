@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Schema;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
 use Chr15k\SchemaAudit\Enums\StructuralMethod;
 use Chr15k\SchemaAudit\Parsers\MigrationParser;
@@ -80,7 +81,7 @@ final readonly class SchemaBuilder
         $table = $tables[$operation->tableName] ?? TableSchema::make($operation->tableName);
 
         foreach ($operation->chains as $chain) {
-            $this->applyChain($table, $chain);
+            $this->applyChain($table, $chain, $operation->guard);
         }
 
         $tables[$operation->tableName] = $table;
@@ -117,12 +118,43 @@ final readonly class SchemaBuilder
         }
     }
 
-    private function applyChain(TableSchema $table, ColumnChain $chain): void
+    // Some schema operations are guarded by runtime existence checks.
+    // Skip operations that cannot be inferred statically to avoid
+    // false-positive audit findings.
+    private function shouldApply(ColumnChain $chain, ?SchemaGuard $guard = null): bool
     {
+        if ($guard !== SchemaGuard::MissingColumn) {
+            return true;
+        }
+
+        $root = $chain->root();
+
+        // Column definitions are still applied.
+        if (ColumnMethod::tryFrom($root->method) !== null) {
+            return true;
+        }
+
+        // Skip standalone indexes and foreign keys.
+        return match (StructuralMethod::tryFrom($root->method)) {
+            StructuralMethod::Index,
+            StructuralMethod::Unique,
+            StructuralMethod::FullText,
+            StructuralMethod::Foreign => false,
+
+            default => true,
+        };
+    }
+
+    private function applyChain(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
+    {
+        if (! $this->shouldApply($chain, $guard)) {
+            return;
+        }
+
         $root = $chain->root();
 
         if (ColumnMethod::tryFrom($root->method) !== null) {
-            $this->applyColumnDefinition($table, $chain);
+            $this->applyColumnDefinition($table, $chain, $guard);
 
             return;
         }
@@ -152,7 +184,7 @@ final readonly class SchemaBuilder
         $table->removeForeignKey($index);
     }
 
-    private function applyColumnDefinition(TableSchema $table, ColumnChain $chain): void
+    private function applyColumnDefinition(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
     {
         $root = $chain->root();
 
@@ -163,6 +195,13 @@ final readonly class SchemaBuilder
         }
 
         $table->addColumn($column);
+
+        // Indexes and foreign keys created under `!Schema::hasColumn()` are
+        // conditional. Model the column itself, but skip dependent structures
+        // to avoid false-positive audit findings.
+        if ($guard === SchemaGuard::MissingColumn) {
+            return;
+        }
 
         if ($column->method->impliesPrimaryKey() || $chain->hasModifier('primary')) {
             $primaryKey = $this->primaryKeys->resolveColumnPrimaryKey($chain, $column);

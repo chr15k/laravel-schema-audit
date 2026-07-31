@@ -294,3 +294,31 @@ describe('dropping constraints across migrations', function (): void {
         expect($products?->indexes())->toBeEmpty();
     });
 });
+
+describe('conditional schema guards', function (): void {
+    it('applies columns inside !Schema::hasColumn() guards but ignores indexes', function (): void {
+        $users = buildSchemaFromBuilderFixtures('ConditionalGuards')
+            ->table('users');
+
+        expect($users)->not->toBeNull()
+            ->and($users?->hasColumn('email'))->toBeTrue()
+            ->and($users?->indexes())->toBeEmpty();
+    });
+
+    it('applies columns inside !Schema::hasColumn() guards but ignores constrained foreign keys', function (): void {
+        $posts = buildSchemaFromBuilderFixtures('ConditionalGuards')
+            ->table('posts');
+
+        expect($posts)->not->toBeNull()
+            ->and($posts?->hasColumn('user_id'))->toBeTrue()
+            ->and($posts?->foreignKeys())->toBeEmpty();
+    });
+
+    it('does not affect unguarded column modifiers', function (): void {
+        $articles = buildSchemaFromBuilderFixtures('ConditionalGuards')
+            ->table('articles');
+
+        expect($articles)->not->toBeNull()
+            ->and($articles?->indexes())->toHaveCount(1);
+    });
+});
