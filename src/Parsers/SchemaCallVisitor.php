@@ -34,10 +34,12 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     public function leaveNode(Node $node): ?int
     {
-        if ($node instanceof Node\Stmt\If_) {
-            if ($this->guard($node->cond) instanceof SchemaGuard) {
-                array_pop($this->guardStack);
-            }
+        if (
+            $node instanceof Node\Stmt\If_
+            || $node instanceof Node\Stmt\ElseIf_
+            || $node instanceof Node\Stmt\Else_
+        ) {
+            array_pop($this->guardStack);
         }
 
         return null;
@@ -45,10 +47,10 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     public function enterNode(Node $node): ?int
     {
-        if ($node instanceof Node\Stmt\If_) {
-            if (($guard = $this->guard($node->cond)) instanceof SchemaGuard) {
-                $this->guardStack[] = $guard;
-            }
+        if ($node instanceof Node\Stmt\If_ || $node instanceof Node\Stmt\ElseIf_) {
+            $this->guardStack[] = $this->guard($node->cond);
+        } elseif ($node instanceof Node\Stmt\Else_) {
+            $this->guardStack[] = SchemaGuard::Unknown;
         }
 
         if ($node instanceof Node\Stmt\ClassMethod && $node->name->toString() === 'down') {
@@ -77,10 +79,16 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     private function currentGuard(): ?SchemaGuard
     {
+        foreach (array_reverse($this->guardStack) as $guard) {
+            if ($guard === SchemaGuard::Unknown) {
+                return SchemaGuard::Unknown;
+            }
+        }
+
         return end($this->guardStack) ?: null;
     }
 
-    private function guard(Node $node): ?SchemaGuard
+    private function guard(Node $node): SchemaGuard
     {
         $negated = $node instanceof Node\Expr\BooleanNot;
 
@@ -89,11 +97,11 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         }
 
         if (! $node instanceof StaticCall) {
-            return null;
+            return SchemaGuard::Unknown;
         }
 
         if (! $node->class instanceof Node\Name || $node->class->toString() !== 'Schema') {
-            return null;
+            return SchemaGuard::Unknown;
         }
 
         $method = $node->name instanceof Node\Identifier
@@ -107,7 +115,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
             ['hasColumn', false] => SchemaGuard::HasColumn,
             ['hasColumn', true]  => SchemaGuard::MissingColumn,
 
-            default => null,
+            default => SchemaGuard::Unknown,
         };
     }
 

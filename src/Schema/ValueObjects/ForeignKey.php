@@ -17,6 +17,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
         public string $referencesTable,
         public string $referencesColumn,
         public ?string $name = null,
+        public bool $conditionallyModified = false,
     ) {}
 
     public function withColumn(string $column): self
@@ -26,6 +27,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
             referencesTable: $this->referencesTable,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
+            conditionallyModified: $this->conditionallyModified
         );
     }
 
@@ -36,6 +38,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
             referencesTable: $table,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
+            conditionallyModified: $this->conditionallyModified
         );
     }
 
@@ -53,10 +56,11 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
     public function toArray(): array
     {
         return [
-            'column'            => $this->column,
-            'references_table'  => $this->referencesTable,
-            'references_column' => $this->referencesColumn,
-            'name'              => $this->name,
+            'column'                 => $this->column,
+            'references_table'       => $this->referencesTable,
+            'references_column'      => $this->referencesColumn,
+            'name'                   => $this->name,
+            'conditionally_modified' => $this->conditionallyModified,
         ];
     }
 }

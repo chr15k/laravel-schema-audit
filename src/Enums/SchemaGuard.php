@@ -11,4 +11,6 @@ enum SchemaGuard
 
     case HasColumn;
     case MissingColumn;
+
+    case Unknown;
 }

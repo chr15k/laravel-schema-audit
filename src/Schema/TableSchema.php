@@ -18,6 +18,8 @@ use JsonSerializable;
  */
 final class TableSchema implements Arrayable, JsonSerializable
 {
+    private bool $conditionallyModified = false;
+
     private ?ValueObjects\PrimaryKey $primaryKey = null;
 
     /**
@@ -35,6 +37,16 @@ final class TableSchema implements Arrayable, JsonSerializable
     public static function make(string $name): self
     {
         return app(self::class, ['name' => $name]);
+    }
+
+    public function markConditionallyModified(): void
+    {
+        $this->conditionallyModified = true;
+    }
+
+    public function isConditionallyModified(): bool
+    {
+        return $this->conditionallyModified;
     }
 
     public function setPrimaryKey(ValueObjects\PrimaryKey $primaryKey): void

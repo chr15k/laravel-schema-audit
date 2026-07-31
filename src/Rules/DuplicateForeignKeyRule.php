@@ -16,6 +16,11 @@ final readonly class DuplicateForeignKeyRule extends Rule
         $findings = [];
 
         foreach ($context->schema->tables() as $table) {
+            if ($table->isConditionallyModified()) {
+                // Skip tables modified by conditional migrations to avoid false-positives.
+                continue;
+            }
+
             foreach ($table->foreignKeys()->duplicated() as $fk) {
                 $findings[] = $this->duplicateForeignKeyFinding($table->name, $fk);
             }
@@ -28,7 +33,10 @@ final readonly class DuplicateForeignKeyRule extends Rule
     {
         return $this->makeFinding(
             table: $table,
-            message: sprintf('Duplicate foreign key <fg=default>%s</> on <fg=default>%s</>', $fk->column, $fk->name ?: '?'),
+            message: sprintf(
+                'Duplicate foreign key on column <fg=default>%s</>',
+                $fk->column,
+            ),
             column: $fk->column,
         );
     }
