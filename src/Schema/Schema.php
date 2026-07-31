@@ -51,10 +51,6 @@ final readonly class Schema implements Arrayable, Jsonable, JsonSerializable
     public function mismatchedForeignKeys(): iterable
     {
         foreach ($this->tables as $table) {
-            if ($table->isConditionallyModified()) {
-                continue;
-            }
-
             foreach ($table->foreignKeys() as $foreignKey) {
                 $referencedTable = $this->table($foreignKey->referencesTable);
 

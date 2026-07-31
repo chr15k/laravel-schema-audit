@@ -52,4 +52,18 @@ return [
         Rules\InvalidReferencedKeyRule::class,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Uncertainty Handling
+    |--------------------------------------------------------------------------
+    |
+    | Some migration logic cannot be resolved statically, such as schema
+    | changes inside runtime conditionals. Findings affected by these cases
+    | are marked as uncertain and may represent false positives.
+    |
+    */
+    'uncertainty' => [
+        'report' => true,
+    ],
+
 ];

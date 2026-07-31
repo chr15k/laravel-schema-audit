@@ -15,6 +15,7 @@ final readonly class Finding implements Stringable
         public string $message,
         public ?string $column = null,
         public Severity $severity = Severity::Warning,
+        public bool $conditional = false,
     ) {}
 
     public function __toString(): string

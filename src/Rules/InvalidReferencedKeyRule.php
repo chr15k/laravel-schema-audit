@@ -43,6 +43,7 @@ final readonly class InvalidReferencedKeyRule extends Rule
                     ),
                     column: $fk->column,
                     severity: Severity::Error,
+                    conditional: $table->isConditionallyModified()
                 );
             }
         }

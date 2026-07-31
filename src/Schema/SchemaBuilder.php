@@ -57,14 +57,8 @@ final readonly class SchemaBuilder
     {
         $declared = isset($tables[$operation->tableName]);
 
-        if ($operation->guard === SchemaGuard::Unknown) {
-            if ($declared) {
-                $tables[$operation->tableName]->markConditionallyModified();
-            }
-
-            // Skip operations guarded by conditions that cannot be evaluated
-            // statically (e.g. DB::getDriverName(), config(), app()->environment()).
-            return;
+        if ($declared && $operation->guard === SchemaGuard::Unknown) {
+            $tables[$operation->tableName]->markConditionallyModified();
         }
 
         // prevent the builder from manufacturing a table out of a conditional alter.

@@ -62,14 +62,19 @@ final class AuditSchemaCommand extends Command
             return $this->renderSchemaOnly($schema);
         }
 
-        $findings = $this->auditor->audit($schema);
+        $audit = $this->auditor->audit($schema);
+
+        if (! config('schema-audit.uncertainty.report')) {
+            $audit = $audit->withoutUncertainFindings();
+        }
+
         $duration = $this->duration($start);
 
         if ($this->option('json')) {
-            return $this->renderJson($findings);
+            return $this->renderJson($audit);
         }
 
-        return $this->renderReport($findings, $schema->tableCount(), $duration);
+        return $this->renderReport($audit, $schema->tableCount(), $duration);
     }
 
     private function initProgress(int $max = 0): ProgressBar
@@ -171,6 +176,10 @@ final class AuditSchemaCommand extends Command
         $message = wordwrap($finding->message, $width ?: 80, "\n      ");
 
         $this->line(sprintf('    <fg=gray>↳ %s</>', $message));
+
+        if ($finding->conditional) {
+            $this->line(sprintf('    <fg=yellow>↳ %s</>', 'This finding may be a false-positive due to conditional migration logic that could not be resolved'));
+        }
     }
 
     /**

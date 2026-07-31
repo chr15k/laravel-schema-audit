@@ -28,6 +28,7 @@ trait CreatesFindings
         ?string $column = null,
         ?string $code = null,
         ?Severity $severity = null,
+        bool $conditional = false
     ): Finding {
         return new Finding(
             code: $code ?? $this->defaultCode(),
@@ -35,6 +36,7 @@ trait CreatesFindings
             message: $message,
             column: $column,
             severity: $severity ?? $this->defaultSeverity(),
+            conditional: $conditional
         );
     }
 }

@@ -34,6 +34,16 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
         ]);
     }
 
+    public function withoutUncertainFindings(): self
+    {
+        return new self(
+            array_values(array_filter(
+                $this->findings,
+                fn (Finding $finding): bool => ! $finding->conditional
+            ))
+        );
+    }
+
     public function count(): int
     {
         return count($this->findings);

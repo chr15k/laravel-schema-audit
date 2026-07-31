@@ -23,6 +23,7 @@ final readonly class RedundantIndexRule extends Rule
                         $redundant->coveredBy->name,
                     ),
                     column: implode(', ', $redundant->index->columns),
+                    conditional: $table->isConditionallyModified()
                 );
             }
         }
