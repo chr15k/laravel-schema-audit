@@ -22,17 +22,6 @@ Unlike runtime tools, it doesn't need a database connection or application traff
 
 ---
 
-## Why use Schema Audit?
-
-Schema Audit reconstructs your application's schema from its migration history
-and checks it for structural problems before they reach production.
-
-Unlike tools that observe executed queries, Schema Audit works entirely from
-your migrations, making it suitable for CI pipelines and projects where
-production traffic may never exercise every code path.
-
----
-
 ## Requirements
 
 - PHP 8.2+
