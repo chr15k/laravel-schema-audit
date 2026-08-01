@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\ValueObjects;
 
 use Chr15k\SchemaAudit\Enums\Severity;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Stringable;
 
 final readonly class Finding implements Stringable
@@ -16,6 +17,9 @@ final readonly class Finding implements Stringable
         public ?string $column = null,
         public Severity $severity = Severity::Warning,
         public bool $conditional = false,
+        public ?SourceLocation $location = null,
+        /** @var array<string, SourceLocation> */
+        public array $related = [],
     ) {}
 
     public function __toString(): string
