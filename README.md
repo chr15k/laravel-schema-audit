@@ -142,6 +142,8 @@ Because migrations are not executed, Schema Audit cannot reliably evaluate arbit
 
 Schema Audit focuses on schema correctness rather than runtime behavior. It does not analyze query performance, execution plans, or N+1 queries. For runtime diagnostics, tools such as Laravel Telescope, Debugbar, or query detectors are more appropriate.
 
+---
+
 ### Unsupported Operations
 
 Unsupported operations include:
@@ -157,6 +159,8 @@ DB::statement('ALTER TABLE users MODIFY COLUMN name TEXT');
 ```
 
 cannot be reliably analyzed without implementing a database-specific SQL parser.
+
+---
 
 ### Conditional Migrations
 
@@ -175,6 +179,8 @@ Operations guarded by conditions that cannot be evaluated statically (for exampl
 Tables affected by these runtime conditionals are marked as conditionally modified. Findings involving those tables may represent false positives because the exact schema depends on runtime execution.
 
 Conditional findings can be suppressed entirely using the report_conditional_findings configuration option.
+
+---
 
 ### Multiple Database Connections
 
