@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 
@@ -15,7 +16,8 @@ final readonly class Column implements Arrayable, JsonSerializable
 {
     public function __construct(
         public string $name,
-        public ColumnMethod $method
+        public ColumnMethod $method,
+        public ?SourceLocation $location = null
     ) {}
 
     /**
@@ -34,6 +36,7 @@ final readonly class Column implements Arrayable, JsonSerializable
         return [
             'name'   => $this->name,
             'method' => $this->method->value,
+            'location' => $this->location
         ];
     }
 }

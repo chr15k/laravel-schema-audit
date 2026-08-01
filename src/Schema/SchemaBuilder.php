@@ -266,7 +266,8 @@ final readonly class SchemaBuilder
             column: $column,
             referencesTable: $referencesTable,
             referencesColumn: $referencesColumn,
-            name: $constraintName
+            name: $constraintName,
+            location: $root->location
         ));
     }
 

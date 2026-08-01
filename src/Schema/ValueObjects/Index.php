@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 
@@ -19,6 +20,7 @@ final readonly class Index implements Arrayable, JsonSerializable
         public ?string $name,
         public array $columns,
         public bool $unique = false,
+        public ?SourceLocation $location = null
     ) {}
 
     public function renameColumn(string $from, string $to): self
@@ -96,6 +98,7 @@ final readonly class Index implements Arrayable, JsonSerializable
             'columns'   => $this->columns,
             'unique'    => $this->unique,
             'signature' => $this->signature(),
+            'location' => $this->location
         ];
     }
 

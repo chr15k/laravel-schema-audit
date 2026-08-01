@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 
@@ -17,7 +18,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
         public string $referencesTable,
         public string $referencesColumn,
         public ?string $name = null,
-        public bool $conditionallyModified = false,
+        public ?SourceLocation $location = null
     ) {}
 
     public function withColumn(string $column): self
@@ -27,7 +28,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
             referencesTable: $this->referencesTable,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
-            conditionallyModified: $this->conditionallyModified
+            location: $this->location
         );
     }
 
@@ -38,7 +39,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
             referencesTable: $table,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
-            conditionallyModified: $this->conditionallyModified
+            location: $this->location
         );
     }
 
@@ -60,7 +61,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
             'references_table'       => $this->referencesTable,
             'references_column'      => $this->referencesColumn,
             'name'                   => $this->name,
-            'conditionally_modified' => $this->conditionallyModified,
+            'location' => $this->location
         ];
     }
 }

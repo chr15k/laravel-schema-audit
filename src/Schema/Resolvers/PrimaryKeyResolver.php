@@ -18,7 +18,8 @@ final readonly class PrimaryKeyResolver
             ?? [];
 
         return new PrimaryKey(
-            columns: (array) $columns
+            columns: (array) $columns,
+            location: $call->location
         );
     }
 
@@ -27,13 +28,22 @@ final readonly class PrimaryKeyResolver
         $root = $chain->root();
 
         if ($column->method->impliesPrimaryKey()) {
-            return new PrimaryKey([$root->argument(0) ?? 'id']);
+            return new PrimaryKey(
+                columns: [$root->argument(0) ?? 'id'],
+                location: $root->location
+            );
         }
 
         if ($chain->hasModifier('primary')) {
-            return new PrimaryKey([$column->name]);
+            return new PrimaryKey(
+                columns: [$column->name],
+                location: $root->location
+            );
         }
 
-        return new PrimaryKey(columns: ['id']);
+        return new PrimaryKey(
+            columns: ['id'],
+            location: $root->location
+        );
     }
 }

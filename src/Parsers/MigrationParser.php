@@ -21,19 +21,19 @@ final readonly class MigrationParser
             throw new RuntimeException('Unable to read migration file: '.$path);
         }
 
-        return $this->parseCode($code);
+        return $this->parseCode($code, $path);
     }
 
     /**
      * @return list<ValueObjects\SchemaOperation>
      */
-    public function parseCode(string $code): array
+    public function parseCode(string $code, string $path): array
     {
         $ast = (new ParserFactory)
             ->createForNewestSupportedVersion()
             ->parse($code) ?? [];
 
-        $visitor = new SchemaCallVisitor;
+        $visitor = new SchemaCallVisitor(filename: $path);
 
         $traverser = new NodeTraverser;
         $traverser->addVisitor($visitor);

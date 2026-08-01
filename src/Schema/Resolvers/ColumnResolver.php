@@ -40,7 +40,7 @@ final readonly class ColumnResolver
                 ?? $this->conventions->foreignKeyColumnFromModel($name);
         }
 
-        return new Column($name, $method);
+        return new Column($name, $method, $call->location);
     }
 
     private function resolveModifiers(ColumnMethod $method, ColumnChain $chain): ColumnMethod

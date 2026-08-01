@@ -11,7 +11,8 @@ final readonly class ColumnCall
      */
     public function __construct(
         public string $method,
-        public array $arguments = []
+        public array $arguments = [],
+        public ?SourceLocation $location = null
     ) {}
 
     public function argument(int|string $key, mixed $default = null): mixed

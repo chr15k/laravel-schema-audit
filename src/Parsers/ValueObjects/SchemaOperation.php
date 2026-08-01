@@ -17,6 +17,7 @@ final readonly class SchemaOperation
         public string $tableName,
         public array $chains = [],
         public ?string $renameTo = null,
-        public ?SchemaGuard $guard = null
+        public ?SchemaGuard $guard = null,
+        public ?SourceLocation $location = null,
     ) {}
 }

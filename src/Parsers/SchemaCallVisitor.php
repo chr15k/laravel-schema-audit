@@ -6,6 +6,7 @@ namespace Chr15k\SchemaAudit\Parsers;
 
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\StaticCall;
@@ -20,9 +21,13 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
     /** @var list<SchemaGuard> */
     private array $guardStack = [];
 
+    private ChainExtractor $chainExtractor;
+
     public function __construct(
-        private readonly ChainExtractor $chainExtractor = new ChainExtractor,
-    ) {}
+        private readonly string $filename,
+    ) {
+        $this->chainExtractor = new ChainExtractor($filename);
+    }
 
     /**
      * @return list<ValueObjects\SchemaOperation>
@@ -135,14 +140,16 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         SchemaOperationType $type,
         string $tableName,
         ?string $renameTo = null,
-        array $chains = []
+        array $chains = [],
+        int $line = -1,
     ): void {
         $this->operations[] = new ValueObjects\SchemaOperation(
             type: $type,
             tableName: $tableName,
             chains: $chains,
             renameTo: $renameTo,
-            guard: $this->currentGuard()
+            guard: $this->currentGuard(),
+            location: new SourceLocation($this->filename, $line)
         );
     }
 
@@ -153,9 +160,10 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
         if ($from && $to) {
             $this->addOperation(
-                SchemaOperationType::Rename,
-                $from,
+                type: SchemaOperationType::Rename,
+                tableName: $from,
                 renameTo: $to,
+                line: $node->getStartLine()
             );
         }
 

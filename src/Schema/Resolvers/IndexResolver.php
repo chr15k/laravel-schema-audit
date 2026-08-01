@@ -34,7 +34,8 @@ final readonly class IndexResolver
                     $call->method
                 ),
             columns: $columns,
-            unique: $call->method === 'unique'
+            unique: $call->method === 'unique',
+            location: $call->location
         );
     }
 
@@ -52,7 +53,8 @@ final readonly class IndexResolver
                     $call->method
                 ),
             columns: [$column],
-            unique: $call->method === 'unique'
+            unique: $call->method === 'unique',
+            location: $call->location
         );
     }
 }

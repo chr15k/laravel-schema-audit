@@ -55,7 +55,8 @@ final readonly class ForeignKeyResolver
             column: $column,
             referencesTable: $tableName,
             referencesColumn: $referencesColumn,
-            name: $name
+            name: $name,
+            location: $root->location
         );
     }
 }

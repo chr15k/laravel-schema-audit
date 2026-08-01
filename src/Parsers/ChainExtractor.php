@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
@@ -15,6 +16,10 @@ use PhpParser\Node\Stmt\Expression;
 
 final class ChainExtractor
 {
+    public function __construct(
+        private readonly string $filename,
+    ) {}
+
     /**
      * @return list<ValueObjects\ColumnChain>
      */
@@ -84,6 +89,10 @@ final class ChainExtractor
         return new ValueObjects\ColumnCall(
             method: $methodName,
             arguments: $arguments,
+            location: new SourceLocation(
+                filename: $this->filename,
+                line: $node->getStartLine()
+            )
         );
     }
 
