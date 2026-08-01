@@ -26,7 +26,7 @@ final readonly class RedundantIndexRule extends Rule
                     conditional: $table->isConditionallyModified(),
                     location: $redundant->index->location,
                     related: [
-                        'Covered By' => $redundant->coveredBy->location
+                        'Covered By' => $redundant->coveredBy->location,
                     ]
                 );
             }
