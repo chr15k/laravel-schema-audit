@@ -57,11 +57,11 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
     public function toArray(): array
     {
         return [
-            'column'                 => $this->column,
-            'references_table'       => $this->referencesTable,
-            'references_column'      => $this->referencesColumn,
-            'name'                   => $this->name,
-            'location' => $this->location
+            'column'            => $this->column,
+            'references_table'  => $this->referencesTable,
+            'references_column' => $this->referencesColumn,
+            'name'              => $this->name,
+            'location'          => $this->location,
         ];
     }
 }

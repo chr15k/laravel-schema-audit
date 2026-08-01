@@ -21,7 +21,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
     /** @var list<SchemaGuard> */
     private array $guardStack = [];
 
-    private ChainExtractor $chainExtractor;
+    private readonly ChainExtractor $chainExtractor;
 
     public function __construct(
         private readonly string $filename,

@@ -34,9 +34,9 @@ final readonly class Column implements Arrayable, JsonSerializable
     public function toArray(): array
     {
         return [
-            'name'   => $this->name,
-            'method' => $this->method->value,
-            'location' => $this->location
+            'name'     => $this->name,
+            'method'   => $this->method->value,
+            'location' => $this->location,
         ];
     }
 }

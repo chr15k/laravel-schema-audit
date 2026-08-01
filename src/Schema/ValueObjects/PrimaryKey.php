@@ -35,8 +35,8 @@ final readonly class PrimaryKey implements Arrayable, JsonSerializable
     public function toArray(): array
     {
         return [
-            'columns' => $this->columns,
-            'location' => $this->location
+            'columns'  => $this->columns,
+            'location' => $this->location,
         ];
     }
 }

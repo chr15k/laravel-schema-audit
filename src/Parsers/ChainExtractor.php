@@ -14,10 +14,10 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
 
-final class ChainExtractor
+final readonly class ChainExtractor
 {
     public function __construct(
-        private readonly string $filename,
+        private string $filename,
     ) {}
 
     /**
