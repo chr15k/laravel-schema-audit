@@ -16,45 +16,29 @@
 
 # Laravel Schema Audit
 
-Static analysis that audits your migration-declared schema — catching
-unindexed foreign keys, duplicate/redundant indexes, dangling foreign
-keys, type-mismatched foreign keys, and missing primary keys before they
-ship.
+Laravel Schema Audit statically reconstructs your application's schema from its migration history and audits it for structural problems before they reach production.
 
-No database connection required. No test traffic required. It folds
-your migration history into final per-table schema state and checks it
-for internal consistency.
+Unlike runtime tools, it doesn't need a database connection or application traffic. It analyzes your migrations, builds the final schema they describe, and reports structural issues including duplicate indexes, redundant indexes, invalid foreign keys, missing primary keys, mismatched foreign key types, and other schema inconsistencies before they reach production.
 
-## Why this over a runtime query monitor?
+---
 
-This package is not a replacement for runtime query monitoring — Laravel
-Debugbar, Telescope, and laravel-query-detector already do a good job catching
-N+1 query storms as they happen, using real execution data this package doesn't
-have access to. What this package checks instead is schema-level consistency: facts
-about your migrations that are true or false regardless of how the code queries them.
+## Why use Schema Audit?
 
-This package solves a different, narrower problem that runtime tools
-structurally can't:
+Schema Audit reconstructs your application's schema from its migration history
+and checks it for structural problems before they reach production.
 
-- **It doesn't need the code to run.** A rarely-hit admin report, a
-  seasonal batch job, a conditional branch nobody's exercised in staging
-  — none of that shows up in a query monitor until someone triggers it,
-  possibly in production. Static analysis reads the migrations directly.
-- **It runs in CI, before merge.** Point it at a pull request's migrations
-  and it can flag a missing index or a dangling foreign key before the
-  code ships.
-- **It checks facts a query monitor was never built to check** — whether
-  an index exists at all, whether two foreign keys' types actually
-  match, whether an index is declared twice for no reason. These are
-  schema-internal-consistency questions, not query-performance questions.
+Unlike tools that observe executed queries, Schema Audit works entirely from
+your migrations, making it suitable for CI pipelines and projects where
+production traffic may never exercise every code path.
 
-This package deliberately does **not** attempt N+1 detection, query
-timing, or execution-plan analysis — see [Limitations](#limitations).
+---
 
 ## Requirements
 
 - PHP 8.2+
 - Laravel 10, 11, 12, or 13
+
+---
 
 ## Installation
 
@@ -67,6 +51,8 @@ Optionally publish the config file:
 ```bash
 php artisan vendor:publish --tag=schema-audit-config
 ```
+
+---
 
 ## Usage
 
@@ -93,6 +79,8 @@ php artisan schema:audit --schema-only
 > Schema Audit treats all provided migration paths as belonging to a single database schema.
 > Use separate audit runs for applications or connections with independent databases.
 
+---
+
 ## What this package checks
 
 | Rule | What it flags |
@@ -104,12 +92,12 @@ php artisan schema:audit --schema-only
 | `DanglingForeignKeyRule` | A foreign key referencing a table that doesn't exist anywhere in the folded schema — a typo, or a table renamed/dropped without updating the reference. |
 | `MismatchedForeignKeyRule` | A foreign key whose column type doesn't match the type family of the referenced table's primary key (e.g. `foreignId()` pointing at a plain `increments()` primary key). |
 | `MissingPrimaryKeyRule` | A table with no identifiable primary key — no `id()`/`increments()`-style column and no explicit `primary()` call. |
-| `InvalidReferenceKeyRule` | Flags a foreign key whose referenced column has no unique constraint on the parent table. |
+| `InvalidReferenceKeyRule` | A foreign key referencing a column that is not protected by a primary or unique key on the parent table. |
 
 > [!NOTE]
-> Every rule is a pure fact about the folded schema - no query usage, no runtime data,
-> no heuristics about "is this a good index." If a rule fires, it's because something
-> in your migration history is verifiably inconsistent, not because a pattern looked suspicious.
+> Rules are evaluated against the schema reconstructed from your migration history. For ordinary migrations,
+> findings represent concrete inconsistencies. When runtime conditionals influence schema changes, affected
+> findings are marked as conditional because the final schema cannot be determined statically.
 
 ## Configuration
 
@@ -132,15 +120,78 @@ return [
         Rules\MismatchedForeignKeyRule::class,
         Rules\InvalidReferencedKeyRule::class,
     ],
+    'report_conditional_findings' => true,
 ];
 ```
 
 > [!NOTE]
-> **`paths`** — migration directories to audit; use `--path` to include additional paths per run.
+> `paths` — migration directories to analyse. Use --path to override the configured paths for a single audit.
 >
-> **`driver`** — defaults to your app's configured connection (`DB_CONNECTION`); override with `--driver` to audit against a different target database than the one currently configured.
+> `driver` — driver — target database driver. Some rules are database-specific, such as whether foreign keys automatically create indexes.
 >
-> **`rules`** — remove an entry to disable that rule without touching any package code. Add your own class here too — see below.
+> `report_conditional_findings` — when enabled, findings originating from tables modified inside runtime conditionals are
+> reported with a note explaining that they may be false positives. Disable to suppress those findings entirely.
+>
+> `rules` — enable, disable or replace audit rules.
+
+---
+
+## Limitations
+
+Schema Audit statically analyzes Laravel migrations to reconstruct your application's schema. It does not connect to your database or execute migration code.
+
+It understands schema declarations made through Laravel's Schema Builder, including:
+
+* `Schema::create()`
+* `Schema::table()`
+* Blueprint column definitions
+* Primary keys
+* Indexes
+* Foreign keys
+
+Because migrations are not executed, Schema Audit cannot reliably evaluate arbitrary PHP logic, runtime conditions, dynamically generated schema definitions, or raw SQL schema changes. In these situations, findings may be marked as **conditional**, indicating they could represent false positives depending on the code path taken at runtime.
+
+Schema Audit focuses on schema correctness rather than runtime behavior. It does not analyze query performance, execution plans, or N+1 queries. For runtime diagnostics, tools such as Laravel Telescope, Debugbar, or query detectors are more appropriate.
+
+### Unsupported Operations
+
+Unsupported operations include:
+
+- Raw SQL schema changes (`DB::statement()`, `DB::unprepared()`)
+- Dynamically generated schema changes
+- Schema changes hidden behind application logic
+
+For example:
+
+```php
+DB::statement('ALTER TABLE users MODIFY COLUMN name TEXT');
+```
+
+cannot be reliably analyzed without implementing a database-specific SQL parser.
+
+### Conditional Migrations
+
+Schema Audit understands Laravel's common schema guards such as:
+
+```php
+if (! Schema::hasColumn('users', 'email')) {
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('email');
+    });
+}
+```
+
+Operations guarded by conditions that cannot be evaluated statically (for example DB::getDriverName(), config(), or application-specific logic) are still folded into the schema so that analysis remains useful.
+
+Tables affected by these runtime conditionals are marked as conditionally modified. Findings involving those tables may represent false positives because the exact schema depends on runtime execution.
+
+Conditional findings can be suppressed entirely using the report_conditional_findings configuration option.
+
+### Multiple Database Connections
+
+Schema Audit assumes all provided migration paths belong to the same database schema.
+
+If your application manages multiple databases or connections, run separate audits for each schema.
 
 ---
 
@@ -235,69 +286,3 @@ return [
     ],
 ];
 ```
-
----
-
-## Limitations
-
-Schema Audit performs static analysis of Laravel migrations without connecting to your database or executing migration code.
-
-This means it analyzes schema declarations made through Laravel's Schema Builder:
-
-- `Schema::create()`
-- `Schema::table()`
-- Blueprint column definitions
-- Index definitions
-- Foreign key definitions
-
-It does not execute migrations, so it cannot determine the result of arbitrary PHP logic or runtime conditions.
-
-### Unsupported Operations
-
-The following are not currently analyzed:
-
-- Raw SQL schema changes:
-  - `DB::statement()`
-  - `DB::unprepared()`
-- Dynamically generated schema changes
-- Schema changes hidden behind application logic or service calls
-
-For example:
-
-```php
-DB::statement('ALTER TABLE users MODIFY COLUMN name TEXT');
-```
-
-cannot be reliably analyzed without implementing a database-specific SQL parser.
-
-### Conditional Schema Changes
-
-Common Laravel schema guards such as:
-
-```php
-if (! Schema::hasTable('users')) {
-    Schema::create('users', function (Blueprint $table) {
-        // ...
-    });
-}
-```
-
-are supported where possible.
-
-However, Schema Audit cannot fully evaluate arbitrary conditional logic:
-
-```php
-if (config('features.new_schema')) {
-    Schema::table('users', function (Blueprint $table) {
-        // ...
-    });
-}
-```
-
-because the final schema depends on runtime state.
-
-### Multiple Database Connections
-
-Schema Audit assumes all provided migration paths belong to the same database schema.
-
-If your application manages multiple databases or connections, run separate audits for each schema.
