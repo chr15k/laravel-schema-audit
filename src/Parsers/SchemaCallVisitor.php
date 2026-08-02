@@ -24,9 +24,9 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
     private readonly ChainExtractor $chainExtractor;
 
     public function __construct(
-        private readonly string $filename,
+        private readonly string $path,
     ) {
-        $this->chainExtractor = new ChainExtractor($filename);
+        $this->chainExtractor = new ChainExtractor($path);
     }
 
     /**
@@ -149,7 +149,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
             chains: $chains,
             renameTo: $renameTo,
             guard: $this->currentGuard(),
-            location: new SourceLocation($this->filename, $line)
+            location: new SourceLocation($this->path, $line)
         );
     }
 

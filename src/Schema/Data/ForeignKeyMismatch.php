@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\ValueObjects;
+namespace Chr15k\SchemaAudit\Schema\Data;
 
 use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 
 final readonly class ForeignKeyMismatch
 {

@@ -33,7 +33,7 @@ final readonly class MigrationParser
             ->createForNewestSupportedVersion()
             ->parse($code) ?? [];
 
-        $visitor = new SchemaCallVisitor(filename: $path);
+        $visitor = new SchemaCallVisitor(path: $path);
 
         $traverser = new NodeTraverser;
         $traverser->addVisitor($visitor);

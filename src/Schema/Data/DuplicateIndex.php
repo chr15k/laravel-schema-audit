@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Chr15k\SchemaAudit\Schema\ValueObjects;
+namespace Chr15k\SchemaAudit\Schema\Data;
+
+use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 
 final readonly class DuplicateIndex
 {

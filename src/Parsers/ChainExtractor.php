@@ -17,7 +17,7 @@ use PhpParser\Node\Stmt\Expression;
 final readonly class ChainExtractor
 {
     public function __construct(
-        private string $filename,
+        private string $path,
     ) {}
 
     /**
@@ -90,7 +90,7 @@ final readonly class ChainExtractor
             method: $methodName,
             arguments: $arguments,
             location: new SourceLocation(
-                filename: $this->filename,
+                path: $this->path,
                 line: $node->getStartLine()
             )
         );

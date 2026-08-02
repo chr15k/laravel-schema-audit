@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Collections;
 
-use Chr15k\SchemaAudit\Schema\ValueObjects\DuplicateIndex;
+use Chr15k\SchemaAudit\Schema\Data\DuplicateIndex;
+use Chr15k\SchemaAudit\Schema\Data\RedundantIndex;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
-use Chr15k\SchemaAudit\Schema\ValueObjects\RedundantIndex;
 use Illuminate\Support\Collection;
 
 /**

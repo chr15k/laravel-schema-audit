@@ -7,6 +7,7 @@ namespace Chr15k\SchemaAudit\Console\Commands;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Migrations\MigrationLocator;
 use Chr15k\SchemaAudit\Migrations\MigrationPathResolver;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\SchemaAudit;
@@ -167,19 +168,76 @@ final class AuditSchemaCommand extends Command
         $severity = $finding->severity;
 
         $this->components->twoColumnDetail(
-            sprintf('  <fg=%s>%s</> %s', $severity->color(), $severity->glyph(), (string) $finding),
+            sprintf(
+                '  <fg=%s>%s</> %s',
+                $severity->color(),
+                $severity->glyph(),
+                (string) $finding,
+            ),
             sprintf('<fg=default;options=bold>%s</>', $column)
         );
 
+        $this->renderWrappedArrow($finding->message);
+
+        $this->renderLocation($finding);
+
+        $this->renderRelated($finding);
+
+        $this->renderConditional($finding);
+    }
+
+    private function renderWrappedArrow(string $text): void
+    {
         $width = (new Terminal)->getWidth() - 20;
 
-        $message = wordwrap($finding->message, $width ?: 80, "\n      ");
+        $this->line(sprintf(
+            '    <fg=gray>↳ %s</>',
+            wordwrap($text, $width ?: 80, "\n      ")
+        ));
+    }
 
-        $this->line(sprintf('    <fg=gray>↳ %s</>', $message));
-
-        if ($finding->conditional) {
-            $this->line(sprintf('    <fg=yellow>↳ %s</>', 'This finding may be a false positive due to conditional migration logic that could not be resolved'));
+    private function renderLocation(Finding $finding): void
+    {
+        if (! $finding->location instanceof SourceLocation) {
+            return;
         }
+
+        $this->newLine();
+
+        $this->line('    <fg=gray>Location:</>');
+
+        $this->renderWrappedArrow(sprintf('<fg=default>%s</>', $finding->location->relative()));
+    }
+
+    private function renderRelated(Finding $finding): void
+    {
+        foreach ($finding->related as $label => $location) {
+            $this->newLine();
+
+            $this->line(sprintf(
+                '    <fg=gray>%s:</>',
+                $label,
+            ));
+
+            $this->renderWrappedArrow(sprintf('<fg=default>%s</>', $location->relative()));
+        }
+    }
+
+    private function renderConditional(Finding $finding): void
+    {
+        if (! $finding->conditional) {
+            return;
+        }
+
+        $this->newLine();
+
+        $this->line(
+            '    <fg=yellow>Note:</>'
+        );
+
+        $this->line(
+            '      <fg=yellow>This finding may be a false positive because the schema is modified by conditional migration logic.</>'
+        );
     }
 
     /**
