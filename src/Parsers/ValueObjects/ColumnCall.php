@@ -15,7 +15,7 @@ final readonly class ColumnCall
         public ?SourceLocation $location = null
     ) {}
 
-    public function argument(int|string $key, mixed $default = null): mixed
+    public function argument(int|string $key, ?string $default = null): ?string
     {
         return $this->arguments[$key] ?? $default;
     }

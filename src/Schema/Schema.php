@@ -46,7 +46,7 @@ final readonly class Schema implements Arrayable, Jsonable, JsonSerializable
     }
 
     /**
-     * @return iterable<ValueObjects\ForeignKeyMismatch>
+     * @return iterable<Data\ForeignKeyMismatch>
      */
     public function mismatchedForeignKeys(): iterable
     {
@@ -62,7 +62,7 @@ final readonly class Schema implements Arrayable, Jsonable, JsonSerializable
                     continue;
                 }
 
-                yield new ValueObjects\ForeignKeyMismatch(
+                yield new Data\ForeignKeyMismatch(
                     table: $table,
                     foreignKey: $foreignKey,
                     referencedTable: $referencedTable,

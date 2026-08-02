@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
+use Chr15k\SchemaAudit\Schema\Data\DuplicateIndex;
 use Chr15k\SchemaAudit\Schema\TableSchema;
-use Chr15k\SchemaAudit\Schema\ValueObjects\DuplicateIndex;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
