@@ -212,6 +212,10 @@ final class AuditSchemaCommand extends Command
     private function renderRelated(Finding $finding): void
     {
         foreach ($finding->related as $label => $location) {
+            if (! $location) {
+                continue; // @todo - fix this
+            }
+
             $this->newLine();
 
             $this->line(sprintf(
