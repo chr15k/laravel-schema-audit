@@ -6,7 +6,7 @@ namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Schema\TableSchema;
-use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
+use Chr15k\SchemaAudit\Schema\ValueObjects\DuplicateIndex;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
@@ -25,19 +25,23 @@ final readonly class DuplicateIndexRule extends Rule
         return $next($context->withFindings($findings));
     }
 
-    private function duplicateIndexFinding(TableSchema $table, Index $index): Finding
+    private function duplicateIndexFinding(TableSchema $table, DuplicateIndex $duplicate): Finding
     {
-        $columns = implode(', ', $index->columns);
+        $columns = implode(', ', $duplicate->index->columns);
 
         return $this->makeFinding(
             table: $table->name,
             message: sprintf(
                 'Duplicate index <fg=default>%s</> on <fg=default>%s</>',
-                $index->name,
+                $duplicate->index->name,
                 $columns
             ),
             column: $columns,
-            conditional: $table->isConditionallyModified()
+            conditional: $table->isConditionallyModified(),
+            location: $duplicate->index->location,
+            related: [
+                'Duplicated by' => $duplicate->duplicatedBy->location,
+            ]
         );
     }
 }
