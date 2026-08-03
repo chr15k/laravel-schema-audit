@@ -23,11 +23,9 @@ final readonly class RedundantIndexRule extends Rule
                         $redundant->coveredBy->name,
                     ),
                     column: implode(', ', $redundant->index->columns),
-                    conditional: $table->isConditional(),
+                    guard: $table->guard(),
                     location: $redundant->index->location,
-                    related: [
-                        'Covered By' => $redundant->coveredBy->location,
-                    ]
+                    related: [$redundant->coveredBy]
                 );
             }
         }

@@ -23,7 +23,7 @@ final readonly class PrimaryKeyResolver
         return new PrimaryKey(
             columns: (array) $columns,
             location: $call->location,
-            conditional: $guard === SchemaGuard::Unknown
+            guard: $guard
         );
     }
 
@@ -38,7 +38,7 @@ final readonly class PrimaryKeyResolver
             return new PrimaryKey(
                 columns: [$root->argument(0) ?? 'id'],
                 location: $root->location,
-                conditional: $guard === SchemaGuard::Unknown
+                guard: $guard
             );
         }
 
@@ -46,14 +46,14 @@ final readonly class PrimaryKeyResolver
             return new PrimaryKey(
                 columns: [$column->name],
                 location: $root->location,
-                conditional: $guard === SchemaGuard::Unknown
+                guard: $guard
             );
         }
 
         return new PrimaryKey(
             columns: ['id'],
             location: $root->location,
-            conditional: $guard === SchemaGuard::Unknown
+            guard: $guard
         );
     }
 }

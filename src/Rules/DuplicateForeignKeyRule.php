@@ -7,6 +7,7 @@ namespace Chr15k\SchemaAudit\Rules;
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Schema\Collections\ForeignKeyCollection;
 use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
@@ -38,7 +39,7 @@ final readonly class DuplicateForeignKeyRule extends Rule
                 $fk->column,
             ),
             column: $fk->column,
-            conditional: $duplicates->contains->conditional,
+            guard: $duplicates->first(fn (ForeignKey $fk): ?bool => $fk->guard?->impliesConditional()),
             location: $fk->location,
             related: $duplicates->skip(1)->all()
         );

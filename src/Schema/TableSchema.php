@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema;
 
+use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\ColumnFamily;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Chr15k\SchemaAudit\Schema\Collections\ColumnCollection;
 use Chr15k\SchemaAudit\Schema\Collections\ForeignKeyCollection;
@@ -17,11 +19,11 @@ use JsonSerializable;
 /**
  * @implements Arrayable<string, list<array<string, bool|list<string>|string|null>>|string>
  */
-final class TableSchema implements Arrayable, JsonSerializable
+final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
 {
-    private bool $conditional = false;
-
     private ?SourceLocation $location = null;
+
+    private ?SchemaGuard $guard = null;
 
     private ?ValueObjects\PrimaryKey $primaryKey = null;
 
@@ -37,30 +39,27 @@ final class TableSchema implements Arrayable, JsonSerializable
         private readonly ColumnCollection $columns
     ) {}
 
-    public static function make(string $name, ?SourceLocation $location = null): self
-    {
+    public static function make(
+        string $name,
+        ?SourceLocation $location = null,
+        ?SchemaGuard $guard = null
+    ): self {
         $instance = app(self::class, ['name' => $name]);
 
         if ($location instanceof SourceLocation) {
             $instance->setLocation($location);
         }
 
+        if ($guard instanceof SchemaGuard) {
+            $instance->setGuard($guard);
+        }
+
         return $instance;
     }
 
-    public function markConditional(): void
+    public function setGuard(SchemaGuard $guard): void
     {
-        $this->conditional = true;
-    }
-
-    public function setConditional(bool $conditional): void
-    {
-        $this->conditional = $conditional;
-    }
-
-    public function isConditional(): bool
-    {
-        return $this->conditional;
+        $this->guard = $guard;
     }
 
     public function setLocation(SourceLocation $location): void
@@ -71,6 +70,11 @@ final class TableSchema implements Arrayable, JsonSerializable
     public function location(): ?SourceLocation
     {
         return $this->location;
+    }
+
+    public function guard(): ?SchemaGuard
+    {
+        return $this->guard;
     }
 
     public function setPrimaryKey(ValueObjects\PrimaryKey $primaryKey): void

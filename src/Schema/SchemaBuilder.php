@@ -57,10 +57,6 @@ final readonly class SchemaBuilder
     {
         $declared = isset($tables[$operation->tableName]);
 
-        if ($declared && $operation->guard === SchemaGuard::Unknown) {
-            $tables[$operation->tableName]->markConditional();
-        }
-
         // prevent the builder from manufacturing a table out of a conditional alter.
         if ($operation->type === SchemaOperationType::Alter && ! $declared) {
             return;
@@ -85,6 +81,7 @@ final readonly class SchemaBuilder
         $table = $tables[$operation->tableName] ?? TableSchema::make(
             name: $operation->tableName,
             location: $operation->location,
+            guard: $operation->guard
         );
 
         foreach ($operation->chains as $chain) {
@@ -92,6 +89,12 @@ final readonly class SchemaBuilder
         }
 
         $tables[$operation->tableName] = $table;
+
+        // if ($operation->type === SchemaOperationType::Create
+        //     && $operation->guard === SchemaGuard::Unknown
+        // ) {
+        //     $tables[$operation->tableName]->setGuard($guard);
+        // }
     }
 
     /**
@@ -104,7 +107,7 @@ final readonly class SchemaBuilder
 
         $tables[$to] = TableSchema::make($to);
         $tables[$to]->setLocation($renamed->location());
-        $tables[$to]->setConditional($renamed->isConditional());
+        $tables[$to]->setGuard($renamed->guard());
 
         if ($pk = $renamed->primaryKey()) {
             $tables[$to]->setPrimaryKey($pk);
@@ -225,7 +228,7 @@ final readonly class SchemaBuilder
             $resolved = $this->foreignKeys->resolve($chain, $table, $column->name, $guard);
             if ($resolved instanceof ForeignKey) {
                 $table->addForeignKey(
-                    $resolved->withConditional($guard === SchemaGuard::Unknown)
+                    $resolved->withGuard($guard)
                 );
             }
         }
@@ -279,7 +282,7 @@ final readonly class SchemaBuilder
             referencesColumn: $referencesColumn,
             name: $constraintName,
             location: $root->location,
-            conditional: $guard === SchemaGuard::Unknown
+            guard: $guard
         ));
     }
 

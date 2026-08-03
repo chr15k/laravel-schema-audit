@@ -7,6 +7,7 @@ namespace Chr15k\SchemaAudit\Rules;
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Schema\Collections\IndexCollection;
 use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
@@ -40,7 +41,7 @@ final readonly class DuplicateIndexRule extends Rule
                 $columns
             ),
             column: $columns,
-            conditional: $duplicates->contains->conditional,
+            guard: $duplicates->first(fn (Index $index): ?bool => $index->guard?->impliesConditional()),
             location: $index->location,
             related: $duplicates->skip(1)->all()
         );

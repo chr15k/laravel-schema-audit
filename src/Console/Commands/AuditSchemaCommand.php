@@ -211,25 +211,21 @@ final class AuditSchemaCommand extends Command
 
     private function renderRelated(Finding $finding): void
     {
-        foreach ($finding->related as $label => $location) {
-            if (! $location) {
-                continue; // @todo - fix this
+        foreach ($finding->related as $related) {
+            if ($related->location() === null) {
+                continue;
             }
 
             $this->newLine();
+            $this->line('    <fg=gray>Related:</>');
 
-            $this->line(sprintf(
-                '    <fg=gray>%s:</>',
-                $label,
-            ));
-
-            $this->renderWrappedArrow(sprintf('<fg=default>%s</>', $location->relative()));
+            $this->renderWrappedArrow(sprintf('<fg=default>%s</>', $related->location()->relative()));
         }
     }
 
     private function renderConditional(Finding $finding): void
     {
-        if (! $finding->conditional) {
+        if (! $finding->guard?->impliesConditional()) {
             return;
         }
 

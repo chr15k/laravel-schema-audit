@@ -38,7 +38,7 @@ final readonly class IndexResolver
             columns: $columns,
             unique: $call->method === 'unique',
             location: $call->location,
-            conditional: $guard === SchemaGuard::Unknown
+            guard: $guard
         );
     }
 
@@ -59,7 +59,7 @@ final readonly class IndexResolver
             columns: [$column],
             unique: $call->method === 'unique',
             location: $call->location,
-            conditional: $guard === SchemaGuard::Unknown
+            guard: $guard
         );
     }
 }

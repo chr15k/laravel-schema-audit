@@ -28,7 +28,10 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
      */
     public function withFindings(array $findings): self
     {
-        return new self([...$this->findings, ...$findings]);
+        return new self([
+            ...$this->findings,
+            ...$findings,
+        ]);
     }
 
     public function withoutConditionalFindings(): self
@@ -36,7 +39,7 @@ final readonly class SchemaAudit implements Arrayable, Jsonable, JsonSerializabl
         return new self(
             array_values(array_filter(
                 $this->findings,
-                fn (Finding $finding): bool => ! $finding->conditional
+                fn (Finding $finding): bool => ! $finding->guard->impliesConditional()
             ))
         );
     }

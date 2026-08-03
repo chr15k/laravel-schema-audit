@@ -43,7 +43,7 @@ final readonly class InvalidReferencedKeyRule extends Rule
                     ),
                     column: $fk->column,
                     severity: Severity::Error,
-                    conditional: $fk->conditional,
+                    guard: $fk->guard,
                     location: $fk->location
                 );
             }

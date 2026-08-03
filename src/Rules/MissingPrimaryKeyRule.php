@@ -20,7 +20,7 @@ final readonly class MissingPrimaryKeyRule extends Rule
                     table: $table->name,
                     message: sprintf('Table <fg=default>%s</> has no primary key', $table->name),
                     severity: Severity::Error,
-                    conditional: $table->isConditional(),
+                    guard: $table->guard(),
                     location: $table->location()
                 );
             }

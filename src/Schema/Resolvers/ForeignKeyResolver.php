@@ -59,7 +59,7 @@ final readonly class ForeignKeyResolver
             referencesColumn: $referencesColumn,
             name: $name,
             location: $root->location,
-            conditional: $guard === SchemaGuard::Unknown
+            guard: $guard
         );
     }
 }

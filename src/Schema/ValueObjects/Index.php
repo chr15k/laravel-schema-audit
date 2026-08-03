@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
+use Chr15k\SchemaAudit\Contracts\SchemaReference;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
@@ -11,7 +13,7 @@ use JsonSerializable;
 /**
  * @implements Arrayable<string, array|bool|string|null>
  */
-final readonly class Index implements Arrayable, JsonSerializable
+final readonly class Index implements Arrayable, JsonSerializable, SchemaReference
 {
     /**
      * @param  list<string>  $columns
@@ -21,17 +23,27 @@ final readonly class Index implements Arrayable, JsonSerializable
         public array $columns,
         public bool $unique = false,
         public ?SourceLocation $location = null,
-        public bool $conditional = false
+        public ?SchemaGuard $guard = null
     ) {}
 
-    public function withConditional(bool $conditional = false): self
+    public function location(): ?SourceLocation
+    {
+        return $this->location;
+    }
+
+    public function guard(): ?SchemaGuard
+    {
+        return $this->guard;
+    }
+
+    public function withGuard(?SchemaGuard $guard = null): self
     {
         return new self(
             name: $this->name,
             columns: $this->columns,
             unique: $this->unique,
             location: $this->location,
-            conditional: $conditional
+            guard: $guard
         );
     }
 

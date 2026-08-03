@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
+use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
@@ -12,22 +14,32 @@ use JsonSerializable;
 /**
  * @implements Arrayable<string, string|int>
  */
-final readonly class Column implements Arrayable, JsonSerializable
+final readonly class Column implements Arrayable, JsonSerializable, SchemaReference
 {
     public function __construct(
         public string $name,
         public ColumnMethod $method,
         public ?SourceLocation $location = null,
-        public bool $conditional = false
+        public ?SchemaGuard $guard = null
     ) {}
 
-    public function withConditional(bool $conditional = false): self
+    public function location(): ?SourceLocation
+    {
+        return $this->location;
+    }
+
+    public function guard(): ?SchemaGuard
+    {
+        return $this->guard;
+    }
+
+    public function withGuard(?SchemaGuard $guard = null): self
     {
         return new self(
             name: $this->name,
             method: $this->method,
             location: $this->location,
-            conditional: $conditional
+            guard: $guard
         );
     }
 

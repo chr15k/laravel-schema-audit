@@ -34,7 +34,8 @@ final readonly class UnindexedForeignKeyRule extends Rule
                             $fk->column,
                         ),
                         column: $fk->column,
-                        conditional: $table->isConditional()
+                        guard: $fk->guard,
+                        location: $fk->location
                     );
                 }
             }

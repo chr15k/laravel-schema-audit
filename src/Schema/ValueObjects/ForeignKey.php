@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
+use Chr15k\SchemaAudit\Contracts\SchemaReference;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
@@ -11,7 +13,7 @@ use JsonSerializable;
 /**
  * @implements Arrayable<string, ?string>
  */
-final readonly class ForeignKey implements Arrayable, JsonSerializable
+final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaReference
 {
     public function __construct(
         public string $column,
@@ -19,10 +21,20 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
         public string $referencesColumn,
         public ?string $name = null,
         public ?SourceLocation $location = null,
-        public bool $conditional = false
+        public ?SchemaGuard $guard = null
     ) {}
 
-    public function withConditional(bool $conditional = false): self
+    public function location(): ?SourceLocation
+    {
+        return $this->location;
+    }
+
+    public function guard(): ?SchemaGuard
+    {
+        return $this->guard;
+    }
+
+    public function withGuard(?SchemaGuard $guard = null): self
     {
         return new self(
             column: $this->column,
@@ -30,7 +42,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
             referencesColumn: $this->referencesColumn,
             name: $this->name,
             location: $this->location,
-            conditional: $conditional
+            guard: $guard
         );
     }
 

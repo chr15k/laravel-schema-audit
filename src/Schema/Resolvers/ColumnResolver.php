@@ -46,7 +46,7 @@ final readonly class ColumnResolver
             name: $name,
             method: $method,
             location: $call->location,
-            conditional: $guard === SchemaGuard::Unknown
+            guard: $guard
         );
     }
 

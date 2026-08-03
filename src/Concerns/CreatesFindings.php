@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Concerns;
 
+use Chr15k\SchemaAudit\Contracts\SchemaReference;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
@@ -23,15 +25,17 @@ trait CreatesFindings
         return Severity::Warning;
     }
 
+    /**
+     * @param  list<SchemaReference>  $related
+     */
     protected function makeFinding(
         string $table,
         string $message,
         ?string $column = null,
         ?string $code = null,
         ?Severity $severity = null,
-        bool $conditional = false,
+        ?SchemaGuard $guard = null,
         ?SourceLocation $location = null,
-        /** @var array<string, SourceLocation> */
         array $related = [],
     ): Finding {
         return new Finding(
@@ -40,7 +44,7 @@ trait CreatesFindings
             message: $message,
             column: $column,
             severity: $severity ?? $this->defaultSeverity(),
-            conditional: $conditional,
+            guard: $guard,
             location: $location,
             related: $related
         );

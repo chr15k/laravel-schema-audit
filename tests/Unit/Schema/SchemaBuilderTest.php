@@ -367,4 +367,14 @@ describe('conditional unknown schema guards', function (): void {
             ->and($products?->column('slug')->conditional)->toBeFalse()
             ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->conditional)->toBeTrue();
     });
+
+    it('marks only the index as conditional when the table and column was created outside the guard', function (): void {
+        $products = buildSchemaFromBuilderFixtures('ConditionalUnknowns')
+            ->table('products');
+
+        expect($products)->not->toBeNull()
+            ->and($products?->isConditional())->toBeFalse()
+            ->and($products?->column('slug')->conditional)->toBeFalse()
+            ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->conditional)->toBeTrue();
+    });
 });

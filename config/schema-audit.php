@@ -62,6 +62,6 @@ return [
     | are marked as conditional and may represent false positives.
     |
     */
-    'report_conditional_findings' => env('SCHEMA_AUDIT_REPORT_CONDITIONAL_FINDINGS', false),
+    'report_conditional_findings' => env('SCHEMA_AUDIT_REPORT_CONDITIONAL_FINDINGS', true),
 
 ];

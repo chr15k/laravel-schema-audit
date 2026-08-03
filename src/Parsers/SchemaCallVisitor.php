@@ -137,7 +137,11 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
     private function recordDrop(StaticCall $node): null
     {
         if ($name = ArgReader::stringArgAt($node->args, 0)) {
-            $this->addOperation(SchemaOperationType::Drop, $name);
+            $this->addOperation(
+                type: SchemaOperationType::Drop,
+                tableName: $name,
+                line: $node->getStartLine()
+            );
         }
 
         return null;
@@ -190,11 +194,12 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
         }
 
         $this->addOperation(
-            $methodName === 'create'
+            type: $methodName === 'create'
                 ? SchemaOperationType::Create
                 : SchemaOperationType::Alter,
-            $name,
+            tableName: $name,
             chains: $this->chainExtractor->extract($closure),
+            line: $node->getStartLine()
         );
 
         return null;
