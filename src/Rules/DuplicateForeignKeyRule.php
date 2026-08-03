@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
+use Chr15k\SchemaAudit\Schema\Collections\ForeignKeyCollection;
 use Chr15k\SchemaAudit\Schema\TableSchema;
-use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
@@ -17,16 +17,20 @@ final readonly class DuplicateForeignKeyRule extends Rule
         $findings = [];
 
         foreach ($context->schema->tables() as $table) {
-            foreach ($table->foreignKeys()->duplicated() as $fk) {
-                $findings[] = $this->duplicateForeignKeyFinding($table, $fk);
+            foreach ($table->foreignKeys()->duplicateGroups() as $duplicates) {
+                $findings[] = $this->duplicateForeignKeyFinding($table, $duplicates);
             }
         }
 
         return $next($context->withFindings($findings));
     }
 
-    private function duplicateForeignKeyFinding(TableSchema $table, ForeignKey $fk): Finding
-    {
+    private function duplicateForeignKeyFinding(
+        TableSchema $table,
+        ForeignKeyCollection $duplicates
+    ): Finding {
+        $fk = $duplicates->first();
+
         return $this->makeFinding(
             table: $table->name,
             message: sprintf(
@@ -34,7 +38,9 @@ final readonly class DuplicateForeignKeyRule extends Rule
                 $fk->column,
             ),
             column: $fk->column,
-            conditional: $table->isConditionallyModified()
+            conditional: $duplicates->contains->conditional,
+            location: $fk->location,
+            related: $duplicates->skip(1)->all()
         );
     }
 }

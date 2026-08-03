@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Schema\Resolvers;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\Schema\LaravelConventions;
@@ -20,7 +21,8 @@ final readonly class ForeignKeyResolver
     public function resolve(
         ColumnChain $chain,
         TableSchema $table,
-        string $column
+        string $column,
+        ?SchemaGuard $guard = null
     ): ?ForeignKey {
         $root = $chain->root();
         $modifier = $chain->modifier('constrained');
@@ -56,7 +58,8 @@ final readonly class ForeignKeyResolver
             referencesTable: $tableName,
             referencesColumn: $referencesColumn,
             name: $name,
-            location: $root->location
+            location: $root->location,
+            conditional: $guard === SchemaGuard::Unknown
         );
     }
 }

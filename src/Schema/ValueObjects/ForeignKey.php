@@ -18,8 +18,21 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
         public string $referencesTable,
         public string $referencesColumn,
         public ?string $name = null,
-        public ?SourceLocation $location = null
+        public ?SourceLocation $location = null,
+        public bool $conditional = false
     ) {}
+
+    public function withConditional(bool $conditional = false): self
+    {
+        return new self(
+            column: $this->column,
+            referencesTable: $this->referencesTable,
+            referencesColumn: $this->referencesColumn,
+            name: $this->name,
+            location: $this->location,
+            conditional: $conditional
+        );
+    }
 
     public function withColumn(string $column): self
     {
@@ -40,6 +53,16 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable
             referencesColumn: $this->referencesColumn,
             name: $this->name,
             location: $this->location
+        );
+    }
+
+    public function signature(): string
+    {
+        return sprintf(
+            '%s|%s|%s',
+            $this->column,
+            $this->referencesTable,
+            $this->referencesColumn,
         );
     }
 

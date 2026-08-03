@@ -37,18 +37,23 @@ final class ForeignKeyCollection extends Collection
         );
     }
 
-    public function duplicated(): static
+    /**
+     * @return Collection<int, ForeignKeyCollection>
+     */
+    public function duplicateGroups(): Collection
     {
-        $seen = [];
-
-        return $this->filter(function (ForeignKey $fk) use (&$seen): bool {
-            if (isset($seen[$fk->column])) {
-                return true;
-            }
-
-            $seen[$fk->column] = true;
-
-            return false;
-        });
+        return $this
+            ->groupBy(
+                fn (ForeignKey $fk): string => $fk->signature()
+            )
+            ->filter(
+                fn (Collection $group): bool => $group->count() > 1
+            )
+            ->map(
+                fn (Collection $group): ForeignKeyCollection => new self(
+                    $group->values()->all()
+                )
+            )
+            ->values();
     }
 }

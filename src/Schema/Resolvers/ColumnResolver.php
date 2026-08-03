@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Schema\Resolvers;
 
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
@@ -12,11 +13,12 @@ use Chr15k\SchemaAudit\Schema\ValueObjects\Column;
 final readonly class ColumnResolver
 {
     public function __construct(
-        private LaravelConventions $conventions
+        private LaravelConventions $conventions,
     ) {}
 
     public function resolve(
-        ColumnChain $chain
+        ColumnChain $chain,
+        ?SchemaGuard $guard = null
     ): ?Column {
         $call = $chain->root();
         $method = ColumnMethod::tryFrom($call->method);
@@ -40,7 +42,12 @@ final readonly class ColumnResolver
                 ?? $this->conventions->foreignKeyColumnFromModel($name);
         }
 
-        return new Column($name, $method, $call->location);
+        return new Column(
+            name: $name,
+            method: $method,
+            location: $call->location,
+            conditional: $guard === SchemaGuard::Unknown
+        );
     }
 
     private function resolveModifiers(ColumnMethod $method, ColumnChain $chain): ColumnMethod
@@ -71,6 +78,7 @@ final readonly class ColumnResolver
 
         $call = $chain->root();
 
+        // @todo - check this as I'm sure we typed arguments[] value as string...
         return $call->argument('unsigned', $call->argument(2)) === true;
     }
 }

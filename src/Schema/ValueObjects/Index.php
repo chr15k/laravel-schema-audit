@@ -20,8 +20,20 @@ final readonly class Index implements Arrayable, JsonSerializable
         public ?string $name,
         public array $columns,
         public bool $unique = false,
-        public ?SourceLocation $location = null
+        public ?SourceLocation $location = null,
+        public bool $conditional = false
     ) {}
+
+    public function withConditional(bool $conditional = false): self
+    {
+        return new self(
+            name: $this->name,
+            columns: $this->columns,
+            unique: $this->unique,
+            location: $this->location,
+            conditional: $conditional
+        );
+    }
 
     public function renameColumn(string $from, string $to): self
     {

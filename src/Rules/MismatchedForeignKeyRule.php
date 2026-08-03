@@ -46,7 +46,8 @@ final readonly class MismatchedForeignKeyRule extends Rule
                 ),
                 column: $fk->column,
                 severity: Severity::Error,
-                conditional: $mismatch->table->isConditionallyModified()
+                conditional: $mismatch->foreignKey->conditional,
+                location: $mismatch->foreignKey->location
             );
         }
 

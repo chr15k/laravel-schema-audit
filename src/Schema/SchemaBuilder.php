@@ -58,7 +58,7 @@ final readonly class SchemaBuilder
         $declared = isset($tables[$operation->tableName]);
 
         if ($declared && $operation->guard === SchemaGuard::Unknown) {
-            $tables[$operation->tableName]->markConditionallyModified();
+            $tables[$operation->tableName]->markConditional();
         }
 
         // prevent the builder from manufacturing a table out of a conditional alter.
@@ -82,7 +82,10 @@ final readonly class SchemaBuilder
             return;
         }
 
-        $table = $tables[$operation->tableName] ?? TableSchema::make($operation->tableName);
+        $table = $tables[$operation->tableName] ?? TableSchema::make(
+            name: $operation->tableName,
+            location: $operation->location,
+        );
 
         foreach ($operation->chains as $chain) {
             $this->applyChain($table, $chain, $operation->guard);
@@ -100,6 +103,8 @@ final readonly class SchemaBuilder
         unset($tables[$from]);
 
         $tables[$to] = TableSchema::make($to);
+        $tables[$to]->setLocation($renamed->location());
+        $tables[$to]->setConditional($renamed->isConditional());
 
         if ($pk = $renamed->primaryKey()) {
             $tables[$to]->setPrimaryKey($pk);
@@ -166,13 +171,13 @@ final readonly class SchemaBuilder
         match (StructuralMethod::tryFrom($root->method)) {
             StructuralMethod::Unique,
             StructuralMethod::Index,
-            StructuralMethod::FullText                                => $table->addIndex($this->indexes->resolveTableIndex($root, $table)),
-            StructuralMethod::Foreign                                 => $this->applyOldStyleForeign($table, $chain),
+            StructuralMethod::FullText                                => $table->addIndex($this->indexes->resolveTableIndex($root, $table, $guard)),
+            StructuralMethod::Foreign                                 => $this->applyOldStyleForeign($table, $chain, $guard),
             StructuralMethod::DropColumn                              => $this->applyDropColumn($table, $root),
             StructuralMethod::RenameColumn                            => $this->applyRenameColumn($table, $root),
             StructuralMethod::DropIndex, StructuralMethod::DropUnique => $this->applyDropIndex($table, $root),
             StructuralMethod::DropForeign                             => $this->applyDropForeign($table, $root),
-            StructuralMethod::Primary                                 => $table->setPrimaryKey($this->primaryKeys->resolveTablePrimaryKey($root)),
+            StructuralMethod::Primary                                 => $table->setPrimaryKey($this->primaryKeys->resolveTablePrimaryKey($root, $guard)),
             null                                                      => null, // not a known structural method — dropPrimary(), timestamps(), etc.
         };
     }
@@ -196,7 +201,7 @@ final readonly class SchemaBuilder
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
     {
-        $column = $this->columns->resolve($chain);
+        $column = $this->columns->resolve($chain, $guard);
 
         if (! $column instanceof Column) {
             return;
@@ -212,22 +217,28 @@ final readonly class SchemaBuilder
         }
 
         if ($column->method->impliesPrimaryKey() || $chain->hasModifier('primary')) {
-            $primaryKey = $this->primaryKeys->resolveColumnPrimaryKey($chain, $column);
+            $primaryKey = $this->primaryKeys->resolveColumnPrimaryKey($chain, $column, $guard);
             $table->setPrimaryKey($primaryKey);
         }
 
         if ($chain->hasModifier('constrained')) {
-            $resolved = $this->foreignKeys->resolve($chain, $table, $column->name);
+            $resolved = $this->foreignKeys->resolve($chain, $table, $column->name, $guard);
             if ($resolved instanceof ForeignKey) {
-                $table->addForeignKey($resolved);
+                $table->addForeignKey(
+                    $resolved->withConditional($guard === SchemaGuard::Unknown)
+                );
             }
         }
 
-        $this->applyColumnIndex($table, $chain, $column->name);
+        $this->applyColumnIndex($table, $chain, $column->name, $guard);
     }
 
-    private function applyColumnIndex(TableSchema $table, ColumnChain $chain, string $column): void
-    {
+    private function applyColumnIndex(
+        TableSchema $table,
+        ColumnChain $chain,
+        string $column,
+        ?SchemaGuard $guard = null
+    ): void {
         // Laravel materialises unique()->index() as a unique index only.
         // Do not model the chained index() call separately.
         $modifier = $chain->hasModifier('unique') ? 'unique' : 'index';
@@ -236,12 +247,12 @@ final readonly class SchemaBuilder
 
         if ($call instanceof ColumnCall) {
             $table->addIndex(
-                $this->indexes->resolveColumnIndex($call, $table, $column)
+                $this->indexes->resolveColumnIndex($call, $table, $column, $guard)
             );
         }
     }
 
-    private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain): void
+    private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
     {
         $root = $chain->root();
         $column = $root->argument(0);
@@ -267,7 +278,8 @@ final readonly class SchemaBuilder
             referencesTable: $referencesTable,
             referencesColumn: $referencesColumn,
             name: $constraintName,
-            location: $root->location
+            location: $root->location,
+            conditional: $guard === SchemaGuard::Unknown
         ));
     }
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Collections;
 
-use Chr15k\SchemaAudit\Schema\Data\DuplicateIndex;
 use Chr15k\SchemaAudit\Schema\Data\RedundantIndex;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 use Illuminate\Support\Collection;
@@ -53,23 +52,23 @@ final class IndexCollection extends Collection
     }
 
     /**
-     * @return Collection<int, DuplicateIndex>
+     * @return Collection<int, IndexCollection>
      */
-    public function duplicated(): Collection
+    public function duplicateGroups(): Collection
     {
-        $seen = [];
-
-        return $this->flatMap(function (Index $index) use (&$seen): array {
-            $signature = $index->signature();
-
-            if (isset($seen[$signature])) {
-                return [new DuplicateIndex(index: $index, duplicatedBy: $seen[$signature])];
-            }
-
-            $seen[$signature] = $index;
-
-            return [];
-        });
+        return $this
+            ->groupBy(
+                fn (Index $index): string => $index->signature()
+            )
+            ->filter(
+                fn (Collection $group): bool => $group->count() > 1
+            )
+            ->map(
+                fn (Collection $group): IndexCollection => new self(
+                    $group->values()->all()
+                )
+            )
+            ->values();
     }
 
     /**

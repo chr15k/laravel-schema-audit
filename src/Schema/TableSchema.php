@@ -6,6 +6,7 @@ namespace Chr15k\SchemaAudit\Schema;
 
 use Chr15k\SchemaAudit\Enums\ColumnFamily;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
+use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Chr15k\SchemaAudit\Schema\Collections\ColumnCollection;
 use Chr15k\SchemaAudit\Schema\Collections\ForeignKeyCollection;
 use Chr15k\SchemaAudit\Schema\Collections\IndexCollection;
@@ -18,7 +19,9 @@ use JsonSerializable;
  */
 final class TableSchema implements Arrayable, JsonSerializable
 {
-    private bool $conditionallyModified = false;
+    private bool $conditional = false;
+
+    private ?SourceLocation $location = null;
 
     private ?ValueObjects\PrimaryKey $primaryKey = null;
 
@@ -34,19 +37,40 @@ final class TableSchema implements Arrayable, JsonSerializable
         private readonly ColumnCollection $columns
     ) {}
 
-    public static function make(string $name): self
+    public static function make(string $name, ?SourceLocation $location = null): self
     {
-        return app(self::class, ['name' => $name]);
+        $instance = app(self::class, ['name' => $name]);
+
+        if ($location instanceof SourceLocation) {
+            $instance->setLocation($location);
+        }
+
+        return $instance;
     }
 
-    public function markConditionallyModified(): void
+    public function markConditional(): void
     {
-        $this->conditionallyModified = true;
+        $this->conditional = true;
     }
 
-    public function isConditionallyModified(): bool
+    public function setConditional(bool $conditional): void
     {
-        return $this->conditionallyModified;
+        $this->conditional = $conditional;
+    }
+
+    public function isConditional(): bool
+    {
+        return $this->conditional;
+    }
+
+    public function setLocation(SourceLocation $location): void
+    {
+        $this->location = $location;
+    }
+
+    public function location(): ?SourceLocation
+    {
+        return $this->location;
     }
 
     public function setPrimaryKey(ValueObjects\PrimaryKey $primaryKey): void

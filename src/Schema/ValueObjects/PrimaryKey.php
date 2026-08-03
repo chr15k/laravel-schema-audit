@@ -18,8 +18,18 @@ final readonly class PrimaryKey implements Arrayable, JsonSerializable
      */
     public function __construct(
         public array $columns,
-        public ?SourceLocation $location = null
+        public ?SourceLocation $location = null,
+        public bool $conditional = false
     ) {}
+
+    public function withConditional(bool $conditional = false): self
+    {
+        return new self(
+            columns: $this->columns,
+            location: $this->location,
+            conditional: $conditional
+        );
+    }
 
     /**
      * @return array{columns: list<string>}

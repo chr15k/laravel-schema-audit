@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Resolvers;
 
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use Chr15k\SchemaAudit\Schema\TableSchema;
@@ -17,7 +18,8 @@ final readonly class IndexResolver
 
     public function resolveTableIndex(
         ColumnCall $call,
-        TableSchema $table
+        TableSchema $table,
+        ?SchemaGuard $guard = null
     ): Index {
         $columns = $call->argument('columns')
             ?? $call->argument(0)
@@ -35,14 +37,16 @@ final readonly class IndexResolver
                 ),
             columns: $columns,
             unique: $call->method === 'unique',
-            location: $call->location
+            location: $call->location,
+            conditional: $guard === SchemaGuard::Unknown
         );
     }
 
     public function resolveColumnIndex(
         ColumnCall $call,
         TableSchema $table,
-        string $column
+        string $column,
+        ?SchemaGuard $guard = null
     ): Index {
         return new Index(
             name: $call->argument('indexName')
@@ -54,7 +58,8 @@ final readonly class IndexResolver
                 ),
             columns: [$column],
             unique: $call->method === 'unique',
-            location: $call->location
+            location: $call->location,
+            conditional: $guard === SchemaGuard::Unknown
         );
     }
 }

@@ -24,7 +24,8 @@ final readonly class DanglingForeignKeyRule extends Rule
                     ),
                     column: $fk->column,
                     severity: Severity::Error,
-                    conditional: $table->isConditionallyModified()
+                    conditional: $fk->conditional,
+                    location: $fk->location
                 );
             }
         }

@@ -52,10 +52,8 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     public function enterNode(Node $node): ?int
     {
-        if ($node instanceof Node\Stmt\If_ || $node instanceof Node\Stmt\ElseIf_) {
-            $this->guardStack[] = $this->guard($node->cond);
-        } elseif ($node instanceof Node\Stmt\Else_) {
-            $this->guardStack[] = SchemaGuard::Unknown;
+        if (($guard = $this->guardForNode($node)) instanceof SchemaGuard) {
+            $this->guardStack[] = $guard;
         }
 
         if ($node instanceof Node\Stmt\ClassMethod && $node->name->toString() === 'down') {
@@ -79,6 +77,18 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
             'rename'               => $this->recordRename($node),
             'create', 'table'      => $this->recordCreateOrAlter($node, $methodName),
             default                => null,
+        };
+    }
+
+    private function guardForNode(Node $node): ?SchemaGuard
+    {
+        return match (true) {
+            $node instanceof Node\Stmt\If_,
+            $node instanceof Node\Stmt\ElseIf_ => $this->guard($node->cond),
+
+            $node instanceof Node\Stmt\Else_ => SchemaGuard::Unknown,
+
+            default => null,
         };
     }
 

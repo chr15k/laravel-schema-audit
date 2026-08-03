@@ -113,3 +113,93 @@ it('reports duplicates independently across multiple tables', function (): void 
         ->toHaveCount(1)
         ->and($result->audit->findings[0]->table)->toBe('orders');
 });
+
+it('marks the finding as conditional when the duplicate foreign key is conditional', function (): void {
+    $orders = TableSchema::make('orders');
+
+    $orders->addForeignKey(new ForeignKey(
+        column: 'customer_id',
+        referencesTable: 'customers',
+        referencesColumn: 'id',
+        name: 'orders_customer_id_foreign',
+    ));
+
+    $orders->addForeignKey(new ForeignKey(
+        column: 'customer_id',
+        referencesTable: 'customers',
+        referencesColumn: 'id',
+        name: 'orders_customer_id_foreign_2',
+        conditional: true,
+    ));
+
+    $schema = new Schema(['orders' => $orders]);
+
+    $result = (new DuplicateForeignKeyRule)->handle(
+        new AuditContext($schema),
+        fn (AuditContext $context): AuditContext => $context,
+    );
+
+    expect($result->audit->findings)
+        ->toHaveCount(1)
+        ->and($result->audit->findings[0]->conditional)->toBeTrue();
+});
+
+it('does not mark the finding as conditional when neither foreign key is conditional', function (): void {
+    $orders = TableSchema::make('orders');
+
+    $orders->addForeignKey(new ForeignKey(
+        column: 'customer_id',
+        referencesTable: 'customers',
+        referencesColumn: 'id',
+        name: 'orders_customer_id_foreign',
+    ));
+
+    $orders->addForeignKey(new ForeignKey(
+        column: 'customer_id',
+        referencesTable: 'customers',
+        referencesColumn: 'id',
+        name: 'orders_customer_id_foreign_2',
+    ));
+
+    $schema = new Schema(['orders' => $orders]);
+
+    $result = (new DuplicateForeignKeyRule)->handle(
+        new AuditContext($schema),
+        fn (AuditContext $context): AuditContext => $context,
+    );
+
+    expect($result->audit->findings)
+        ->toHaveCount(1)
+        ->and($result->audit->findings[0]->conditional)->toBeFalse();
+});
+
+it('marks the finding as conditional when all duplicate foreign keys are conditional', function (): void {
+    $orders = TableSchema::make('orders');
+
+    $orders->addForeignKey(new ForeignKey(
+        column: 'customer_id',
+        referencesTable: 'customers',
+        referencesColumn: 'id',
+        name: 'orders_customer_id_foreign',
+        conditional: true,
+    ));
+
+    $orders->addForeignKey(new ForeignKey(
+        column: 'customer_id',
+        referencesTable: 'customers',
+        referencesColumn: 'id',
+        name: 'orders_customer_id_foreign_2',
+        conditional: true,
+    ));
+
+    $schema = new Schema(['orders' => $orders]);
+
+    $result = (new DuplicateForeignKeyRule)->handle(
+        new AuditContext($schema),
+        fn (AuditContext $context): AuditContext => $context,
+    );
+
+    expect($result->audit->findings)
+        ->toHaveCount(1)
+        ->and($result->audit->findings[0]->conditional)->toBeTrue();
+});

@@ -322,3 +322,49 @@ describe('conditional schema guards', function (): void {
             ->and($articles?->indexes())->toHaveCount(1);
     });
 });
+
+describe('conditional unknown schema guards', function (): void {
+    it('marks column & index as conditional inside an unknown if statement', function (): void {
+        $users = buildSchemaFromBuilderFixtures('ConditionalUnknowns')
+            ->table('users');
+
+        expect($users)->not->toBeNull()
+            ->and($users?->hasColumn('id'))->toBeTrue()
+            ->and($users?->hasColumn('email'))->toBeTrue()
+            ->and($users?->column('email')->conditional)->toBeTrue()
+            ->and($users?->indexes()->where('name', 'users_email_index')->first()?->conditional)->toBeTrue();
+    });
+
+    it('marks column & fk as conditional inside an unknown if statement', function (): void {
+        $posts = buildSchemaFromBuilderFixtures('ConditionalUnknowns')
+            ->table('posts');
+
+        expect($posts)->not->toBeNull()
+            ->and($posts?->hasColumn('id'))->toBeTrue()
+            ->and($posts?->hasColumn('user_id'))->toBeTrue()
+            ->and($posts?->column('user_id')->conditional)->toBeTrue()
+            ->and($posts?->foreignKeys()->where('name', 'posts_user_id_foreign')->first()?->conditional)->toBeTrue();
+    });
+
+    it('does not mark unguarded column & index as conditional', function (): void {
+        $articles = buildSchemaFromBuilderFixtures('ConditionalUnknowns')
+            ->table('articles');
+
+        expect($articles)->not->toBeNull()
+            ->and($articles?->hasColumn('id'))->toBeTrue()
+            ->and($articles?->hasColumn('slug'))->toBeTrue()
+            ->and($articles?->column('slug')->conditional)->toBeFalse()
+            ->and($articles?->indexes()->where('name', 'articles_slug_unique')->first()?->conditional)->toBeFalse();
+    });
+
+    it('marks only the column index as conditional', function (): void {
+        $products = buildSchemaFromBuilderFixtures('ConditionalUnknowns')
+            ->table('products');
+
+        expect($products)->not->toBeNull()
+            ->and($products?->hasColumn('id'))->toBeTrue()
+            ->and($products?->hasColumn('slug'))->toBeTrue()
+            ->and($products?->column('slug')->conditional)->toBeFalse()
+            ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->conditional)->toBeTrue();
+    });
+});

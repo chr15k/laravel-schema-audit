@@ -17,8 +17,19 @@ final readonly class Column implements Arrayable, JsonSerializable
     public function __construct(
         public string $name,
         public ColumnMethod $method,
-        public ?SourceLocation $location = null
+        public ?SourceLocation $location = null,
+        public bool $conditional = false
     ) {}
+
+    public function withConditional(bool $conditional = false): self
+    {
+        return new self(
+            name: $this->name,
+            method: $this->method,
+            location: $this->location,
+            conditional: $conditional
+        );
+    }
 
     /**
      * @return array{name: string, method: string}
