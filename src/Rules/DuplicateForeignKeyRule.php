@@ -36,10 +36,10 @@ final readonly class DuplicateForeignKeyRule extends Rule
             table: $table->name,
             message: sprintf(
                 'Duplicate foreign key on column <fg=default>%s</>',
-                $fk->column,
+                $fk->columns,
             ),
-            column: $fk->column,
-            guard: $duplicates->first(fn (ForeignKey $fk): ?bool => $fk->guard?->impliesConditional()),
+            column: $fk->columns,
+            guard: $duplicates->first(fn (ForeignKey $fk): ?bool => $fk->guard?->impliesConditional())?->guard(),
             location: $fk->location,
             related: $duplicates->skip(1)->all()
         );

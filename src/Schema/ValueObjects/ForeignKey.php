@@ -15,10 +15,14 @@ use JsonSerializable;
  */
 final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaReference
 {
+    /**
+     * @param  string|list<string>  $columns
+     * @param  string|list<string>  $referencesColumn
+     */
     public function __construct(
-        public string $column,
+        public string|array $columns,
         public string $referencesTable,
-        public string $referencesColumn,
+        public string|array $referencesColumn,
         public ?string $name = null,
         public ?SourceLocation $location = null,
         public ?SchemaGuard $guard = null
@@ -37,7 +41,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
     public function withGuard(?SchemaGuard $guard = null): self
     {
         return new self(
-            column: $this->column,
+            columns: $this->columns,
             referencesTable: $this->referencesTable,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
@@ -46,10 +50,10 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
         );
     }
 
-    public function withColumn(string $column): self
+    public function withColumns(string|array $columns): self
     {
         return new self(
-            column: $column,
+            columns: $columns,
             referencesTable: $this->referencesTable,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
@@ -60,7 +64,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
     public function withReferencesTable(string $table): self
     {
         return new self(
-            column: $this->column,
+            columns: $this->columns,
             referencesTable: $table,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
@@ -72,9 +76,13 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
     {
         return sprintf(
             '%s|%s|%s',
-            $this->column,
+            is_array($this->columns)
+                ? implode('_', $this->columns)
+                : $this->columns,
             $this->referencesTable,
-            $this->referencesColumn,
+            is_array($this->referencesColumn)
+                ? implode('_', $this->referencesColumn)
+                : $this->referencesColumn
         );
     }
 
@@ -92,7 +100,7 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
     public function toArray(): array
     {
         return [
-            'column'            => $this->column,
+            'columns'           => $this->columns,
             'references_table'  => $this->referencesTable,
             'references_column' => $this->referencesColumn,
             'name'              => $this->name,

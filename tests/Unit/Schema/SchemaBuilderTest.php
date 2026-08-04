@@ -331,8 +331,8 @@ describe('conditional unknown schema guards', function (): void {
         expect($users)->not->toBeNull()
             ->and($users?->hasColumn('id'))->toBeTrue()
             ->and($users?->hasColumn('email'))->toBeTrue()
-            ->and($users?->column('email')->conditional)->toBeTrue()
-            ->and($users?->indexes()->where('name', 'users_email_index')->first()?->conditional)->toBeTrue();
+            ->and($users?->column('email')?->guard()?->impliesConditional())->toBeTrue()
+            ->and($users?->indexes()->where('name', 'users_email_index')->first()?->guard()?->impliesConditional())->toBeTrue();
     });
 
     it('marks column & fk as conditional inside an unknown if statement', function (): void {
@@ -342,8 +342,8 @@ describe('conditional unknown schema guards', function (): void {
         expect($posts)->not->toBeNull()
             ->and($posts?->hasColumn('id'))->toBeTrue()
             ->and($posts?->hasColumn('user_id'))->toBeTrue()
-            ->and($posts?->column('user_id')->conditional)->toBeTrue()
-            ->and($posts?->foreignKeys()->where('name', 'posts_user_id_foreign')->first()?->conditional)->toBeTrue();
+            ->and($posts?->column('user_id')?->guard()?->impliesConditional())->toBeTrue()
+            ->and($posts?->foreignKeys()->where('name', 'posts_user_id_foreign')->first()?->guard()?->impliesConditional())->toBeTrue();
     });
 
     it('does not mark unguarded column & index as conditional', function (): void {
@@ -353,8 +353,8 @@ describe('conditional unknown schema guards', function (): void {
         expect($articles)->not->toBeNull()
             ->and($articles?->hasColumn('id'))->toBeTrue()
             ->and($articles?->hasColumn('slug'))->toBeTrue()
-            ->and($articles?->column('slug')->conditional)->toBeFalse()
-            ->and($articles?->indexes()->where('name', 'articles_slug_unique')->first()?->conditional)->toBeFalse();
+            ->and($articles?->column('slug')?->guard())->toBeNull()
+            ->and($articles?->indexes()->where('name', 'articles_slug_unique')->first()?->guard())->toBeNull();
     });
 
     it('marks only the column index as conditional', function (): void {
@@ -364,8 +364,8 @@ describe('conditional unknown schema guards', function (): void {
         expect($products)->not->toBeNull()
             ->and($products?->hasColumn('id'))->toBeTrue()
             ->and($products?->hasColumn('slug'))->toBeTrue()
-            ->and($products?->column('slug')->conditional)->toBeFalse()
-            ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->conditional)->toBeTrue();
+            ->and($products?->column('slug')?->guard())->toBeNull()
+            ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->guard()?->impliesConditional())->toBeTrue();
     });
 
     it('marks only the index as conditional when the table and column was created outside the guard', function (): void {
@@ -373,8 +373,8 @@ describe('conditional unknown schema guards', function (): void {
             ->table('products');
 
         expect($products)->not->toBeNull()
-            ->and($products?->isConditional())->toBeFalse()
-            ->and($products?->column('slug')->conditional)->toBeFalse()
-            ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->conditional)->toBeTrue();
+            ->and($products?->guard())->toBeNull()
+            ->and($products?->column('slug')?->guard())->toBeNull()
+            ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->guard()?->impliesConditional())->toBeTrue();
     });
 });

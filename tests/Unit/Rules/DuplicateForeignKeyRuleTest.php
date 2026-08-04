@@ -1,6 +1,7 @@
 <?php
 
 use Chr15k\SchemaAudit\Data\AuditContext;
+use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Rules\DuplicateForeignKeyRule;
 use Chr15k\SchemaAudit\Schema\Schema;
@@ -129,7 +130,7 @@ it('marks the finding as conditional when the duplicate foreign key is condition
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign_2',
-        conditional: true,
+        guard: SchemaGuard::Unknown,
     ));
 
     $schema = new Schema(['orders' => $orders]);
@@ -141,7 +142,7 @@ it('marks the finding as conditional when the duplicate foreign key is condition
 
     expect($result->audit->findings)
         ->toHaveCount(1)
-        ->and($result->audit->findings[0]->conditional)->toBeTrue();
+        ->and($result->audit->findings[0]->guard?->impliesConditional())->toBeTrue();
 });
 
 it('does not mark the finding as conditional when neither foreign key is conditional', function (): void {
@@ -170,7 +171,7 @@ it('does not mark the finding as conditional when neither foreign key is conditi
 
     expect($result->audit->findings)
         ->toHaveCount(1)
-        ->and($result->audit->findings[0]->conditional)->toBeFalse();
+        ->and($result->audit->findings[0]->guard)->toBeNull();
 });
 
 it('marks the finding as conditional when all duplicate foreign keys are conditional', function (): void {
@@ -181,7 +182,7 @@ it('marks the finding as conditional when all duplicate foreign keys are conditi
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign',
-        conditional: true,
+        guard: SchemaGuard::Unknown,
     ));
 
     $orders->addForeignKey(new ForeignKey(
@@ -189,7 +190,7 @@ it('marks the finding as conditional when all duplicate foreign keys are conditi
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign_2',
-        conditional: true,
+        guard: SchemaGuard::Unknown,
     ));
 
     $schema = new Schema(['orders' => $orders]);
@@ -201,5 +202,5 @@ it('marks the finding as conditional when all duplicate foreign keys are conditi
 
     expect($result->audit->findings)
         ->toHaveCount(1)
-        ->and($result->audit->findings[0]->conditional)->toBeTrue();
+        ->and($result->audit->findings[0]->guard()?->impliesConditional())->toBeTrue();
 });

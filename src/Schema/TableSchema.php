@@ -57,12 +57,12 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         return $instance;
     }
 
-    public function setGuard(SchemaGuard $guard): void
+    public function setGuard(?SchemaGuard $guard = null): void
     {
         $this->guard = $guard;
     }
 
-    public function setLocation(SourceLocation $location): void
+    public function setLocation(?SourceLocation $location = null): void
     {
         $this->location = $location;
     }
@@ -92,7 +92,7 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         return $this->primaryKey instanceof ValueObjects\PrimaryKey;
     }
 
-    public function column(string $name): ?Column
+    public function column(string|array $name): ?Column
     {
         return $this->columns->get($name);
     }
@@ -218,7 +218,7 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         ValueObjects\ForeignKey $foreignKey,
         self $referencedTable,
     ): bool {
-        $column = $this->column($foreignKey->column);
+        $column = $this->column($foreignKey->columns);
 
         if (! $column instanceof Column) {
             return true;

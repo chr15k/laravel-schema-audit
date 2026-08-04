@@ -54,7 +54,7 @@ final readonly class ForeignKeyResolver
             ?? 'id';
 
         return new ForeignKey(
-            column: $column,
+            columns: $column,
             referencesTable: $tableName,
             referencesColumn: $referencesColumn,
             name: $name,

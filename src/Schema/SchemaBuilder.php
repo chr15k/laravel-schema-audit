@@ -255,32 +255,35 @@ final readonly class SchemaBuilder
         }
     }
 
-    private function applyOldStyleForeign(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
-    {
+    private function applyOldStyleForeign(
+        TableSchema $table,
+        ColumnChain $chain,
+        ?SchemaGuard $guard = null
+    ): void {
         $root = $chain->root();
-        $column = $root->argument(0);
 
-        if ($column === null) {
+        $columns = $root->argument('columns', $root->argument(0));
+        $name = $root->argument('name', $root->argument(1));
+
+        if ($columns === null) {
             return;
         }
 
         $onCall = $chain->modifier('on');
         $referencesCall = $chain->modifier('references');
 
-        $referencesTable = $onCall?->arguments[0] ?? null;
-        $referencesColumn = $referencesCall?->arguments[0] ?? null;
+        $referencesTable = $onCall?->argument('table', $onCall->argument(0));
+        $referencesColumn = $referencesCall?->argument('columns', $referencesCall->argument(0));
 
         if ($referencesTable === null || $referencesColumn === null) {
             return;
         }
 
-        $constraintName = $root->arguments[1] ?? null;
-
         $table->addForeignKey(new ForeignKey(
-            column: $column,
+            columns: $columns,
             referencesTable: $referencesTable,
             referencesColumn: $referencesColumn,
-            name: $constraintName,
+            name: $name,
             location: $root->location,
             guard: $guard
         ));

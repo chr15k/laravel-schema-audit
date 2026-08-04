@@ -10,7 +10,7 @@ use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Stringable;
 
-final readonly class Finding implements Stringable
+final readonly class Finding implements SchemaReference, Stringable
 {
     /**
      * @param  list<SchemaReference>  $related
@@ -29,5 +29,15 @@ final readonly class Finding implements Stringable
     public function __toString(): string
     {
         return str($this->code)->headline()->toString();
+    }
+
+    public function location(): ?SourceLocation
+    {
+        return $this->location;
+    }
+
+    public function guard(): ?SchemaGuard
+    {
+        return $this->guard;
     }
 }

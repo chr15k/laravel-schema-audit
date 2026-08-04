@@ -32,7 +32,7 @@ final readonly class MismatchedForeignKeyRule extends Rule
         foreach ($context->schema->mismatchedForeignKeys() as $mismatch) {
             $fk = $mismatch->foreignKey;
 
-            $family = $mismatch->table->column($fk->column)?->method->family()->value;
+            $family = $mismatch->table->column($fk->columns)?->method->family()->value;
             $referencesFamily = $mismatch->referencedTable->column($fk->referencesColumn)?->method->family()->value;
 
             $findings[] = $this->makeFinding(
@@ -44,7 +44,7 @@ final readonly class MismatchedForeignKeyRule extends Rule
                     $fk->referencesColumn,
                     $referencesFamily ?: '?'
                 ),
-                column: $fk->column,
+                column: $fk->columns,
                 severity: Severity::Error,
                 guard: $mismatch->foreignKey->guard,
                 location: $mismatch->foreignKey->location

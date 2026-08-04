@@ -24,16 +24,16 @@ final readonly class UnindexedForeignKeyRule extends Rule
 
         foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
-                if (! $table->indexesColumn($fk->column)) {
+                if (! $table->indexesColumn($fk->columns)) {
                     $findings[] = $this->makeFinding(
                         table: $table->name,
                         message: sprintf(
                             '<fg=default>%s</> does not auto-index foreign key columns; add index on <fg=default>%s.%s</>',
                             $this->config->driver(),
                             $table->name,
-                            $fk->column,
+                            $fk->columns,
                         ),
-                        column: $fk->column,
+                        column: $fk->columns,
                         guard: $fk->guard,
                         location: $fk->location
                     );

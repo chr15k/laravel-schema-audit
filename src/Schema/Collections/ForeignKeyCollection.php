@@ -19,13 +19,22 @@ final class ForeignKeyCollection extends Collection
         );
     }
 
-    public function renameColumn(string $from, string $to): static
+    public function renameColumn(string|array $from, string|array $to): static
     {
-        return $this->map(
-            fn (ForeignKey $fk): ForeignKey => $fk->column === $from
-                ? $fk->withColumn($to)
-                : $fk
-        );
+        return $this->map(function (ForeignKey $fk) use ($from, $to): ForeignKey {
+            if (is_array($fk->columns)) {
+                $columns = array_map(
+                    fn (string $column): string => $column === $from ? $to : $column,
+                    $fk->columns
+                );
+
+                return $fk->withColumns($columns);
+            }
+
+            return $fk->columns === $from
+                ? $fk->withColumns($to)
+                : $fk;
+        });
     }
 
     public function renameReferencedTable(string $from, string $to): static

@@ -37,11 +37,11 @@ final readonly class InvalidReferencedKeyRule extends Rule
                     table: $table->name,
                     message: sprintf(
                         'Foreign key on <fg=default>%s</> references <fg=default>%s.%s</>, which has no unique key or primary key',
-                        $fk->column,
+                        $fk->columns,
                         $fk->referencesTable,
                         $fk->referencesColumn,
                     ),
-                    column: $fk->column,
+                    column: $fk->columns,
                     severity: Severity::Error,
                     guard: $fk->guard,
                     location: $fk->location
