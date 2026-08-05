@@ -40,11 +40,17 @@ final class AuditSchemaCommand extends Command
         $start = microtime(true);
 
         /** @var list<string> $path */
-        $path = $this->option('path');
+        $paths = $this->option('path');
 
-        $files = $this->locator->files(
-            $this->paths->resolve($path)
-        );
+        $resolvedPaths = $this->paths->resolve($paths);
+
+        try {
+            $files = $this->locator->files($resolvedPaths);
+        } catch (\Throwable $e) {
+            $this->components->error($e->getMessage());
+
+            return self::FAILURE;
+        }
 
         $progress = null;
 
