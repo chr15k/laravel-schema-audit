@@ -187,6 +187,8 @@ final class AuditSchemaCommand extends Command
         $this->renderRelated($finding);
 
         $this->renderConditional($finding);
+
+        $this->newLine();
     }
 
     private function renderWrappedArrow(string $text): void
@@ -228,7 +230,7 @@ final class AuditSchemaCommand extends Command
 
     private function renderConditional(Finding $finding): void
     {
-        if (! $finding->guard?->impliesConditional()) {
+        if (! $finding->guard()?->impliesConditional()) {
             return;
         }
 
@@ -238,9 +240,10 @@ final class AuditSchemaCommand extends Command
             '    <fg=yellow>Note:</>'
         );
 
-        $this->line(
-            '      <fg=yellow>This finding may be a false positive because the schema is modified by conditional migration logic.</>'
-        );
+        $this->renderWrappedArrow(sprintf(
+            '<fg=yellow>%s</>',
+            'This finding may be a false positive because conditional migration logic prevents the final schema from being determined with certainty.'
+        ));
     }
 
     /**

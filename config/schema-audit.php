@@ -61,7 +61,10 @@ return [
     | changes inside runtime conditionals. Findings affected by these cases
     | are marked as conditional and may represent false positives.
     |
+    | Set this option to true to include conditional findings in the report.
+    | These will be marked with a yellow "Note" message explaining the uncertainty.
+    |
     */
-    'report_conditional_findings' => env('SCHEMA_AUDIT_REPORT_CONDITIONAL_FINDINGS', true),
+    'report_conditional_findings' => env('SCHEMA_AUDIT_REPORT_CONDITIONAL_FINDINGS', false),
 
 ];
