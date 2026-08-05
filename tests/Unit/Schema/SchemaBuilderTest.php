@@ -115,7 +115,7 @@ describe('foreign key resolution', function (): void {
         $fk = collect($comments?->foreignKeys())->firstWhere('referencesTable', 'users');
 
         expect($fk)->not->toBeNull()
-            ->and($fk?->column)->toBe('assigned_to')
+            ->and($fk?->columns)->toBe('assigned_to')
             ->and($fk?->name)->toBe('comments_assigned_to_custom_fk');
     });
 

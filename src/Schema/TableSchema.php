@@ -92,7 +92,7 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         return $this->primaryKey instanceof ValueObjects\PrimaryKey;
     }
 
-    public function column(string|array $name): ?Column
+    public function column(string $name): ?Column
     {
         return $this->columns->get($name);
     }
@@ -218,6 +218,14 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         ValueObjects\ForeignKey $foreignKey,
         self $referencedTable,
     ): bool {
+        // Composite foreign keys are intentionally skipped here.
+        // The schema model keeps columns in a string-keyed collection, so
+        // single-column family comparison is not defined for array-valued
+        // FK column lists. Conservative behavior avoids false positives.
+        if (is_array($foreignKey->columns) || is_array($foreignKey->referencesColumn)) {
+            return true;
+        }
+
         $column = $this->column($foreignKey->columns);
 
         if (! $column instanceof Column) {

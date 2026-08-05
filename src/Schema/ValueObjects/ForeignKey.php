@@ -50,6 +50,9 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
         );
     }
 
+    /**
+     * @param  string|list<string>  $columns
+     */
     public function withColumns(string|array $columns): self
     {
         return new self(
@@ -57,7 +60,8 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
             referencesTable: $this->referencesTable,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
-            location: $this->location
+            location: $this->location,
+            guard: $this->guard
         );
     }
 
@@ -68,7 +72,8 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
             referencesTable: $table,
             referencesColumn: $this->referencesColumn,
             name: $this->name,
-            location: $this->location
+            location: $this->location,
+            guard: $this->guard
         );
     }
 
@@ -87,7 +92,13 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
     }
 
     /**
-     * @return array{column: string, references_table: ?string, name: ?string}
+     * @return array{
+     *     columns: string|list<string>,
+     *     references_table: string,
+     *     name: ?string,
+     *     references_column: string|list<string>,
+     *     location: ?SourceLocation
+     * }
      */
     public function jsonSerialize(): array
     {
@@ -95,7 +106,13 @@ final readonly class ForeignKey implements Arrayable, JsonSerializable, SchemaRe
     }
 
     /**
-     * @return array{column: string, references_table: ?string, name: ?string}
+     * @return array{
+     *     columns: string|list<string>,
+     *     references_table: string,
+     *     name: ?string,
+     *     references_column: string|list<string>,
+     *     location: ?SourceLocation
+     * }
      */
     public function toArray(): array
     {

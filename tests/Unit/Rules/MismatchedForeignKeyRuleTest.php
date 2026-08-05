@@ -45,7 +45,7 @@ it('reports a foreignId() foreign key pointing at a plain increments() primary k
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('category_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(
-        column: 'category_id',
+        columns: 'category_id',
         referencesTable: 'categories',
         referencesColumn: 'id',
         name: 'posts_category_id_foreign'));
@@ -73,7 +73,7 @@ it('does not report a foreignId() foreign key pointing at an id() primary key of
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('author_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(
-        column: 'author_id',
+        columns: 'author_id',
         referencesTable: 'authors',
         referencesColumn: 'id',
         name: 'posts_author_id_foreign')
@@ -97,7 +97,7 @@ it('does not report a foreign key whose referenced table does not exist', functi
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('ghost_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(
-        column: 'ghost_id',
+        columns: 'ghost_id',
         referencesTable: 'ghosts',
         referencesColumn: 'id',
         name: 'x'
@@ -123,7 +123,7 @@ it('does not report when the referenced table has no auto-incrementing primary k
     $posts->addColumn(new Column('id', ColumnMethod::Id));
     $posts->addColumn(new Column('legacy_id', ColumnMethod::ForeignId));
     $posts->addForeignKey(new ForeignKey(
-        column: 'legacy_id',
+        columns: 'legacy_id',
         referencesTable: 'legacy_table',
         referencesColumn: 'id',
         name: 'x'
@@ -147,7 +147,7 @@ it('does not report a foreign key column that is not tracked on the table at all
 
     $posts = TableSchema::make('posts');
     $posts->addForeignKey(new ForeignKey(
-        column: 'category_id',
+        columns: 'category_id',
         referencesTable: 'categories',
         referencesColumn: 'id',
         name: 'x'
@@ -176,7 +176,7 @@ it('does not report a foreign key referencing a compatible non-primary unique co
     $users->addColumn(new Column('id', ColumnMethod::Id));
     $users->addColumn(new Column('country_uuid', ColumnMethod::Uuid));
     $users->addForeignKey(new ForeignKey(
-        column: 'country_uuid',
+        columns: 'country_uuid',
         referencesTable: 'countries',
         referencesColumn: 'uuid',
     ));

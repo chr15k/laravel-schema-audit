@@ -39,7 +39,7 @@ it('does nothing when there are no tables', function (): void {
 it('does not report a single foreign key on a column', function (): void {
     $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign'
@@ -58,12 +58,12 @@ it('does not report a single foreign key on a column', function (): void {
 it('reports a foreign key declared more than once on the same column', function (): void {
     $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign'));
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign_2'));
@@ -86,19 +86,19 @@ it('reports a foreign key declared more than once on the same column', function 
 it('reports duplicates independently across multiple tables', function (): void {
     $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'a'));
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'b'));
 
     $invoices = TableSchema::make('invoices');
     $invoices->addForeignKey(new ForeignKey(
-        column: 'order_id',
+        columns: 'order_id',
         referencesTable: 'orders',
         referencesColumn: 'id',
         name: 'c'));
@@ -119,14 +119,14 @@ it('marks the finding as conditional when the duplicate foreign key is condition
     $orders = TableSchema::make('orders');
 
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign',
     ));
 
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign_2',
@@ -149,14 +149,14 @@ it('does not mark the finding as conditional when neither foreign key is conditi
     $orders = TableSchema::make('orders');
 
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign',
     ));
 
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign_2',
@@ -178,7 +178,7 @@ it('marks the finding as conditional when all duplicate foreign keys are conditi
     $orders = TableSchema::make('orders');
 
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign',
@@ -186,7 +186,7 @@ it('marks the finding as conditional when all duplicate foreign keys are conditi
     ));
 
     $orders->addForeignKey(new ForeignKey(
-        column: 'customer_id',
+        columns: 'customer_id',
         referencesTable: 'customers',
         referencesColumn: 'id',
         name: 'orders_customer_id_foreign_2',
