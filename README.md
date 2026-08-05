@@ -219,7 +219,7 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
                 if ($column->method === ColumnMethod::Text /* ...your condition... */) {
                     $findings[] = $this->makeFinding(
                         table: $table->name,
-                        column: $column,
+                        columns: $column,
                         message: "Column '{$column}' is a text column on a high-traffic table.",
                     );
                 }

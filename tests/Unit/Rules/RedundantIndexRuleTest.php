@@ -51,7 +51,7 @@ it('flags a non-unique index as redundant when an equivalent unique index exists
         ->toHaveCount(1)
         ->and($result->audit->findings[0]->table)->toBe('users')
         ->and($result->audit->findings[0]->code)->toBe('redundant_index')
-        ->and($result->audit->findings[0]->column)->toBe('email')
+        ->and($result->audit->findings[0]->columns)->toBe('email')
         ->and($result->audit->findings[0]->severity)->toBe(Severity::Warning)
         ->and($result->audit->findings[0]->message)->toContain('users_email_index')
         ->and($result->audit->findings[0]->message)->toContain('users_email_unique');
@@ -74,7 +74,7 @@ it('does NOT flag a unique index as redundant just because a non-unique one exis
 
     expect($result->audit->findings)
         ->toHaveCount(1)
-        ->and($result->audit->findings[0]->column)->toBe('email');
+        ->and($result->audit->findings[0]->columns)->toBe('email');
 
     // Confirm it's specifically the non-unique one flagged, not the unique one.
     expect($result->audit->findings[0]->message)
@@ -95,7 +95,7 @@ it('flags a single-column index covered by the leading column of a composite ind
 
     expect($result->audit->findings)
         ->toHaveCount(1)
-        ->and($result->audit->findings[0]->column)->toBe('category_id');
+        ->and($result->audit->findings[0]->columns)->toBe('category_id');
 });
 
 it('does not flag two composite indexes of equal length as redundant, even with overlapping columns', function (): void {

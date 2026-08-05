@@ -59,7 +59,7 @@ final readonly class UnindexedForeignKeyRule extends Rule
         return $this->makeFinding(
             table: $table->name,
             message: $message,
-            column: $columns,
+            columns: $columns,
             guard: $fk->guard(),
             location: $fk->location(),
         );

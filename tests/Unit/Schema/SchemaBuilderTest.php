@@ -47,7 +47,7 @@ describe('foreign key resolution', function (): void {
     it('infers the referenced table from the column name by convention', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'user_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('columns', 'user_id');
 
         expect($fk)->not->toBeNull()
             ->and($fk?->referencesTable)->toBe('users')
@@ -57,7 +57,7 @@ describe('foreign key resolution', function (): void {
     it('honours an explicit table name passed positionally to constrained()', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'editor_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('columns', 'editor_id');
 
         expect($fk?->referencesTable)->toBe('users');
     });
@@ -65,7 +65,7 @@ describe('foreign key resolution', function (): void {
     it('honours an explicit table name passed as a named argument to constrained()', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'category_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('columns', 'category_id');
 
         expect($fk?->referencesTable)->toBe('categories');
     });
@@ -73,7 +73,7 @@ describe('foreign key resolution', function (): void {
     it('resolves old-style foreign()->references()->on() chains', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'legacy_owner_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('columns', 'legacy_owner_id');
 
         expect($fk)->not->toBeNull()
             ->and($fk?->referencesTable)->toBe('users');
@@ -87,7 +87,7 @@ describe('foreign key resolution', function (): void {
         // being surprised by it.
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts?->foreignKeys())->firstWhere('column', 'legacy_owner_id');
+        $fk = collect($posts?->foreignKeys())->firstWhere('columns', 'legacy_owner_id');
 
         expect($fk?->name)->toBeNull();
     });
@@ -97,7 +97,7 @@ describe('foreign key resolution', function (): void {
 
         expect($comments?->hasColumn('post_id'))->toBeTrue();
 
-        $fk = collect($comments?->foreignKeys())->firstWhere('column', 'post_id');
+        $fk = collect($comments?->foreignKeys())->firstWhere('columns', 'post_id');
 
         expect($fk)->not->toBeNull()
             ->and($fk?->referencesTable)->toBe('posts');
@@ -123,8 +123,8 @@ describe('foreign key resolution', function (): void {
         $table = buildSchemaFromBuilderFixtures('ForeignKeys')
             ->table('telescope_entries_tags');
 
-        $fk = collect($table?->foreignKeys() ?? [])
-            ->firstWhere('column', 'entry_uuid');
+        $fk = $table?->foreignKeys()
+            ->firstWhere('columns', 'entry_uuid');
 
         expect($fk)->not->toBeNull()
             ->and($fk?->referencesTable)->toBe('telescope_entries')
@@ -273,8 +273,8 @@ describe('folding across multiple migration files', function (): void {
 
         $subscriptions = $schema->table('subscriptions');
 
-        $fk = collect($subscriptions?->foreignKeys())
-            ->firstWhere('column', 'user_id');
+        $fk = $subscriptions?->foreignKeys()
+            ->firstWhere('columns', 'user_id');
 
         expect($fk)->not->toBeNull()
             ->and($fk?->referencesTable)->toBe('members'); // users renamed to members

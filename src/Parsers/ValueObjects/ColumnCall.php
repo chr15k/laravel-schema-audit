@@ -40,6 +40,30 @@ final readonly class ColumnCall
     }
 
     /**
+     * @return string|list<string>|null
+     */
+    public function stringOrArrayArgument(
+        int|string $key,
+        mixed $default = null,
+    ): string|array|null {
+        $value = $this->argument($key, $default);
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (
+            is_array($value)
+            && array_is_list($value)
+            && array_all($value, is_string(...)) // PHP 8.4
+        ) {
+            return $value;
+        }
+
+        return null;
+    }
+
+    /**
      * Returns an argument that may be a single string or a list of strings
      * as a normalized list of strings.
      *

@@ -49,7 +49,7 @@ final readonly class InvalidReferencedKeyRule extends Rule
                         $fk->referencesTable,
                         $referencedColumns,
                     ),
-                    column: $fk->columns,
+                    columns: $fk->columns,
                     severity: Severity::Error,
                     guard: $fk->guard,
                     location: $fk->location,

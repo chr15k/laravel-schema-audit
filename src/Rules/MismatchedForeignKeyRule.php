@@ -59,7 +59,7 @@ final readonly class MismatchedForeignKeyRule extends Rule
                     $fk->referencesColumn,
                     $referencesFamily ?? '?',
                 ),
-                column: $fk->columns,
+                columns: $fk->columns,
                 severity: Severity::Error,
                 guard: $fk->guard,
                 location: $fk->location,

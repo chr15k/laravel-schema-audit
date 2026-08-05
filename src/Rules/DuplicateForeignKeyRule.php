@@ -38,7 +38,7 @@ final readonly class DuplicateForeignKeyRule extends Rule
                 'Duplicate foreign key on column <fg=default>%s</>',
                 implode(', ', $columns)
             ),
-            column: $columns,
+            columns: $columns,
             guard: $fk->guard(),
             location: $fk->location(),
             related: $group->related()

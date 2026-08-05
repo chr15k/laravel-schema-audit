@@ -22,7 +22,7 @@ final readonly class DanglingForeignKeyRule extends Rule
                         'References missing table <fg=default>%s</>',
                         $fk->referencesTable
                     ),
-                    column: $fk->columns,
+                    columns: $fk->columns,
                     severity: Severity::Error,
                     guard: $fk->guard,
                     location: $fk->location

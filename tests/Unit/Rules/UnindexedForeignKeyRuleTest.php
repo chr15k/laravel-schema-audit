@@ -58,7 +58,7 @@ it('reports a foreign key with no covering index on a driver that does not auto-
         ->toHaveCount(1)
         ->and($result->audit->findings[0]->table)->toBe('orders')
         ->and($result->audit->findings[0]->code)->toBe('unindexed_foreign_key')
-        ->and($result->audit->findings[0]->column)->toBe('customer_id')
+        ->and($result->audit->findings[0]->columns)->toBe('customer_id')
         ->and($result->audit->findings[0]->severity)->toBe(Severity::Warning)
         ->and($result->audit->findings[0]->message)->toContain('pgsql');
 });

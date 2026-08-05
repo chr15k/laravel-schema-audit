@@ -269,7 +269,7 @@ final readonly class SchemaBuilder
     ): void {
         $root = $chain->root();
 
-        $columns = $root->stringListArgument(
+        $columns = $root->stringOrArrayArgument(
             'columns',
             $root->argument(0)
         );
@@ -285,7 +285,7 @@ final readonly class SchemaBuilder
 
         $referencesTable = $onCall?->stringArgument('table', $onCall->stringArgument(0));
 
-        $referencesColumn = $referencesCall?->stringListArgument('columns', $referencesCall->argument(0));
+        $referencesColumn = $referencesCall?->stringOrArrayArgument('columns', $referencesCall->argument(0));
 
         if ($referencesTable === null || $referencesColumn === null) {
             return;

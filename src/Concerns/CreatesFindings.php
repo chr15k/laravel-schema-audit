@@ -27,12 +27,12 @@ trait CreatesFindings
 
     /**
      * @param  array<int, SchemaReference>  $related
-     * @param  string|list<string>|null  $column
+     * @param  string|list<string>|null  $columns
      */
     protected function makeFinding(
         string $table,
         string $message,
-        null|string|array $column = null,
+        null|string|array $columns = null,
         ?string $code = null,
         ?Severity $severity = null,
         ?SchemaGuard $guard = null,
@@ -43,7 +43,7 @@ trait CreatesFindings
             code: $code ?? $this->defaultCode(),
             table: $table,
             message: $message,
-            column: $column,
+            columns: $columns,
             severity: $severity ?? $this->defaultSeverity(),
             guard: $guard,
             location: $location,

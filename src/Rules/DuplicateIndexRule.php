@@ -39,7 +39,7 @@ final readonly class DuplicateIndexRule extends Rule
                 $index->name,
                 implode(', ', $columns)
             ),
-            column: $columns,
+            columns: $columns,
             guard: $index->guard(),
             location: $index->location(),
             related: $group->related()

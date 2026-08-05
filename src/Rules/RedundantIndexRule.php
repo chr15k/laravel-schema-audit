@@ -22,7 +22,7 @@ final readonly class RedundantIndexRule extends Rule
                         $redundant->index->name,
                         $redundant->coveredBy->name,
                     ),
-                    column: implode(', ', $redundant->index->columns),
+                    columns: implode(', ', $redundant->index->columns),
                     guard: $table->guard(),
                     location: $redundant->index->location,
                     related: [$redundant->coveredBy]

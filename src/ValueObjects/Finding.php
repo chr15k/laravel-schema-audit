@@ -14,13 +14,13 @@ final readonly class Finding implements SchemaReference, Stringable
 {
     /**
      * @param  array<int, SchemaReference>  $related
-     * @param  string|list<string>|null  $column
+     * @param  string|list<string>|null  $columns
      */
     public function __construct(
         public string $code,
         public string $table,
         public string $message,
-        public null|string|array $column = null,
+        public null|string|array $columns = null,
         public Severity $severity = Severity::Warning,
         public ?SchemaGuard $guard = null,
         public ?SourceLocation $location = null,
