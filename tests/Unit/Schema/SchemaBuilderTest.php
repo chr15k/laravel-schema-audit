@@ -43,6 +43,17 @@ describe('column resolution', function (): void {
     });
 });
 
+describe('create() resolution', function (): void {
+    it('records create() calls whose table name is expressed dynamically', function (): void {
+        $schema = buildSchemaFromBuilderFixtures('DynamicCreates');
+
+        expect($schema->hasTable('abilities'))->toBeTrue()
+            ->and($schema->hasTable('users'))->toBeTrue()
+            ->and($schema->hasTable('roles'))->toBeTrue()
+            ->and($schema->hasTable('$tableName'))->toBeTrue();
+    });
+});
+
 describe('foreign key resolution', function (): void {
     it('infers the referenced table from the column name by convention', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');

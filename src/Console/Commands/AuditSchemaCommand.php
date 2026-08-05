@@ -17,6 +17,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Terminal;
+use Throwable;
 
 final class AuditSchemaCommand extends Command
 {
@@ -39,15 +40,14 @@ final class AuditSchemaCommand extends Command
     {
         $start = microtime(true);
 
-        /** @var list<string> $path */
         $paths = $this->option('path');
 
         $resolvedPaths = $this->paths->resolve($paths);
 
         try {
             $files = $this->locator->files($resolvedPaths);
-        } catch (\Throwable $e) {
-            $this->components->error($e->getMessage());
+        } catch (Throwable $throwable) {
+            $this->components->error($throwable->getMessage());
 
             return self::FAILURE;
         }

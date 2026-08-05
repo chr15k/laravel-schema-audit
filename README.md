@@ -16,9 +16,11 @@
 
 # Laravel Schema Audit
 
-Laravel Schema Audit reconstructs your application's database schema from its migration history and checks it for structural problems — before they reach production.
+Laravel Schema Audit statically reconstructs your application's database schema from its migration history and checks it for structural problems before they reach production.
 
-It doesn't touch your database or run any traffic. Instead it reads your migrations, folds them into a final schema, and flags issues like duplicate indexes, redundant indexes, invalid or dangling foreign keys, mismatched foreign key types, and missing primary keys.
+It doesn't connect to your database or execute migrations. Instead, it analyzes your migration history, folds it into a final schema, and flags issues such as duplicate indexes, redundant indexes, invalid or dangling foreign keys, mismatched foreign key types, invalid referenced keys, and missing primary keys.
+
+Where values can be determined statically, Schema Audit also resolves common Laravel conventions such as model table names, configuration lookups, helper methods, and simple variables.
 
 ---
 
@@ -123,30 +125,91 @@ return [
 
 ## Limitations
 
-Schema Audit statically analyzes Laravel migrations — it doesn't connect to your database or execute migration code.
+Laravel Schema Audit reconstructs your schema by statically analyzing migration code. It does **not** execute migrations or connect to your database.
 
-It understands schema declarations made through Laravel's Schema Builder, including:
+For the vast majority of Laravel applications this produces an accurate representation of the final schema while remaining safe to run in CI without requiring a database connection.
 
-* `Schema::create()`
-* `Schema::table()`
-* Blueprint column definitions
-* Primary keys, indexes, and foreign keys
+### Supported schema declarations
 
-Because migrations aren't executed, it can't reliably evaluate arbitrary PHP logic, runtime conditions, dynamically generated schema definitions, or raw SQL schema changes. In these cases, findings may be marked **conditional**, meaning they could be false positives depending on the code path taken at runtime.
+Schema Audit understands Laravel's Schema Builder, including:
 
-Schema Audit checks schema correctness, not runtime behavior — it doesn't analyze query performance, execution plans, or N+1 queries. For that, tools like Laravel Telescope, Debugbar, or query detectors are a better fit.
+- `Schema::create()`
+- `Schema::table()`
+- Blueprint column definitions
+- Primary keys
+- Indexes
+- Foreign keys
+
+It also resolves common table-name patterns where the final value can be determined statically, including:
+
+```php
+Schema::create('users', function (Blueprint $table) {
+    //
+});
+
+Schema::create(Models::table('users'), function (Blueprint $table) {
+    //
+});
+
+Schema::create((new User())->getTable(), function (Blueprint $table) {
+    //
+});
+
+Schema::create(config('permission.table_names.roles'), function (Blueprint $table) {
+    //
+});
+
+$tableName = 'users';
+
+Schema::create($tableName, function (Blueprint $table) {
+    //
+});
+```
+
+The goal is to support common Laravel conventions rather than requiring migrations to use only string literals.
+
+### Best-effort analysis
+
+Laravel migrations are executable PHP rather than declarative schema definitions. Where runtime behaviour cannot be determined statically, Schema Audit makes a best effort to continue analysis.
+
+Examples include:
+
+- runtime conditionals
+- environment-specific logic
+- application-specific helper methods
+- dynamically generated schema definitions
+- values originating from external input
+
+Tables modified by code that cannot be evaluated statically are marked as **conditionally modified**. Any findings reported against those tables are annotated to indicate they may be false positives depending on which code path executes at runtime.
+
+Set `report_conditional_findings` to `false` to suppress these findings entirely.
 
 ### Unsupported operations
 
-- Raw SQL schema changes (`DB::statement()`, `DB::unprepared()`)
-- Dynamically generated schema changes
-- Schema changes hidden behind application logic
+Some schema changes cannot be reconstructed safely without executing application code or parsing database-specific SQL.
 
-For example, this can't be reliably analyzed without a database-specific SQL parser:
+Examples include:
+
+- Raw SQL schema changes (`DB::statement()`, `DB::unprepared()`)
+- Database-specific DDL
+- Arbitrary PHP execution
+- Runtime-generated SQL
+
+For example:
 
 ```php
 DB::statement('ALTER TABLE users MODIFY COLUMN name TEXT');
 ```
+
+or
+
+```php
+Schema::create(generateTableName(), function (Blueprint $table) {
+    //
+});
+```
+
+These operations are intentionally ignored rather than guessed.
 
 ### Conditional migrations
 
@@ -160,13 +223,29 @@ if (! Schema::hasColumn('users', 'email')) {
 }
 ```
 
-Operations guarded by conditions that can't be evaluated statically (e.g. `DB::getDriverName()`, `config()`, or application-specific logic) are still folded into the schema so analysis stays useful — but the affected tables are marked as conditionally modified, and their findings may be false positives depending on runtime execution.
+When a condition cannot be evaluated statically—for example:
 
-Set `report_conditional_findings` to `false` to suppress these findings entirely.
+```php
+if (app()->environment('production')) {
+    //
+}
+
+if (DB::getDriverName() === 'pgsql') {
+    //
+}
+
+if (someApplicationSpecificCheck()) {
+    //
+}
+```
+
+Schema Audit continues reconstructing the schema but marks the affected tables as conditionally modified so that any related findings are clearly identified as potentially conditional.
 
 ### Multiple database connections
 
-Schema Audit assumes all provided migration paths belong to the same database schema. If your application manages multiple databases or connections, run a separate audit for each.
+Schema Audit assumes all supplied migration paths belong to the same logical database schema.
+
+If your application manages multiple databases or independent connections, run a separate audit for each schema.
 
 ---
 
