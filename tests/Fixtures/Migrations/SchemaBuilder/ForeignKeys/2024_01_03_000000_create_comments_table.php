@@ -19,8 +19,8 @@ return new class extends Migration
             // fully named-arg override
             $table->foreignId('assigned_to')->constrained(
                 table: 'users',
-                indexName: 'comments_assigned_to_custom_fk',
-                columns: 'id'
+                column: 'id',
+                indexName: 'comments_assigned_to_custom_fk'
             );
         });
     }

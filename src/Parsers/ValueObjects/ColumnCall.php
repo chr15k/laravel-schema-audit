@@ -55,8 +55,9 @@ final readonly class ColumnCall
         if (
             is_array($value)
             && array_is_list($value)
-            && array_all($value, is_string(...)) // PHP 8.4
+            && array_filter($value, is_string(...)) === $value
         ) {
+            /** @var list<string> $value */
             return $value;
         }
 

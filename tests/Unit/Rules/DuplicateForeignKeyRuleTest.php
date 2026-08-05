@@ -79,7 +79,7 @@ it('reports a foreign key declared more than once on the same column', function 
         ->toHaveCount(1)
         ->and($result->audit->findings[0]->table)->toBe('orders')
         ->and($result->audit->findings[0]->code)->toBe('duplicate_foreign_key')
-        ->and($result->audit->findings[0]->columns[0])->toBe('customer_id')
+        ->and($result->audit->findings[0]->columns[0] ?? null)->toBe('customer_id')
         ->and($result->audit->findings[0]->severity)->toBe(Severity::Warning);
 });
 
