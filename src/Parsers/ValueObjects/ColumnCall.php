@@ -25,4 +25,18 @@ final readonly class ColumnCall
     {
         return $this->arguments[$key] ?? $default;
     }
+
+    public function stringArgument(int|string $key, ?string $default = null): ?string
+    {
+        $value = $this->argument($key, $default);
+
+        return is_string($value) ? $value : $default;
+    }
+
+    public function arrayArgument(int|string $key, ?array $default = null): ?array
+    {
+        $value = $this->argument($key, $default);
+
+        return is_array($value) ? $value : $default;
+    }
 }

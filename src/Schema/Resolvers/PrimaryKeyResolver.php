@@ -36,7 +36,7 @@ final readonly class PrimaryKeyResolver
 
         if ($column->method->impliesPrimaryKey()) {
             return new PrimaryKey(
-                columns: [$root->argument(0) ?? 'id'],
+                columns: [$root->stringArgument(0) ?? 'id'],
                 location: $root->location,
                 guard: $guard
             );

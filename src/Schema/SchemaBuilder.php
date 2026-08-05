@@ -263,7 +263,7 @@ final readonly class SchemaBuilder
         $root = $chain->root();
 
         $columns = $root->argument('columns', $root->argument(0));
-        $name = $root->argument('name', $root->argument(1));
+        $name = $root->stringArgument('name', $root->stringArgument(1));
 
         if ($columns === null) {
             return;
@@ -272,7 +272,7 @@ final readonly class SchemaBuilder
         $onCall = $chain->modifier('on');
         $referencesCall = $chain->modifier('references');
 
-        $referencesTable = $onCall?->argument('table', $onCall->argument(0));
+        $referencesTable = $onCall?->stringArgument('table', $onCall->stringArgument(0));
         $referencesColumn = $referencesCall?->argument('columns', $referencesCall->argument(0));
 
         if ($referencesTable === null || $referencesColumn === null) {
@@ -306,8 +306,8 @@ final readonly class SchemaBuilder
 
     private function applyRenameColumn(TableSchema $table, ColumnCall $call): void
     {
-        $from = $call->argument(0);
-        $to = $call->argument(1);
+        $from = $call->stringArgument(0);
+        $to = $call->stringArgument(1);
 
         if ($from === null || $to === null) {
             return;
