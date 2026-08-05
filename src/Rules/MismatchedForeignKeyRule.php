@@ -15,7 +15,7 @@ use Closure;
  * integer). MySQL frequently rejects this outright at migrate time;
  * SQLite/loosely-enforced setups can let it exist silently.
  *
- * Deliberately conservative: only fires when BOTH sides resolve with
+ * The approach is deliberately conservative: only fires when BOTH sides resolve with
  * confidence — the referenced table exists (DanglingForeignKeyRule
  * covers the case where it doesn't), and its primary key type is
  * resolvable via the auto-increment convention. A table using an
@@ -32,22 +32,37 @@ final readonly class MismatchedForeignKeyRule extends Rule
         foreach ($context->schema->mismatchedForeignKeys() as $mismatch) {
             $fk = $mismatch->foreignKey;
 
-            $family = $mismatch->table->column($fk->columns)?->method->family()->value;
-            $referencesFamily = $mismatch->referencedTable->column($fk->referencesColumn)?->method->family()->value;
+            // Composite foreign keys require comparing each column pair.
+            // Skip until composite type matching is supported.
+            if (! is_string($fk->columns)) {
+                continue;
+            }
+
+            if (! is_string($fk->referencesColumn)) {
+                continue;
+            }
+
+            $column = $mismatch->table->column($fk->columns);
+            $family = $column?->method->family()->value;
+
+            $referencesColumn = $mismatch->referencedTable->column($fk->referencesColumn);
+            $referencesFamily = $referencesColumn?->method->family()->value;
 
             $findings[] = $this->makeFinding(
                 table: $mismatch->table->name,
                 message: sprintf(
-                    'Type <fg=default>%s</> does not match %s.%s <fg=default>(%s)</>',
-                    $family ?: '?',
+                    'Foreign key <fg=default>%s.%s</> type (%s) does not match referenced column <fg=default>%s.%s</> type (%s)',
+                    $mismatch->table->name,
+                    $fk->columns,
+                    $family ?? '?',
                     $mismatch->referencedTable->name,
                     $fk->referencesColumn,
-                    $referencesFamily ?: '?'
+                    $referencesFamily ?? '?',
                 ),
                 column: $fk->columns,
                 severity: Severity::Error,
-                guard: $mismatch->foreignKey->guard,
-                location: $mismatch->foreignKey->location
+                guard: $fk->guard,
+                location: $fk->location,
             );
         }
 

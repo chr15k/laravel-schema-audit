@@ -21,15 +21,10 @@ final readonly class IndexResolver
         TableSchema $table,
         ?SchemaGuard $guard = null
     ): Index {
-        $columns = $call->argument('columns')
-            ?? $call->argument(0)
-            ?? [];
-
-        $columns = (array) $columns;
+        $columns = $call->stringListArgument('columns', $call->argument(0)) ?? [];
 
         return new Index(
-            name: $call->argument('name')
-                ?? $call->argument(1)
+            name: $call->stringArgument('name', $call->stringArgument(1))
                 ?? $this->conventions->indexName(
                     $table->name,
                     $columns,
@@ -49,8 +44,7 @@ final readonly class IndexResolver
         ?SchemaGuard $guard = null
     ): Index {
         return new Index(
-            name: $call->argument('indexName')
-                ?? $call->argument(0)
+            name: $call->stringArgument('indexName', $call->stringArgument(0))
                 ?? $this->conventions->indexName(
                     $table->name,
                     [$column],

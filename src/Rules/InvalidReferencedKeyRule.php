@@ -33,18 +33,26 @@ final readonly class InvalidReferencedKeyRule extends Rule
                     continue;
                 }
 
+                $columns = is_array($fk->columns)
+                    ? implode(', ', $fk->columns)
+                    : $fk->columns;
+
+                $referencedColumns = is_array($fk->referencesColumn)
+                    ? implode(', ', $fk->referencesColumn)
+                    : $fk->referencesColumn;
+
                 $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf(
-                        'Foreign key on <fg=default>%s</> references <fg=default>%s.%s</>, which has no unique key or primary key',
-                        $fk->columns,
+                        'Foreign key on <fg=default>%s</> references <fg=default>%s (%s)</>, which has no matching unique key or primary key',
+                        $columns,
                         $fk->referencesTable,
-                        $fk->referencesColumn,
+                        $referencedColumns,
                     ),
                     column: $fk->columns,
                     severity: Severity::Error,
                     guard: $fk->guard,
-                    location: $fk->location
+                    location: $fk->location,
                 );
             }
         }

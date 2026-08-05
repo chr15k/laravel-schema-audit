@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
-use Chr15k\SchemaAudit\Schema\Collections\IndexCollection;
 use Chr15k\SchemaAudit\Schema\TableSchema;
-use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
+use Chr15k\SchemaAudit\Schema\ValueObjects\DuplicateIndexGroup;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
@@ -28,22 +27,22 @@ final readonly class DuplicateIndexRule extends Rule
 
     private function duplicateIndexFinding(
         TableSchema $table,
-        IndexCollection $duplicates
+        DuplicateIndexGroup $group
     ): Finding {
-        $index = $duplicates->first();
-        $columns = implode(', ', $index->columns);
+        $index = $group->primary();
+        $columns = $group->columns();
 
         return $this->makeFinding(
             table: $table->name,
             message: sprintf(
                 'Duplicate index <fg=default>%s</> on <fg=default>%s</>',
                 $index->name,
-                $columns
+                implode(', ', $columns)
             ),
             column: $columns,
-            guard: $duplicates->first(fn (Index $index): ?bool => $index->guard?->impliesConditional()),
-            location: $index->location,
-            related: $duplicates->skip(1)->all()
+            guard: $index->guard(),
+            location: $index->location(),
+            related: $group->related()
         );
     }
 }

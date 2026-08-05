@@ -164,7 +164,10 @@ final class AuditSchemaCommand extends Command
 
     private function renderFinding(Finding $finding): void
     {
-        $column = $finding->column ?? '—';
+        $column = is_string($finding->column)
+            ? $finding->column
+            : implode(', ', $finding->column ?? []);
+
         $severity = $finding->severity;
 
         $this->components->twoColumnDetail(
@@ -174,7 +177,7 @@ final class AuditSchemaCommand extends Command
                 $severity->glyph(),
                 (string) $finding,
             ),
-            sprintf('<fg=default;options=bold>%s</>', $column)
+            sprintf('<fg=default;options=bold>%s</>', $column ?: 'N/A')
         );
 
         $this->renderWrappedArrow($finding->message);

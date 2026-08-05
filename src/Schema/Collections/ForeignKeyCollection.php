@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\Collections;
 
+use Chr15k\SchemaAudit\Schema\ValueObjects\DuplicateForeignKeyGroup;
 use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 use Illuminate\Support\Collection;
 
@@ -19,7 +20,7 @@ final class ForeignKeyCollection extends Collection
         );
     }
 
-    public function renameColumn(string|array $from, string|array $to): static
+    public function renameColumn(string $from, string $to): static
     {
         return $this->map(function (ForeignKey $fk) use ($from, $to): ForeignKey {
             if (is_array($fk->columns)) {
@@ -47,11 +48,11 @@ final class ForeignKeyCollection extends Collection
     }
 
     /**
-     * @return Collection<int, ForeignKeyCollection>
+     * @return array<int, DuplicateForeignKeyGroup>
      */
-    public function duplicateGroups(): Collection
+    public function duplicateGroups(): array
     {
-        return $this
+        return collect($this->all())
             ->groupBy(
                 fn (ForeignKey $fk): string => $fk->signature()
             )
@@ -59,10 +60,11 @@ final class ForeignKeyCollection extends Collection
                 fn (Collection $group): bool => $group->count() > 1
             )
             ->map(
-                fn (Collection $group): ForeignKeyCollection => new self(
-                    $group->values()->all()
+                fn (Collection $group): DuplicateForeignKeyGroup => new DuplicateForeignKeyGroup(
+                    new self($group->values()->all())
                 )
             )
-            ->values();
+            ->values()
+            ->all();
     }
 }

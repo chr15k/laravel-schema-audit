@@ -26,12 +26,13 @@ trait CreatesFindings
     }
 
     /**
-     * @param  list<SchemaReference>  $related
+     * @param  array<int, SchemaReference>  $related
+     * @param  string|list<string>|null  $column
      */
     protected function makeFinding(
         string $table,
         string $message,
-        ?string $column = null,
+        null|string|array $column = null,
         ?string $code = null,
         ?Severity $severity = null,
         ?SchemaGuard $guard = null,

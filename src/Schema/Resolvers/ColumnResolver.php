@@ -31,14 +31,14 @@ final readonly class ColumnResolver
 
         $impliedPrimaryKey = $method->impliesPrimaryKey();
 
-        $name = $call->argument(0) ?? ($impliedPrimaryKey ? 'id' : null);
+        $name = $call->stringArgument(0) ?? ($impliedPrimaryKey ? 'id' : null);
 
         if ($name === null) {
             return null;
         }
 
         if ($method->isForeignIdType() && str_contains($name, '::class')) {
-            $name = $call->argument(1)
+            $name = $call->stringArgument(1)
                 ?? $this->conventions->foreignKeyColumnFromModel($name);
         }
 
@@ -78,7 +78,6 @@ final readonly class ColumnResolver
 
         $call = $chain->root();
 
-        // @todo - check this as I'm sure we typed arguments[] value as string...
-        return $call->argument('unsigned', $call->argument(2)) === true;
+        return (bool) $call->argument('unsigned', $call->argument(2));
     }
 }

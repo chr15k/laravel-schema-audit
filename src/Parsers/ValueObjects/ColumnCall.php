@@ -7,7 +7,7 @@ namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 final readonly class ColumnCall
 {
     /**
-     * @var list<string|list<string>|int|bool|null>
+     * @param  array<int|string, mixed>  $arguments
      */
     public function __construct(
         public string $method,
@@ -15,12 +15,6 @@ final readonly class ColumnCall
         public ?SourceLocation $location = null
     ) {}
 
-    /**
-     * @template T
-     *
-     * @param  T  $default
-     * @return string|list<string>|T
-     */
     public function argument(int|string $key, mixed $default = null): mixed
     {
         return $this->arguments[$key] ?? $default;
@@ -33,10 +27,36 @@ final readonly class ColumnCall
         return is_string($value) ? $value : $default;
     }
 
-    public function arrayArgument(int|string $key, ?array $default = null): ?array
+    /**
+     * @return list<string>|null
+     */
+    public function stringArrayArgument(int|string $key): ?array
+    {
+        $value = $this->argument($key);
+
+        return is_array($value) && array_is_list($value)
+            ? array_values(array_filter($value, is_string(...)))
+            : null;
+    }
+
+    /**
+     * Returns an argument that may be a single string or a list of strings
+     * as a normalized list of strings.
+     *
+     * @return list<string>|null
+     */
+    public function stringListArgument(int|string $key, mixed $default = null): ?array
     {
         $value = $this->argument($key, $default);
 
-        return is_array($value) ? $value : $default;
+        if (is_string($value)) {
+            return [$value];
+        }
+
+        if (is_array($value) && array_is_list($value)) {
+            return array_values(array_filter($value, is_string(...)));
+        }
+
+        return null;
     }
 }

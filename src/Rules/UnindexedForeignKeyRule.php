@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
+use Chr15k\SchemaAudit\Schema\TableSchema;
+use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\Support\Config;
+use Chr15k\SchemaAudit\ValueObjects\Finding;
 use Closure;
 
 final readonly class UnindexedForeignKeyRule extends Rule
@@ -24,25 +27,41 @@ final readonly class UnindexedForeignKeyRule extends Rule
 
         foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
-                if (! $table->indexesColumn($fk->columns)) {
-                    $findings[] = $this->makeFinding(
-                        table: $table->name,
-                        message: sprintf(
-                            '<fg=default>%s</> does not auto-index foreign key columns; add index on <fg=default>%s.%s</>',
-                            $this->config->driver(),
-                            $table->name,
-                            $fk->columns,
-                        ),
-                        column: $fk->columns,
-                        guard: $fk->guard,
-                        location: $fk->location
-                    );
+                if ($table->hasNoIndexFor($fk->columns)) {
+                    $findings[] = $this->unindexedForeignKeyFinding($table, $fk);
                 }
             }
         }
 
-        $context = $context->withFindings($findings);
+        return $next($context->withFindings($findings));
+    }
 
-        return $next($context);
+    private function unindexedForeignKeyFinding(TableSchema $table, ForeignKey $fk): Finding
+    {
+        $columns = is_array($fk->columns)
+            ? implode(', ', $fk->columns)
+            : $fk->columns;
+
+        $message = is_array($fk->columns)
+            ? sprintf(
+                '<fg=default>%s</> does not auto-index composite foreign key columns; add a composite index on <fg=default>%s (%s)</>',
+                $this->config->driver(),
+                $table->name,
+                $columns,
+            )
+            : sprintf(
+                '<fg=default>%s</> does not auto-index foreign key columns; add an index on <fg=default>%s.%s</>',
+                $this->config->driver(),
+                $table->name,
+                $columns,
+            );
+
+        return $this->makeFinding(
+            table: $table->name,
+            message: $message,
+            column: $columns,
+            guard: $fk->guard(),
+            location: $fk->location(),
+        );
     }
 }

@@ -187,19 +187,26 @@ final readonly class SchemaBuilder
 
     private function applyDropForeign(TableSchema $table, ColumnCall $call): void
     {
-        $index = $call->argument(0);
-
-        if (is_array($index)) {
-            $index = $this->conventions->indexName(
-                $table->name,
-                $index,
-                'foreign'
-            );
-        }
+        $index = $call->stringArgument(0);
 
         if (is_string($index)) {
             $table->removeForeignKey($index);
+
+            return;
         }
+
+        $index = $call->stringListArgument(0, $call->argument(0));
+
+        if (! is_array($index)) {
+            return;
+        }
+
+        $table->removeForeignKey(
+            $this->conventions->indexName(
+                $table->name,
+                $index,
+                'foreign'
+            ));
     }
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
@@ -262,7 +269,11 @@ final readonly class SchemaBuilder
     ): void {
         $root = $chain->root();
 
-        $columns = $root->argument('columns', $root->argument(0));
+        $columns = $root->stringListArgument(
+            'columns',
+            $root->argument(0)
+        );
+
         $name = $root->stringArgument('name', $root->stringArgument(1));
 
         if ($columns === null) {
@@ -273,7 +284,8 @@ final readonly class SchemaBuilder
         $referencesCall = $chain->modifier('references');
 
         $referencesTable = $onCall?->stringArgument('table', $onCall->stringArgument(0));
-        $referencesColumn = $referencesCall?->argument('columns', $referencesCall->argument(0));
+
+        $referencesColumn = $referencesCall?->stringListArgument('columns', $referencesCall->argument(0));
 
         if ($referencesTable === null || $referencesColumn === null) {
             return;

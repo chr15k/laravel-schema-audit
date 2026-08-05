@@ -33,25 +33,22 @@ final readonly class ForeignKeyResolver
 
         $method = ColumnMethod::tryFrom($root->method);
 
-        $tableName = $modifier->arguments['table']
-            ?? $modifier->arguments[0]
+        $tableName = $modifier->stringArgument('table')
+            ?? $modifier->stringArgument(0)
             ?? (
                 $method?->requiresModel()
-                    ? $this->conventions->tableNameFromModel($root->arguments[0])
+                    ? $this->conventions->tableNameFromModel($root->stringArgument(0) ?? '')
                     : $this->conventions->tableNameFromForeignKey($column)
             );
 
-        $name = $modifier->arguments['indexName']
-            ?? $modifier->arguments[2]
+        $name = $modifier->stringArgument('indexName', $modifier->stringArgument(2))
             ?? $this->conventions->indexName(
                 $table->name,
                 [$column],
                 'foreign',
             );
 
-        $referencesColumn = $modifier->arguments['column']
-            ?? $modifier->arguments[1]
-            ?? 'id';
+        $referencesColumn = $modifier->stringArgument('column', $modifier->stringArgument(1)) ?? 'id';
 
         return new ForeignKey(
             columns: $column,

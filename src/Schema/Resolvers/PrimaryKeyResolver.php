@@ -16,12 +16,10 @@ final readonly class PrimaryKeyResolver
         ColumnCall $call,
         ?SchemaGuard $guard = null
     ): PrimaryKey {
-        $columns = $call->argument('columns')
-            ?? $call->argument(0)
-            ?? [];
+        $columns = $call->stringListArgument('columns', $call->argument(0)) ?? [];
 
         return new PrimaryKey(
-            columns: (array) $columns,
+            columns: $columns,
             location: $call->location,
             guard: $guard
         );

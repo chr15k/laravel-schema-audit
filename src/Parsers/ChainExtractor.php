@@ -10,6 +10,7 @@ use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
@@ -68,7 +69,7 @@ final readonly class ChainExtractor
 
     private function toColumnCall(MethodCall $node): ValueObjects\ColumnCall
     {
-        $methodName = $node->name instanceof Node\Identifier
+        $methodName = $node->name instanceof Identifier
             ? $node->name->toString()
             : '';
 
@@ -79,7 +80,7 @@ final readonly class ChainExtractor
                 continue;
             }
 
-            $key = $arg->name instanceof Node\Identifier
+            $key = $arg->name instanceof Identifier
                 ? $arg->name->toString()
                 : $i;
 
@@ -112,22 +113,22 @@ final readonly class ChainExtractor
             $node instanceof Node\Scalar\Float_ => $node->value,
 
             $node instanceof ClassConstFetch => $node->class instanceof Name
-                    ? $node->class->toString().'::'.$node->name->toString()
-                    : null,
+                && $node->name instanceof Identifier
+                ? $node->class->toString().'::'.$node->name->toString()
+                : null,
 
             default => null,
         };
     }
 
+    /**
+     * @return array<int|string, mixed>
+     */
     private function resolveArray(Node\Expr\Array_ $node): array
     {
         $values = [];
 
         foreach ($node->items as $item) {
-            if ($item === null) {
-                continue;
-            }
-
             $values[] = $this->resolveValue($item->value);
         }
 

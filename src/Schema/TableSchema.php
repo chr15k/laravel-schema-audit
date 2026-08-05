@@ -177,13 +177,20 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         return $this->foreignKeys;
     }
 
-    public function indexesColumn(string $column): bool
+    /**
+     * @param  string|list<string>  $columns
+     */
+    public function hasIndexFor(string|array $columns): bool
     {
-        // Laravel's foreignId()->constrained() does NOT auto-index
-        // on all DB drivers/versions, so we deliberately do not
-        // treat "is a foreign key" as "is indexed" here - that gap
-        // is exactly what rule UnindexedForeignKey checks for.
-        return $this->indexes->indexesColumn($column);
+        return $this->indexes->hasIndexFor($columns);
+    }
+
+    /**
+     * @param  string|list<string>  $columns
+     */
+    public function hasNoIndexFor(string|array $columns): bool
+    {
+        return ! $this->hasIndexFor($columns);
     }
 
     /**
@@ -194,16 +201,23 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         return $this->indexes->hasExactColumns($columns);
     }
 
-    public function hasValidReferencedKey(string $column): bool
+    /**
+     * @param  string|list<string>  $columns
+     */
+    public function hasValidReferencedKey(string|array $columns): bool
     {
+        $columns = is_string($columns)
+            ? [$columns]
+            : $columns;
+
         $primaryKey = $this->primaryKey;
 
-        if ($primaryKey instanceof ValueObjects\PrimaryKey && $primaryKey->columns === [$column]) {
+        if ($primaryKey instanceof ValueObjects\PrimaryKey && $primaryKey->columns === $columns) {
             return true;
         }
 
         return $this->indexes->contains(
-            fn (ValueObjects\Index $index): bool => $index->unique && $index->columns === [$column]
+            fn (ValueObjects\Index $index): bool => $index->unique && $index->columns === $columns
         );
     }
 

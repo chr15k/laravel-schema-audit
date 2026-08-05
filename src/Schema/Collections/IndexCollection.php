@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Schema\Collections;
 
 use Chr15k\SchemaAudit\Schema\Data\RedundantIndex;
+use Chr15k\SchemaAudit\Schema\ValueObjects\DuplicateIndexGroup;
 use Chr15k\SchemaAudit\Schema\ValueObjects\Index;
 use Illuminate\Support\Collection;
 
@@ -13,11 +14,15 @@ use Illuminate\Support\Collection;
  */
 final class IndexCollection extends Collection
 {
-    public function indexesColumn(string $column): bool
+    /**
+     * @param  string|list<string>  $columns
+     */
+    public function hasIndexFor(string|array $columns): bool
     {
-        return $this->contains(
-            fn (Index $index): bool => ($index->columns[0] ?? null) === $column
-        );
+        return $this->contains(fn (Index $index): bool => match (true) {
+            is_string($columns) => ($index->columns[0] ?? null) === $columns,
+            default             => $index->columns === $columns,
+        });
     }
 
     /**
@@ -52,11 +57,11 @@ final class IndexCollection extends Collection
     }
 
     /**
-     * @return Collection<int, IndexCollection>
+     * @return array<int, DuplicateIndexGroup>
      */
-    public function duplicateGroups(): Collection
+    public function duplicateGroups(): array
     {
-        return $this
+        return collect($this->all())
             ->groupBy(
                 fn (Index $index): string => $index->signature()
             )
@@ -64,11 +69,12 @@ final class IndexCollection extends Collection
                 fn (Collection $group): bool => $group->count() > 1
             )
             ->map(
-                fn (Collection $group): IndexCollection => new self(
-                    $group->values()->all()
+                fn (Collection $group): DuplicateIndexGroup => new DuplicateIndexGroup(
+                    new self($group->values()->all())
                 )
             )
-            ->values();
+            ->values()
+            ->all();
     }
 
     /**
