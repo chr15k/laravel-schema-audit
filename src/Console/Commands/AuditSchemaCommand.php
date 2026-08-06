@@ -58,6 +58,7 @@ final class AuditSchemaCommand extends Command
         $progress = null;
 
         if (! $this->option('schema-only') && ! $this->option('json')) {
+            $this->newLine();
             $progress = $this->initProgress(count($source->files()));
         }
 
@@ -67,8 +68,7 @@ final class AuditSchemaCommand extends Command
         );
 
         if ($progress instanceof ProgressBar) {
-            $progress->finish();
-            $this->newLine();
+            $progress->clear();
         }
 
         if ($this->option('schema-only')) {
@@ -109,7 +109,7 @@ final class AuditSchemaCommand extends Command
     {
         $progress = $this->output->createProgressBar($max);
 
-        $progress->setFormat('%bar%');
+        $progress->setFormat('  %bar%');
         $progress->setBarCharacter('.');
         $progress->setEmptyBarCharacter(' ');
 
