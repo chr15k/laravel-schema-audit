@@ -176,7 +176,6 @@ final class AuditSchemaCommand extends Command
                     $count,
                     $grammar
                 ));
-
                 $items->each($this->renderFinding(...));
             });
     }
@@ -189,6 +188,7 @@ final class AuditSchemaCommand extends Command
 
         $severity = $finding->severity;
 
+        $this->newLine();
         $this->components->twoColumnDetail(
             sprintf(
                 '  <fg=%s>%s</> %s',
@@ -206,8 +206,6 @@ final class AuditSchemaCommand extends Command
         $this->renderRelated($finding);
 
         $this->renderConditional($finding);
-
-        $this->newLine();
     }
 
     private function renderWrappedArrow(string $text): void
