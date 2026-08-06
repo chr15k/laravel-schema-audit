@@ -12,6 +12,9 @@ use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 use Stringable;
 
+/**
+ * @implements Arrayable<string, mixed>
+ */
 final readonly class Finding implements Arrayable, JsonSerializable, SchemaReference, Stringable
 {
     /**
@@ -45,13 +48,16 @@ final readonly class Finding implements Arrayable, JsonSerializable, SchemaRefer
     }
 
     /**
-     * @return list<Finding>
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {
         return $this->toArray();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [
@@ -60,7 +66,7 @@ final readonly class Finding implements Arrayable, JsonSerializable, SchemaRefer
             'message'  => strip_tags($this->message),
             'columns'  => $this->columns,
             'severity' => $this->severity->value,
-            'guard'    => $this->guard?->value,
+            'guard'    => $this->guard,
             'location' => $this->location,
             'related'  => $this->related,
         ];

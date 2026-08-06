@@ -168,16 +168,23 @@ final class AuditSchemaCommand extends Command
                 $grammar = str('issue')->plural($count);
                 $worst = $this->worstSeverity($items);
 
+                $this->renderSeparator();
                 $this->newLine();
                 $this->line(sprintf(
-                    '  <fg=%s;options=bold>%s</> <fg=gray>(%d %s)</>',
-                    $worst->color(),
+                    '  <%s> %s </> <fg=gray>(%d %s)</>',
+                    $worst->colorTag(),
                     $table,
                     $count,
                     $grammar
                 ));
                 $items->each($this->renderFinding(...));
             });
+    }
+
+    private function renderSeparator(): void
+    {
+        $this->newLine();
+        $this->line('<fg=gray>  '.str_repeat('=', $this->terminalContentWidth()).'</>');
     }
 
     private function renderFinding(Finding $finding): void
@@ -210,12 +217,17 @@ final class AuditSchemaCommand extends Command
 
     private function renderWrappedArrow(string $text): void
     {
-        $width = (new Terminal)->getWidth() - 20;
-
         $this->line(sprintf(
             '    <fg=gray>↳ %s</>',
-            wordwrap($text, $width ?: 80, "\n      ")
+            wordwrap($text, $this->terminalContentWidth() - 6, "\n      ")
         ));
+    }
+
+    private function terminalContentWidth(): int
+    {
+        $terminalWidth = max(1, (new Terminal)->getWidth());
+
+        return max(1, min($terminalWidth - 4, 146));
     }
 
     private function renderLocation(Finding $finding): void
@@ -294,7 +306,7 @@ final class AuditSchemaCommand extends Command
     {
         $grammar = str('issue')->plural($count);
 
-        $this->newLine();
+        $this->newLine(2);
         $this->components->twoColumnDetail(
             '<fg=red;options=bold>FAIL</>',
             sprintf('<fg=default>%ss</>', $duration)
