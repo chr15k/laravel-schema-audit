@@ -6,6 +6,7 @@ namespace Chr15k\SchemaAudit\Parsers;
 
 use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -21,7 +22,7 @@ final class ArgReader
     /**
      * @param  array<int|string, Node\Arg|Node\VariadicPlaceholder>  $args
      */
-    public static function stringArgAt(array $args, int $position): ?string
+    public static function stringArgAt(array $args, int $position, ?Node $context = null): ?string
     {
         $arg = $args[$position] ?? null;
 
@@ -29,7 +30,7 @@ final class ArgReader
             return null;
         }
 
-        return self::resolveStringValue($arg->value);
+        return self::resolveStringValue($arg->value, $context);
     }
 
     /**
@@ -46,12 +47,12 @@ final class ArgReader
         return null;
     }
 
-    private static function resolveStringValue(Node $node): ?string
+    private static function resolveStringValue(Node $node, ?Node $context = null): ?string
     {
         return match (true) {
             $node instanceof String_ => $node->value,
 
-            $node instanceof Variable => '$'.$node->name,
+            $node instanceof Variable => self::resolveVariableValue($node, $context),
 
             $node instanceof StaticCall => self::resolveStaticCall($node),
 
@@ -61,6 +62,96 @@ final class ArgReader
 
             default => null,
         };
+    }
+
+    private static function resolveVariableValue(Variable $node, ?Node $context = null): ?string
+    {
+        $name = $node->name;
+
+        if (! is_string($name)) {
+            return null;
+        }
+
+        if (! $context instanceof Node) {
+            return '$'.$name;
+        }
+
+        $scope = self::nearestScope($context);
+
+        if (! $scope instanceof Node || ! property_exists($scope, 'stmts') || ! is_array($scope->stmts)) {
+            return '$'.$name;
+        }
+
+        $statementIndex = self::statementIndexInScope($scope, $context);
+
+        if ($statementIndex === null) {
+            return '$'.$name;
+        }
+
+        for ($i = $statementIndex - 1; $i >= 0; $i--) {
+            $statement = $scope->stmts[$i];
+
+            if ($statement instanceof Node\Stmt\Expression && $statement->expr instanceof Assign) {
+                $assignment = $statement->expr;
+
+                if ($assignment->var instanceof Variable && is_string($assignment->var->name) && $assignment->var->name === $name) {
+                    return self::resolveStringValue($assignment->expr, $context);
+                }
+            }
+
+            if ($statement instanceof Assign && $statement->var instanceof Variable && is_string($statement->var->name) && $statement->var->name === $name) {
+                return self::resolveStringValue($statement->expr, $context);
+            }
+        }
+
+        return '$'.$name;
+    }
+
+    private static function nearestScope(Node $node): ?Node
+    {
+        for ($current = $node; $current instanceof Node; $current = self::parentOf($current)) {
+            if (
+                $current instanceof Node\Stmt\ClassMethod
+                || $current instanceof Node\Stmt\Function_
+                || $current instanceof Closure
+                || $current instanceof Node\Stmt\If_
+                || $current instanceof Node\Stmt\ElseIf_
+                || $current instanceof Node\Stmt\Else_
+                || $current instanceof Node\Stmt\Foreach_
+                || $current instanceof Node\Stmt\For_
+                || $current instanceof Node\Stmt\While_
+                || $current instanceof Node\Stmt\Switch_
+                || $current instanceof Node\Stmt\Case_
+            ) {
+                return $current;
+            }
+        }
+
+        return null;
+    }
+
+    private static function statementIndexInScope(Node $scope, Node $context): ?int
+    {
+        if (! property_exists($scope, 'stmts') || ! is_array($scope->stmts)) {
+            return null;
+        }
+
+        foreach ($scope->stmts as $index => $statement) {
+            for ($current = $context; $current instanceof Node; $current = self::parentOf($current)) {
+                if ($current === $statement) {
+                    return $index;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static function parentOf(Node $node): ?Node
+    {
+        $parent = $node->getAttribute('parent');
+
+        return $parent instanceof Node ? $parent : null;
     }
 
     private static function resolveStaticCall(StaticCall $node): ?string

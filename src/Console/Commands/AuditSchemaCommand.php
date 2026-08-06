@@ -40,9 +40,7 @@ final class AuditSchemaCommand extends Command
     {
         $start = microtime(true);
 
-        $paths = $this->option('path');
-
-        $resolvedPaths = $this->paths->resolve($paths);
+        $resolvedPaths = $this->resolvePathsFromOption();
 
         try {
             $files = $this->locator->files($resolvedPaths);
@@ -82,6 +80,21 @@ final class AuditSchemaCommand extends Command
         }
 
         return $this->renderReport($audit, $schema->tableCount(), $duration);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function resolvePathsFromOption(): array
+    {
+        $paths = (array) $this->option('path');
+
+        $paths = array_filter(
+            $paths,
+            static fn (mixed $path): bool => is_string($path) && $path !== '',
+        );
+
+        return $this->paths->resolve(array_values($paths));
     }
 
     private function initProgress(int $max = 0): ProgressBar

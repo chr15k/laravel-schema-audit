@@ -49,8 +49,7 @@ describe('create() resolution', function (): void {
 
         expect($schema->hasTable('abilities'))->toBeTrue()
             ->and($schema->hasTable('users'))->toBeTrue()
-            ->and($schema->hasTable('roles'))->toBeTrue()
-            ->and($schema->hasTable('$tableName'))->toBeTrue();
+            ->and($schema->hasTable('roles'))->toBeTrue();
     });
 });
 

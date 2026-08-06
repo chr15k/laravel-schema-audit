@@ -136,7 +136,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     private function recordDrop(StaticCall $node): null
     {
-        if ($name = ArgReader::stringArgAt($node->args, 0)) {
+        if ($name = ArgReader::stringArgAt($node->args, 0, $node)) {
             $this->addOperation(
                 type: SchemaOperationType::Drop,
                 tableName: $name,
@@ -169,8 +169,8 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     private function recordRename(StaticCall $node): null
     {
-        $from = ArgReader::stringArgAt($node->args, 0);
-        $to = ArgReader::stringArgAt($node->args, 1);
+        $from = ArgReader::stringArgAt($node->args, 0, $node);
+        $to = ArgReader::stringArgAt($node->args, 1, $node);
 
         if ($from && $to) {
             $this->addOperation(
@@ -186,7 +186,7 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     private function recordCreateOrAlter(StaticCall $node, string $methodName): null
     {
-        $name = ArgReader::stringArgAt($node->args, 0);
+        $name = ArgReader::stringArgAt($node->args, 0, $node);
         $closure = ArgReader::closureArgAt($node->args, 1);
 
         if (! $name || ! $closure instanceof Closure) {
