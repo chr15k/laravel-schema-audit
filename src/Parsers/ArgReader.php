@@ -81,17 +81,13 @@ final class ArgReader
         };
     }
 
-    /**
-     * @return list<string>
-     */
     private static function resolveFuncCall(FuncCall $node): array
     {
-        if (
-            ! $node->name instanceof Name ||
-            $node->name->toString() !== 'collect'
-        ) {
+        if (! $node->name instanceof Name) {
             return [];
         }
+
+        $name = $node->name->toString();
 
         $arg = $node->args[0] ?? null;
 
@@ -99,10 +95,29 @@ final class ArgReader
             return [];
         }
 
-        return self::resolveStrings(
-            $arg->value,
-            $node,
-        );
+        if ($name === 'collect') {
+            return self::resolveStrings($arg->value, $node);
+        }
+
+        /**
+         * Resolves simple config() calls by using the final config key segment.
+         *
+         * Example:
+         * config('permission.table_names.roles') => ['roles']
+         *
+         * This is a best-effort resolution because config values are not available
+         * during static analysis.
+         */
+        if ($name === 'config' && $arg->value instanceof String_) {
+            return [
+                mb_substr(
+                    $arg->value->value,
+                    mb_strrpos($arg->value->value, '.') + 1
+                ),
+            ];
+        }
+
+        return [];
     }
 
     /**
@@ -265,9 +280,11 @@ final class ArgReader
             if (! property_exists($scope, 'stmts')) {
                 continue;
             }
+
             if (! is_array($scope->stmts)) {
                 continue;
             }
+
             $statementIndex = self::statementIndexInScope(
                 $scope,
                 $context,
@@ -293,9 +310,11 @@ final class ArgReader
                 if (! $assign->var instanceof Variable) {
                     continue;
                 }
+
                 if (! is_string($assign->var->name)) {
                     continue;
                 }
+
                 if ($assign->var->name !== $name) {
                     continue;
                 }
