@@ -36,9 +36,9 @@ enum Severity: string
     public function colorTag(): string
     {
         return match ($this) {
-            self::Error   => 'fg=white;bg=red;options=bold',
-            self::Warning => 'fg=black;bg=yellow;options=bold',
-            self::Info    => 'fg=white;bg=blue;options=bold',
+            self::Error   => 'fg=red;options=bold',
+            self::Warning => 'fg=yellow;options=bold',
+            self::Info    => 'fg=blue;options=bold',
         };
     }
 }

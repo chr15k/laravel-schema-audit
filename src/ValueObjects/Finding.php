@@ -8,12 +8,8 @@ use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
-use Illuminate\Contracts\Support\Arrayable;
 use Stringable;
 
-/**
- * @implements Arrayable<string, mixed>
- */
 final readonly class Finding implements SchemaReference, Stringable
 {
     /**

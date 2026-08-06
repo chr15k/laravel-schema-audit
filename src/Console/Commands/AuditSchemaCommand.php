@@ -171,7 +171,7 @@ final class AuditSchemaCommand extends Command
                 $this->renderSeparator();
                 $this->newLine();
                 $this->line(sprintf(
-                    '  <%s> %s </> <fg=cyan>(%d %s)</>',
+                    '  <%s>⛁ %s </> <fg=cyan>(%d %s)</>',
                     $worst->colorTag(),
                     $table,
                     $count,
@@ -181,10 +181,10 @@ final class AuditSchemaCommand extends Command
             });
     }
 
-    private function renderSeparator(): void
+    private function renderSeparator(string $char = '░'): void
     {
         $this->newLine();
-        $this->line('<fg=cyan>  '.str_repeat('=', $this->terminalContentWidth()).'</>');
+        $this->line('<fg=cyan;>  '.str_repeat($char, $this->terminalContentWidth()).'</>');
     }
 
     private function renderFinding(Finding $finding): void
@@ -215,7 +215,7 @@ final class AuditSchemaCommand extends Command
         $this->renderConditional($finding);
     }
 
-    private function renderWrappedArrow(string $text, string $color = 'cyan', bool $bold = false): void
+    private function renderWrappedArrow(string $text, string $color = 'bright-cyan', bool $bold = false): void
     {
         $this->line(sprintf(
             '    <fg=%s%s>↳ %s</>',
@@ -306,11 +306,12 @@ final class AuditSchemaCommand extends Command
 
     private function renderFail(string $duration, int $count): void
     {
+        $this->renderSeparator();
         $grammar = str('issue')->plural($count);
 
-        $this->newLine(2);
+        $this->newLine();
         $this->components->twoColumnDetail(
-            '<fg=red;options=bold>FAIL</>',
+            '<fg=red;options=bold> FAIL </>',
             sprintf('<fg=default>%ss</>', $duration)
         );
         $this->renderWrappedArrow(sprintf('%d schema %s found', $count, $grammar), 'red', true);
