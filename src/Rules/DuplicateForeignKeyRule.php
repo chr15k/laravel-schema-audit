@@ -35,7 +35,7 @@ final readonly class DuplicateForeignKeyRule extends Rule
         return $this->makeFinding(
             table: $table->name,
             message: sprintf(
-                'Duplicate foreign key on column <fg=default>%s</>',
+                'Duplicate foreign key on column %s',
                 implode(', ', $columns)
             ),
             columns: $columns,

@@ -9,13 +9,12 @@ use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
-use JsonSerializable;
 use Stringable;
 
 /**
  * @implements Arrayable<string, mixed>
  */
-final readonly class Finding implements Arrayable, JsonSerializable, SchemaReference, Stringable
+final readonly class Finding implements SchemaReference, Stringable
 {
     /**
      * @param  array<int, SchemaReference>  $related
@@ -45,30 +44,5 @@ final readonly class Finding implements Arrayable, JsonSerializable, SchemaRefer
     public function guard(): ?SchemaGuard
     {
         return $this->guard;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return $this->toArray();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array
-    {
-        return [
-            'code'     => $this->code,
-            'table'    => $this->table,
-            'message'  => strip_tags($this->message),
-            'columns'  => $this->columns,
-            'severity' => $this->severity->value,
-            'guard'    => $this->guard,
-            'location' => $this->location,
-            'related'  => $this->related,
-        ];
     }
 }

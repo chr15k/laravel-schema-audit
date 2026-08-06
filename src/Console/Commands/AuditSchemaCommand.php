@@ -171,7 +171,7 @@ final class AuditSchemaCommand extends Command
                 $this->renderSeparator();
                 $this->newLine();
                 $this->line(sprintf(
-                    '  <%s> %s </> <fg=gray>(%d %s)</>',
+                    '  <%s> %s </> <fg=cyan>(%d %s)</>',
                     $worst->colorTag(),
                     $table,
                     $count,
@@ -184,7 +184,7 @@ final class AuditSchemaCommand extends Command
     private function renderSeparator(): void
     {
         $this->newLine();
-        $this->line('<fg=gray>  '.str_repeat('=', $this->terminalContentWidth()).'</>');
+        $this->line('<fg=cyan>  '.str_repeat('=', $this->terminalContentWidth()).'</>');
     }
 
     private function renderFinding(Finding $finding): void
@@ -215,10 +215,12 @@ final class AuditSchemaCommand extends Command
         $this->renderConditional($finding);
     }
 
-    private function renderWrappedArrow(string $text): void
+    private function renderWrappedArrow(string $text, string $color = 'cyan', bool $bold = false): void
     {
         $this->line(sprintf(
-            '    <fg=gray>↳ %s</>',
+            '    <fg=%s%s>↳ %s</>',
+            $color,
+            $bold ? ';options=bold' : '',
             wordwrap($text, $this->terminalContentWidth() - 6, "\n      ")
         ));
     }
@@ -238,7 +240,7 @@ final class AuditSchemaCommand extends Command
 
         $this->newLine();
 
-        $this->line('    <fg=gray>Location:</>');
+        $this->line('    <fg=cyan>Location:</>');
 
         $this->renderWrappedArrow(sprintf('<fg=default>%s</>', $finding->location->relative()));
     }
@@ -251,7 +253,7 @@ final class AuditSchemaCommand extends Command
             }
 
             $this->newLine();
-            $this->line('    <fg=gray>Related:</>');
+            $this->line('    <fg=cyan>Related:</>');
 
             $this->renderWrappedArrow(sprintf('<fg=default>%s</>', $related->location()->relative()));
         }
@@ -311,7 +313,7 @@ final class AuditSchemaCommand extends Command
             '<fg=red;options=bold>FAIL</>',
             sprintf('<fg=default>%ss</>', $duration)
         );
-        $this->components->bulletList([sprintf('%d schema %s found.', $count, $grammar)]);
+        $this->renderWrappedArrow(sprintf('%d schema %s found', $count, $grammar), 'red', true);
         $this->newLine();
     }
 }

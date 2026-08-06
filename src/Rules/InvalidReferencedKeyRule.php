@@ -44,7 +44,7 @@ final readonly class InvalidReferencedKeyRule extends Rule
                 $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf(
-                        'Foreign key on <fg=default>%s</> references <fg=default>%s (%s)</>, which has no matching unique key or primary key',
+                        'Foreign key on %s references %s (%s), which has no matching unique key or primary key',
                         $columns,
                         $fk->referencesTable,
                         $referencedColumns,

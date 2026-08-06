@@ -44,13 +44,13 @@ final readonly class UnindexedForeignKeyRule extends Rule
 
         $message = is_array($fk->columns)
             ? sprintf(
-                '<fg=default>%s</> does not auto-index composite foreign key columns; add a composite index on <fg=default>%s (%s)</>',
+                '%s does not auto-index composite foreign key columns; add a composite index on %s (%s)',
                 $this->config->driver(),
                 $table->name,
                 $columns,
             )
             : sprintf(
-                '<fg=default>%s</> does not auto-index foreign key columns; add an index on <fg=default>%s.%s</>',
+                '%s does not auto-index foreign key columns; add an index on %s.%s',
                 $this->config->driver(),
                 $table->name,
                 $columns,

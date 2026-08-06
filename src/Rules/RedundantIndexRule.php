@@ -18,7 +18,7 @@ final readonly class RedundantIndexRule extends Rule
                 $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf(
-                        'Index <fg=default>%s</> is covered by <fg=default>%s</>',
+                        'Index %s is covered by %s',
                         $redundant->index->name,
                         $redundant->coveredBy->name,
                     ),

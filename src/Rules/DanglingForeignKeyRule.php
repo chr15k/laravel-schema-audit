@@ -19,7 +19,7 @@ final readonly class DanglingForeignKeyRule extends Rule
                 $findings[] = $this->makeFinding(
                     table: $table->name,
                     message: sprintf(
-                        'References missing table <fg=default>%s</>',
+                        'References missing table %s',
                         $fk->referencesTable
                     ),
                     columns: $fk->columns,
