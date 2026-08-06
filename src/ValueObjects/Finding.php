@@ -8,9 +8,11 @@ use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
+use Illuminate\Contracts\Support\Arrayable;
+use JsonSerializable;
 use Stringable;
 
-final readonly class Finding implements SchemaReference, Stringable
+final readonly class Finding implements SchemaReference, Stringable, Arrayable, JsonSerializable
 {
     /**
      * @param  array<int, SchemaReference>  $related
@@ -40,5 +42,27 @@ final readonly class Finding implements SchemaReference, Stringable
     public function guard(): ?SchemaGuard
     {
         return $this->guard;
+    }
+
+    /**
+     * @return list<Finding>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'code' => $this->code,
+            'table' => $this->table,
+            'message' => strip_tags($this->message),
+            'columns' => $this->columns,
+            'severity' => $this->severity->value,
+            'guard' => $this->guard?->value,
+            'location' => $this->location,
+            'related' => $this->related
+        ];
     }
 }

@@ -124,7 +124,7 @@ final class AuditSchemaCommand extends Command
 
     private function renderJson(SchemaAudit $audit): int
     {
-        $this->line($audit->toPrettyJson());
+        $this->line($audit->toPrettyJson(JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return $audit->hasIssues() ? self::FAILURE : self::SUCCESS;
     }
