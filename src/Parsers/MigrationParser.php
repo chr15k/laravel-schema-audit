@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Parsers;
 
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\ParentConnectingVisitor;
 use PhpParser\ParserFactory;
 use RuntimeException;
 
@@ -36,6 +37,7 @@ final readonly class MigrationParser
         $visitor = new SchemaCallVisitor(path: $path);
 
         $traverser = new NodeTraverser;
+        $traverser->addVisitor(new ParentConnectingVisitor);
         $traverser->addVisitor($visitor);
         $traverser->traverse($ast);
 

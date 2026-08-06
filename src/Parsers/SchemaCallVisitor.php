@@ -186,21 +186,30 @@ final class SchemaCallVisitor extends NodeVisitorAbstract
 
     private function recordCreateOrAlter(StaticCall $node, string $methodName): null
     {
-        $name = ArgReader::stringArgAt($node->args, 0, $node);
-        $closure = ArgReader::closureArgAt($node->args, 1);
+        $names = ArgReader::stringsArgAt($node->args, 0, $node);
 
-        if (! $name || ! $closure instanceof Closure) {
+        if ($names === []) {
             return null;
         }
 
-        $this->addOperation(
-            type: $methodName === 'create'
-                ? SchemaOperationType::Create
-                : SchemaOperationType::Alter,
-            tableName: $name,
-            chains: $this->chainExtractor->extract($closure),
-            line: $node->getStartLine()
-        );
+        $closure = ArgReader::closureArgAt($node->args, 1);
+
+        if (! $closure instanceof Closure) {
+            return null;
+        }
+
+        $chains = $this->chainExtractor->extract($closure);
+
+        foreach ($names as $name) {
+            $this->addOperation(
+                type: $methodName === 'create'
+                    ? SchemaOperationType::Create
+                    : SchemaOperationType::Alter,
+                tableName: $name,
+                chains: $chains,
+                line: $node->getStartLine()
+            );
+        }
 
         return null;
     }
