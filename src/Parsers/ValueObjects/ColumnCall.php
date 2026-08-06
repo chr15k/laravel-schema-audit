@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 
+use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
+
 final readonly class ColumnCall
 {
     /**

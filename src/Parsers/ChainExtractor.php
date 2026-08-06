@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
-use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
+use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;

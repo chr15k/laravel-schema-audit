@@ -7,7 +7,7 @@ namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
-use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
+use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 

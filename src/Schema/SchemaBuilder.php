@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema;
 
+use Chr15k\SchemaAudit\Contracts\SchemaSource;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
 use Chr15k\SchemaAudit\Enums\StructuralMethod;
-use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnCall;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\Parsers\ValueObjects\SchemaOperation;
@@ -23,7 +23,6 @@ use Closure;
 final readonly class SchemaBuilder
 {
     public function __construct(
-        private MigrationParser $parser,
         private IndexResolver $indexes,
         private ForeignKeyResolver $foreignKeys,
         private ColumnResolver $columns,
@@ -31,18 +30,14 @@ final readonly class SchemaBuilder
         private LaravelConventions $conventions
     ) {}
 
-    /**
-     * @param  array<string>  $files
-     */
-    public function build(array $files, ?Closure $progress = null): Schema
-    {
-        /** @var array<string, TableSchema> $tables */
+    public function build(
+        SchemaSource $source,
+        ?Closure $progress = null
+    ): Schema {
         $tables = [];
 
-        foreach ($files as $file) {
-            foreach ($this->parser->parseFile($file) as $operation) {
-                $this->applyOperation($tables, $operation);
-            }
+        foreach ($source->operations() as $operation) {
+            $this->applyOperation($tables, $operation);
 
             $progress?->__invoke();
         }

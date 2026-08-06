@@ -6,7 +6,7 @@ namespace Chr15k\SchemaAudit\Parsers;
 
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
-use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
+use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\StaticCall;

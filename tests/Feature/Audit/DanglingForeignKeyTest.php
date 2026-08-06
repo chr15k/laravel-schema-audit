@@ -4,19 +4,24 @@ declare(strict_types=1);
 
 use Chr15k\SchemaAudit\Migrations\MigrationLocator;
 use Chr15k\SchemaAudit\Migrations\MigrationPathResolver;
+use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\SchemaAuditor;
+use Chr15k\SchemaAudit\Sources\MigrationSource;
 
 it('detects dangling fk from migrations', function (): void {
     $directory = __DIR__.'/../../Fixtures/Migrations/Audit/DanglingForeignKeys';
 
-    $paths = app(MigrationPathResolver::class)->resolve([
-        $directory,
-    ]);
+    $files = app(MigrationPathResolver::class)
+        ->resolve([$directory]);
 
-    $files = app(MigrationLocator::class)->files($paths);
+    $source = new MigrationSource(
+        app(MigrationLocator::class),
+        app(MigrationParser::class),
+        $files
+    );
 
-    $schema = app(SchemaBuilder::class)->build($files);
+    $schema = app(SchemaBuilder::class)->build($source);
 
     $audit = app(SchemaAuditor::class)->audit($schema);
 

@@ -7,12 +7,14 @@ namespace Chr15k\SchemaAudit\Console\Commands;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Migrations\MigrationLocator;
 use Chr15k\SchemaAudit\Migrations\MigrationPathResolver;
-use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
+use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\SchemaAudit;
 use Chr15k\SchemaAudit\SchemaAuditor;
+use Chr15k\SchemaAudit\Sources\MigrationSource;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -32,6 +34,7 @@ final class AuditSchemaCommand extends Command
         private readonly SchemaAuditor $auditor,
         private readonly MigrationPathResolver $paths,
         private readonly MigrationLocator $locator,
+        private readonly MigrationParser $parser,
     ) {
         parent::__construct();
     }
@@ -40,10 +43,12 @@ final class AuditSchemaCommand extends Command
     {
         $start = microtime(true);
 
-        $resolvedPaths = $this->resolvePathsFromOption();
-
         try {
-            $files = $this->locator->files($resolvedPaths);
+            $source = new MigrationSource(
+                $this->locator,
+                $this->parser,
+                $this->resolvePathsFromOption(),
+            );
         } catch (Throwable $throwable) {
             $this->components->error($throwable->getMessage());
 
@@ -53,10 +58,13 @@ final class AuditSchemaCommand extends Command
         $progress = null;
 
         if (! $this->option('schema-only') && ! $this->option('json')) {
-            $progress = $this->initProgress(count($files));
+            $progress = $this->initProgress(count($source->files()));
         }
 
-        $schema = $builder->build($files, fn () => $progress?->advance());
+        $schema = $builder->build(
+            $source,
+            fn () => $progress?->advance()
+        );
 
         if ($progress instanceof ProgressBar) {
             $progress->finish();

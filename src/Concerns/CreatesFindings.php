@@ -7,8 +7,8 @@ namespace Chr15k\SchemaAudit\Concerns;
 use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
+use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
 
 trait CreatesFindings
 {

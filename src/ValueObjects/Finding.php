@@ -7,7 +7,6 @@ namespace Chr15k\SchemaAudit\ValueObjects;
 use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
-use Chr15k\SchemaAudit\Parsers\ValueObjects\SourceLocation;
 use Stringable;
 
 final readonly class Finding implements SchemaReference, Stringable

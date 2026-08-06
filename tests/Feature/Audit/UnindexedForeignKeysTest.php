@@ -1,8 +1,11 @@
 <?php
 
 use Chr15k\SchemaAudit\Migrations\MigrationLocator;
+use Chr15k\SchemaAudit\Migrations\MigrationPathResolver;
+use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\SchemaAuditor;
+use Chr15k\SchemaAudit\Sources\MigrationSource;
 
 it('detects unindexed fks from migrations', function (): void {
     $directory = __DIR__.'/../../Fixtures/Migrations/Audit/UnindexedForeignKeys';
@@ -11,11 +14,17 @@ it('detects unindexed fks from migrations', function (): void {
         'schema-audit.driver' => 'pgsql',
     ]);
 
-    $files = app(MigrationLocator::class)
-        ->files([$directory]);
+    $files = app(MigrationPathResolver::class)
+        ->resolve([$directory]);
+
+    $source = new MigrationSource(
+        app(MigrationLocator::class),
+        app(MigrationParser::class),
+        $files
+    );
 
     $schema = app(SchemaBuilder::class)
-        ->build($files);
+        ->build($source);
 
     $audit = app(SchemaAuditor::class)
         ->audit($schema);
@@ -31,11 +40,17 @@ it('bypasses unindexed fks check if unsupported db driver', function (): void {
         'schema-audit.driver' => 'mysql',
     ]);
 
-    $files = app(MigrationLocator::class)
-        ->files([$directory]);
+    $files = app(MigrationPathResolver::class)
+        ->resolve([$directory]);
+
+    $source = new MigrationSource(
+        app(MigrationLocator::class),
+        app(MigrationParser::class),
+        $files
+    );
 
     $schema = app(SchemaBuilder::class)
-        ->build($files);
+        ->build($source);
 
     $audit = app(SchemaAuditor::class)
         ->audit($schema);

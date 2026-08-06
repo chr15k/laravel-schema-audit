@@ -6,6 +6,7 @@ namespace Chr15k\SchemaAudit\Parsers\ValueObjects;
 
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\SchemaOperationType;
+use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
 
 final readonly class SchemaOperation
 {

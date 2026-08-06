@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Chr15k\SchemaAudit\Migrations\MigrationLocator;
 use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use Chr15k\SchemaAudit\Schema\Resolvers\ColumnResolver;
@@ -10,6 +11,7 @@ use Chr15k\SchemaAudit\Schema\Resolvers\IndexResolver;
 use Chr15k\SchemaAudit\Schema\Resolvers\PrimaryKeyResolver;
 use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
+use Chr15k\SchemaAudit\Sources\MigrationSource;
 use Chr15k\SchemaAudit\Tests\TestCase;
 
 /*
@@ -54,7 +56,6 @@ function schemaBuilder(): SchemaBuilder
     $conventions = new LaravelConventions;
 
     return new SchemaBuilder(
-        new MigrationParser,
         new IndexResolver($conventions),
         new ForeignKeyResolver($conventions),
         new ColumnResolver($conventions),
@@ -66,8 +67,12 @@ function schemaBuilder(): SchemaBuilder
 function buildSchemaFromBuilderFixtures(string $relativeDir): Schema
 {
     $path = __DIR__.'/Fixtures/Migrations/SchemaBuilder/'.mb_trim($relativeDir, '/');
-    $files = glob(mb_rtrim($path, '/').'/*.php') ?: [];
-    sort($files);
 
-    return schemaBuilder()->build($files);
+    $source = new MigrationSource(
+        app(MigrationLocator::class),
+        app(MigrationParser::class),
+        [$path]
+    );
+
+    return schemaBuilder()->build($source);
 }
