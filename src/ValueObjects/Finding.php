@@ -12,7 +12,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 use Stringable;
 
-final readonly class Finding implements SchemaReference, Stringable, Arrayable, JsonSerializable
+final readonly class Finding implements Arrayable, JsonSerializable, SchemaReference, Stringable
 {
     /**
      * @param  array<int, SchemaReference>  $related
@@ -55,14 +55,14 @@ final readonly class Finding implements SchemaReference, Stringable, Arrayable, 
     public function toArray(): array
     {
         return [
-            'code' => $this->code,
-            'table' => $this->table,
-            'message' => strip_tags($this->message),
-            'columns' => $this->columns,
+            'code'     => $this->code,
+            'table'    => $this->table,
+            'message'  => strip_tags($this->message),
+            'columns'  => $this->columns,
             'severity' => $this->severity->value,
-            'guard' => $this->guard?->value,
+            'guard'    => $this->guard?->value,
             'location' => $this->location,
-            'related' => $this->related
+            'related'  => $this->related,
         ];
     }
 }
