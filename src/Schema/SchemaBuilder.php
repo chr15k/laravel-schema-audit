@@ -177,6 +177,7 @@ final readonly class SchemaBuilder
             StructuralMethod::Unique,
             StructuralMethod::Index,
             StructuralMethod::FullText                    => $table->addIndex($this->indexes->resolveTableIndex($root, $table, $guard)),
+            StructuralMethod::Primary                     => $table->setPrimaryKey($this->primaryKeys->resolveTablePrimaryKey($root, $guard)),
             StructuralMethod::Foreign                     => $this->applyOldStyleForeign($table, $chain, $guard),
             StructuralMethod::DropColumn                  => $this->applyDropColumn($table, $root),
             StructuralMethod::RenameColumn                => $this->applyRenameColumn($table, $root),
@@ -190,8 +191,11 @@ final readonly class SchemaBuilder
             StructuralMethod::DropConstrainedForeignId    => $this->applyDropConstrainedIndex($table, $root, 'foreign'),
             StructuralMethod::DropForeignIdFor            => $this->applyDropForeignIdFor($table, $root),
             StructuralMethod::DropConstrainedForeignIdFor => $this->applyDropForeignIdFor($table, $root, true),
-            StructuralMethod::Primary                     => $table->setPrimaryKey($this->primaryKeys->resolveTablePrimaryKey($root, $guard)),
-            null                                          => null, // not a known structural method — dropPrimary(), timestamps(), etc.
+            StructuralMethod::DropTimestamps,
+            StructuralMethod::DropTimestampsTz  => $table->dropColumns(['created_at', 'updated_at']),
+            StructuralMethod::DropRememberToken => $table->dropColumn('remember_token'),
+            StructuralMethod::DropSoftDeletes   => $this->applyDropColumn($table, $root, 'deleted_at'),
+            null                                => null,
         };
     }
 
@@ -294,19 +298,19 @@ final readonly class SchemaBuilder
         ));
     }
 
-    private function applyDropColumn(TableSchema $table, ColumnCall $call): void
+    private function applyDropColumn(TableSchema $table, ColumnCall $call, ?string $defaultColumn = null): void
     {
-        $columns = $call->argument(0);
+        $columns = $call->argument(0, $defaultColumn);
+
+        if ($columns === null) {
+            return;
+        }
 
         if (! is_array($columns)) {
             $columns = [$columns];
         }
 
-        foreach ($columns as $column) {
-            if (is_string($column)) {
-                $table->dropColumn($column);
-            }
-        }
+        $table->dropColumns($columns);
     }
 
     private function applyRenameIndex(TableSchema $table, ColumnCall $call): void

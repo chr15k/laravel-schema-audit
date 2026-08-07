@@ -31,7 +31,7 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
         return $this->location;
     }
 
-    public function guard(): SchemaGuard
+    public function guard(): ?SchemaGuard
     {
         return $this->guard;
     }

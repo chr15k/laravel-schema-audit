@@ -6,13 +6,14 @@ namespace Chr15k\SchemaAudit\Enums;
 
 enum StructuralMethod: string
 {
+    case Primary = 'primary';
     case Foreign = 'foreign';
     case Unique = 'unique';
     case Index = 'index';
     case FullText = 'fullText';
     case DropColumn = 'dropColumn';
     case RenameColumn = 'renameColumn';
-    case RenameIndex = 'renameIndex'; // @todo
+    case RenameIndex = 'renameIndex';
     case DropIndex = 'dropIndex';
     case DropUnique = 'dropUnique';
     case DropForeign = 'dropForeign';
@@ -22,7 +23,10 @@ enum StructuralMethod: string
     case DropConstrainedForeignId = 'dropConstrainedForeignId';
     case DropForeignIdFor = 'dropForeignIdFor';
     case DropConstrainedForeignIdFor = 'dropConstrainedForeignIdFor';
-    case Primary = 'primary';
+    case DropTimestamps = 'dropTimestamps';
+    case DropTimestampsTz = 'dropTimestampsTz';
+    case DropRememberToken = 'dropRememberToken';
+    case DropSoftDeletes = 'dropSoftDeletes';
 
     public function isDestructive(): bool
     {
@@ -36,6 +40,10 @@ enum StructuralMethod: string
             self::DropConstrainedForeignId,
             self::DropForeignIdFor,
             self::DropConstrainedForeignIdFor,
+            self::DropTimestamps,
+            self::DropTimestampsTz,
+            self::DropRememberToken,
+            self::DropSoftDeletes,
             self::DropColumn => true,
             default          => false,
         };
