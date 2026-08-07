@@ -102,6 +102,9 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         $this->columns->put($column->name, $column);
     }
 
+    /**
+     * @param  array<mixed>  $columns
+     */
     public function dropColumns(array $columns): void
     {
         foreach ($columns as $column) {

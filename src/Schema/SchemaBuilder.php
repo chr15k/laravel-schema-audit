@@ -121,7 +121,7 @@ final readonly class SchemaBuilder
 
     private function shouldApply(ColumnChain $chain, ?SchemaGuard $guard = null): bool
     {
-        if ($guard !== SchemaGuard::MissingColumn) {
+        if ($guard !== SchemaGuard::MissingColumn && $guard !== SchemaGuard::Unknown) {
             return true;
         }
 
@@ -134,15 +134,15 @@ final readonly class SchemaBuilder
 
         $structuralMethod = StructuralMethod::tryFrom($root->method);
 
-        // Some conditional schema changes cannot be resolved statically.
-        // We still apply destructive operations like dropForeign/dropIndex because
-        // ignoring them would make the final folded schema inaccurate. We only skip
-        // operations that would invent structures which may never exist.
+        // With an unknown condition, destructive operations must still be
+        // applied so the folded schema does not retain structures that may
+        // actually be removed by the migration.
         if ($guard === SchemaGuard::Unknown && $structuralMethod?->isDestructive()) {
             return true;
         }
 
-        // Skip standalone indexes and foreign keys.
+        // Don't manufacture indexes or foreign keys whose creation is
+        // conditional and therefore cannot be established statically.
         return match ($structuralMethod) {
             StructuralMethod::Index,
             StructuralMethod::Unique,
@@ -393,7 +393,7 @@ final readonly class SchemaBuilder
 
     private function applyDropForeignIdFor(TableSchema $table, ColumnCall $call, bool $constrained = false): void
     {
-        $column = $call->stringArgument('column', $call->argument(1));
+        $column = $call->stringArgument('column', $call->stringArgument(1));
         $model = $call->argument('model', $call->argument(0));
 
         if ($column === null && (is_string($model) || is_object($model))) {

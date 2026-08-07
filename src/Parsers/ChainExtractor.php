@@ -23,6 +23,9 @@ final readonly class ChainExtractor
         private string $path,
     ) {}
 
+    /**
+     * @return list<ColumnChain>
+     */
     public function extract(Closure $closure): array
     {
         $chains = [];
@@ -33,7 +36,7 @@ final readonly class ChainExtractor
     }
 
     /**
-     * @param  array<int, Node\Stmt>  $statements
+     * @param  array<Node\Stmt>  $statements
      * @param  list<ColumnChain>  $chains
      */
     private function extractStatements(

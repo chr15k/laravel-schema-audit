@@ -139,8 +139,8 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
             'columns'   => $this->columns,
             'unique'    => $this->unique,
             'signature' => $this->signature(),
-            'location'  => $this->location,
-            'guard'     => $this->guard?->value,
+            'location'  => $this->location?->__toString(),
+            'guard'     => $this->guard?->name,
         ];
     }
 

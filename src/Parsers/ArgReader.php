@@ -62,6 +62,9 @@ final class ArgReader
         return null;
     }
 
+    /**
+     * @return list<string>
+     */
     private static function resolveStrings(Node $node, ?Node $context = null): array
     {
         return match (true) {
@@ -81,6 +84,9 @@ final class ArgReader
         };
     }
 
+    /**
+     * @return list<string>
+     */
     private static function resolveFuncCall(FuncCall $node): array
     {
         if (! $node->name instanceof Name) {
@@ -128,10 +134,6 @@ final class ArgReader
         $values = [];
 
         foreach ($array->items as $item) {
-            if ($item === null) {
-                continue;
-            }
-
             if ($item->value instanceof String_) {
                 $values[] = $item->value->value;
             }
@@ -223,7 +225,10 @@ final class ArgReader
         Node $scope,
         Node $context,
     ): ?int {
-        foreach ($scope->stmts as $index => $statement) {
+        /** @var Node\Stmt[] $stmts */
+        $stmts = $scope->stmts ?? [];
+
+        foreach ($stmts as $index => $statement) {
             for (
                 $current = $context;
                 $current instanceof Node;
@@ -453,10 +458,7 @@ final class ArgReader
         $values = [];
 
         foreach ($arg->value->items as $item) {
-            if (
-                $item !== null &&
-                $item->value instanceof String_
-            ) {
+            if ($item->value instanceof String_) {
                 $values[] = $item->value->value;
             }
         }
