@@ -56,6 +56,13 @@ final class IndexCollection extends Collection
         );
     }
 
+    public function rename(string $from, string $to): static
+    {
+        return $this->map(
+            fn (Index $index): Index => $index->name === $from ? $index->withName($to) : $index
+        );
+    }
+
     /**
      * @return array<int, DuplicateIndexGroup>
      */

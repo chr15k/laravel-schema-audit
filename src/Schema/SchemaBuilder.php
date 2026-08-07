@@ -180,7 +180,7 @@ final readonly class SchemaBuilder
             StructuralMethod::Foreign                     => $this->applyOldStyleForeign($table, $chain, $guard),
             StructuralMethod::DropColumn                  => $this->applyDropColumn($table, $root),
             StructuralMethod::RenameColumn                => $this->applyRenameColumn($table, $root),
-            StructuralMethod::RenameIndex => $this->applyRenameIndex($table, $root), // @todo
+            StructuralMethod::RenameIndex                 => $this->applyRenameIndex($table, $root),
             StructuralMethod::DropIndex                   => $this->applyDropIndex($table, $root, 'index'),
             StructuralMethod::DropUnique                  => $this->applyDropIndex($table, $root, 'unique'),
             StructuralMethod::DropPrimary                 => $this->applyDropIndex($table, $root, 'primary'),
@@ -307,6 +307,18 @@ final readonly class SchemaBuilder
                 $table->dropColumn($column);
             }
         }
+    }
+
+    private function applyRenameIndex(TableSchema $table, ColumnCall $call): void
+    {
+        $from = $call->stringArgument(0);
+        $to = $call->stringArgument(1);
+
+        if ($from === null || $to === null) {
+            return;
+        }
+
+        $table->renameIndex($from, $to);
     }
 
     private function applyRenameColumn(TableSchema $table, ColumnCall $call): void

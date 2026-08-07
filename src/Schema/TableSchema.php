@@ -123,6 +123,11 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         $this->foreignKeys = $this->foreignKeys->renameColumn($from, $to);
     }
 
+    public function renameIndex(string $from, string $to): void
+    {
+        $this->indexes = $this->indexes->rename($from, $to);
+    }
+
     public function addIndex(ValueObjects\Index $index): void
     {
         $this->indexes->push($index);

@@ -31,7 +31,7 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
         return $this->location;
     }
 
-    public function guard(): ?SchemaGuard
+    public function guard(): SchemaGuard
     {
         return $this->guard;
     }
@@ -47,6 +47,17 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
         );
     }
 
+    public function withName(string $name): self
+    {
+        return new self(
+            name: $name,
+            columns: $this->columns,
+            unique: $this->unique,
+            location: $this->location,
+            guard: $this->guard
+        );
+    }
+
     public function renameColumn(string $from, string $to): self
     {
         return new self(
@@ -56,6 +67,8 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
                 $this->columns,
             ),
             unique: $this->unique,
+            location: $this->location,
+            guard: $this->guard
         );
     }
 
@@ -99,7 +112,9 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
      *     name: ?string,
      *     columns: list<string>,
      *     unique: bool,
-     *     signature: string
+     *     signature: string,
+     *     location: ?string,
+     *     guard: ?string
      * }
      */
     public function jsonSerialize(): array
@@ -112,7 +127,9 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
      *     name: ?string,
      *     columns: list<string>,
      *     unique: bool,
-     *     signature: string
+     *     signature: string,
+     *     location: ?string,
+     *     guard: ?string
      * }
      */
     public function toArray(): array
@@ -123,6 +140,7 @@ final readonly class Index implements Arrayable, JsonSerializable, SchemaReferen
             'unique'    => $this->unique,
             'signature' => $this->signature(),
             'location'  => $this->location,
+            'guard'     => $this->guard?->value,
         ];
     }
 
