@@ -176,39 +176,23 @@ final readonly class SchemaBuilder
         match (StructuralMethod::tryFrom($root->method)) {
             StructuralMethod::Unique,
             StructuralMethod::Index,
-            StructuralMethod::FullText                                => $table->addIndex($this->indexes->resolveTableIndex($root, $table, $guard)),
-            StructuralMethod::Foreign                                 => $this->applyOldStyleForeign($table, $chain, $guard),
-            StructuralMethod::DropColumn                              => $this->applyDropColumn($table, $root),
-            StructuralMethod::RenameColumn                            => $this->applyRenameColumn($table, $root),
-            StructuralMethod::DropIndex, StructuralMethod::DropUnique => $this->applyDropIndex($table, $root),
-            StructuralMethod::DropForeign                             => $this->applyDropForeign($table, $root),
-            StructuralMethod::Primary                                 => $table->setPrimaryKey($this->primaryKeys->resolveTablePrimaryKey($root, $guard)),
-            null                                                      => null, // not a known structural method — dropPrimary(), timestamps(), etc.
+            StructuralMethod::FullText                    => $table->addIndex($this->indexes->resolveTableIndex($root, $table, $guard)),
+            StructuralMethod::Foreign                     => $this->applyOldStyleForeign($table, $chain, $guard),
+            StructuralMethod::DropColumn                  => $this->applyDropColumn($table, $root),
+            StructuralMethod::RenameColumn                => $this->applyRenameColumn($table, $root),
+            StructuralMethod::RenameIndex => $this->applyRenameIndex($table, $root), // @todo
+            StructuralMethod::DropIndex                   => $this->applyDropIndex($table, $root, 'index'),
+            StructuralMethod::DropUnique                  => $this->applyDropIndex($table, $root, 'unique'),
+            StructuralMethod::DropPrimary                 => $this->applyDropIndex($table, $root, 'primary'),
+            StructuralMethod::DropFullText                => $this->applyDropIndex($table, $root, 'fulltext'),
+            StructuralMethod::DropSpatialIndex            => $this->applyDropIndex($table, $root, 'spatialIndex'),
+            StructuralMethod::DropForeign                 => $this->applyDropIndex($table, $root, 'foreign'),
+            StructuralMethod::DropConstrainedForeignId    => $this->applyDropConstrainedIndex($table, $root, 'foreign'),
+            StructuralMethod::DropForeignIdFor            => $this->applyDropForeignIdFor($table, $root),
+            StructuralMethod::DropConstrainedForeignIdFor => $this->applyDropForeignIdFor($table, $root, true),
+            StructuralMethod::Primary                     => $table->setPrimaryKey($this->primaryKeys->resolveTablePrimaryKey($root, $guard)),
+            null                                          => null, // not a known structural method — dropPrimary(), timestamps(), etc.
         };
-    }
-
-    private function applyDropForeign(TableSchema $table, ColumnCall $call): void
-    {
-        $index = $call->stringArgument(0);
-
-        if (is_string($index)) {
-            $table->removeForeignKey($index);
-
-            return;
-        }
-
-        $index = $call->stringListArgument(0, $call->argument(0));
-
-        if (! is_array($index)) {
-            return;
-        }
-
-        $table->removeForeignKey(
-            $this->conventions->indexName(
-                $table->name,
-                $index,
-                'foreign'
-            ));
     }
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
@@ -337,18 +321,60 @@ final readonly class SchemaBuilder
         $table->renameColumn($from, $to);
     }
 
-    private function applyDropIndex(TableSchema $table, ColumnCall $call): void
+    private function applyDropIndex(TableSchema $table, ColumnCall $call, string $type): void
     {
-        $index = $call->argument(0);
+        $index = $call->stringOrArrayArgument(0);
 
-        if (! is_array($index)) {
-            $index = [$index];
+        if ($index === null) {
+            return;
         }
 
-        foreach ($index as $name) {
-            if (is_string($name)) {
-                $table->removeIndex($name);
+        if (is_string($index)) {
+            $table->removeIndex($index);
+
+            return;
+        }
+
+        if ($index === []) {
+            return;
+        }
+
+        $table->removeIndex(
+            $this->conventions->indexName(
+                $table->name,
+                $index,
+                $type,
+            )
+        );
+    }
+
+    private function applyDropConstrainedIndex(TableSchema $table, ColumnCall $call, string $type): void
+    {
+        $this->applyDropIndex($table, $call, $type);
+        $this->applyDropColumn($table, $call);
+    }
+
+    private function applyDropForeignIdFor(TableSchema $table, ColumnCall $call, bool $constrained = false): void
+    {
+        $column = $call->stringArgument('column', $call->argument(1));
+        $model = $call->argument('model', $call->argument(0));
+
+        if ($column === null && (is_string($model) || is_object($model))) {
+            $column = $this->conventions->foreignKeyColumnFromModel(class_basename($model));
+        }
+
+        if (is_string($column)) {
+            if ($constrained) {
+                $table->removeIndex(
+                    $this->conventions->indexName(
+                        $table->name,
+                        [$column],
+                        'foreign',
+                    )
+                );
             }
+
+            $table->dropColumn($column);
         }
     }
 }

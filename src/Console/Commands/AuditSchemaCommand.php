@@ -179,7 +179,7 @@ final class AuditSchemaCommand extends Command
                 $this->renderSeparator();
                 $this->newLine();
                 $this->line(sprintf(
-                    '  <%s>⛁ %s </> <fg=cyan>(%d %s)</>',
+                    '  <%s> ⌗ %s </> <fg=cyan>(%d %s)</>',
                     $worst->colorTag(),
                     $table,
                     $count,
@@ -211,10 +211,13 @@ final class AuditSchemaCommand extends Command
                 $severity->glyph(),
                 (string) $finding,
             ),
-            sprintf('<fg=default;options=bold>%s</>', $column ?: 'N/A')
+            sprintf('<fg=%s> ⛁ %s.%s </>', $severity->color(), $finding->table, $column ?: 'N/A')
         );
 
-        $this->renderWrappedArrow($finding->message);
+        $this->renderWrappedArrow(
+            text: $finding->message,
+            color: $finding->severity->color()
+        );
 
         $this->renderLocation($finding);
 
@@ -223,7 +226,7 @@ final class AuditSchemaCommand extends Command
         $this->renderConditional($finding);
     }
 
-    private function renderWrappedArrow(string $text, string $color = 'bright-cyan', bool $bold = false): void
+    private function renderWrappedArrow(string $text, string $color = 'cyan', bool $bold = false): void
     {
         $this->line(sprintf(
             '    <fg=%s%s>↳ %s</>',
