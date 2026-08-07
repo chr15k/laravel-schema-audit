@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Parsers;
 
+use Chr15k\SchemaAudit\Parsers\ValueObjects\ColumnChain;
 use Chr15k\SchemaAudit\ValueObjects\SourceLocation;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ClassConstFetch;
@@ -13,6 +14,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\Else_;
 use PhpParser\Node\Stmt\Expression;
 
 final readonly class ChainExtractor
@@ -21,30 +23,47 @@ final readonly class ChainExtractor
         private string $path,
     ) {}
 
-    /**
-     * @return list<ValueObjects\ColumnChain>
-     */
     public function extract(Closure $closure): array
     {
         $chains = [];
 
-        foreach ($closure->stmts as $stmt) {
-            if (! $stmt instanceof Expression) {
-                continue;
-            }
-
-            if (! $stmt->expr instanceof MethodCall) {
-                continue;
-            }
-
-            $calls = $this->unwind($stmt->expr);
-
-            if ($calls !== null) {
-                $chains[] = new ValueObjects\ColumnChain(array_reverse($calls));
-            }
-        }
+        $this->extractStatements($closure->stmts, $chains);
 
         return $chains;
+    }
+
+    /**
+     * @param  array<int, Node\Stmt>  $statements
+     * @param  list<ColumnChain>  $chains
+     */
+    private function extractStatements(
+        array $statements,
+        array &$chains,
+        bool $conditional = false,
+    ): void {
+        foreach ($statements as $stmt) {
+            if ($stmt instanceof Expression && $stmt->expr instanceof MethodCall) {
+                $calls = $this->unwind($stmt->expr);
+
+                if ($calls !== null) {
+                    $chains[] = new ColumnChain(array_reverse($calls), $conditional);
+                }
+
+                continue;
+            }
+
+            if ($stmt instanceof Node\Stmt\If_) {
+                $this->extractStatements($stmt->stmts, $chains, true);
+
+                foreach ($stmt->elseifs as $elseif) {
+                    $this->extractStatements($elseif->stmts, $chains, true);
+                }
+
+                if ($stmt->else instanceof Else_) {
+                    $this->extractStatements($stmt->else->stmts, $chains, true);
+                }
+            }
+        }
     }
 
     /**

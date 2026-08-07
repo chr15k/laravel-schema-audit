@@ -125,9 +125,6 @@ final readonly class SchemaBuilder
         }
     }
 
-    // Some schema operations are guarded by runtime existence checks.
-    // Skip operations that cannot be inferred statically to avoid
-    // false-positive audit findings.
     private function shouldApply(ColumnChain $chain, ?SchemaGuard $guard = null): bool
     {
         if ($guard !== SchemaGuard::MissingColumn) {
@@ -141,8 +138,18 @@ final readonly class SchemaBuilder
             return true;
         }
 
+        $structuralMethod = StructuralMethod::tryFrom($root->method);
+
+        // Some conditional schema changes cannot be resolved statically.
+        // We still apply destructive operations like dropForeign/dropIndex because
+        // ignoring them would make the final folded schema inaccurate. We only skip
+        // operations that would invent structures which may never exist.
+        if ($guard === SchemaGuard::Unknown && $structuralMethod?->isDestructive()) {
+            return true;
+        }
+
         // Skip standalone indexes and foreign keys.
-        return match (StructuralMethod::tryFrom($root->method)) {
+        return match ($structuralMethod) {
             StructuralMethod::Index,
             StructuralMethod::Unique,
             StructuralMethod::FullText,
@@ -154,11 +161,11 @@ final readonly class SchemaBuilder
 
     private function applyChain(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
     {
+        $root = $chain->root();
+
         if (! $this->shouldApply($chain, $guard)) {
             return;
         }
-
-        $root = $chain->root();
 
         if (ColumnMethod::tryFrom($root->method) !== null) {
             $this->applyColumnDefinition($table, $chain, $guard);
@@ -269,11 +276,18 @@ final readonly class SchemaBuilder
             $root->argument(0)
         );
 
-        $name = $root->stringArgument('name', $root->stringArgument(1));
-
         if ($columns === null) {
             return;
         }
+
+        $name = $root->stringArgument(
+            'name',
+            $root->stringArgument(1)
+        ) ?? $this->conventions->indexName(
+            $table->name,
+            (array) $columns,
+            'foreign'
+        );
 
         $onCall = $chain->modifier('on');
         $referencesCall = $chain->modifier('references');

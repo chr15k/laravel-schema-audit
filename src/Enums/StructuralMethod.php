@@ -16,4 +16,16 @@ enum StructuralMethod: string
     case DropUnique = 'dropUnique';
     case DropForeign = 'dropForeign';
     case Primary = 'primary';
+
+    public function isDestructive(): bool
+    {
+        return match ($this) {
+            self::DropForeign,
+            self::DropIndex,
+            self::DropUnique,
+            self::DropColumn => true,
+
+            default => false,
+        };
+    }
 }

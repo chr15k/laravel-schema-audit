@@ -13,5 +13,10 @@
         <include>
             <directory>src</directory>
         </include>
+        <exclude>
+            <directory>src/Enums</directory>
+            <directory>src/Exceptions</directory>
+            <directory>src/Support</directory>
+        </exclude>
     </source>
 </phpunit>

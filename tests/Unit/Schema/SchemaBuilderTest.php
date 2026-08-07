@@ -89,17 +89,14 @@ describe('foreign key resolution', function (): void {
             ->and($fk?->referencesTable)->toBe('users');
     });
 
-    it('does NOT auto-generate a constraint name for old-style foreign() — unlike constrained()', function (): void {
-        // Documents a real, current asymmetry: the modern constrained()
-        // path always resolves a conventional index/constraint name, but
-        // the legacy foreign()->references()->on() chain does not. If
-        // this ever changes deliberately, update this test rather than
-        // being surprised by it.
+    it('resolves conventional names for old-style foreign keys so they can be dropped later', function (): void {
         $posts = buildSchemaFromBuilderFixtures('ForeignKeys')->table('posts');
 
-        $fk = collect($posts?->foreignKeys())->firstWhere('columns', 'legacy_owner_id');
+        $fk = collect($posts?->foreignKeys())
+            ->firstWhere('columns', 'legacy_owner_id');
 
-        expect($fk?->name)->toBeNull();
+        expect($fk?->name)
+            ->toBe('posts_legacy_owner_id_foreign');
     });
 
     it('resolves the referenced table from a model class passed to foreignIdFor()', function (): void {

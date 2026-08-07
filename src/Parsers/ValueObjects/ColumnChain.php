@@ -11,6 +11,7 @@ final readonly class ColumnChain
      */
     public function __construct(
         public array $calls,
+        public bool $conditional = false,
     ) {}
 
     public function root(): ColumnCall
