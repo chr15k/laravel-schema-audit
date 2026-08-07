@@ -84,12 +84,6 @@ final readonly class SchemaBuilder
         }
 
         $tables[$operation->tableName] = $table;
-
-        // if ($operation->type === SchemaOperationType::Create
-        //     && $operation->guard === SchemaGuard::Unknown
-        // ) {
-        //     $tables[$operation->tableName]->setGuard($guard);
-        // }
     }
 
     /**

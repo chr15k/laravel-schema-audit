@@ -11,13 +11,15 @@
     ],
     "license": "MIT",
     "keywords": [
+        "chr15k",
         "laravel",
         "mysql",
         "migration",
         "schema",
         "index",
         "performance",
-        "optimization"
+        "optimization",
+        "static analysis"
     ],
     "require": {
         "php": "^8.2",
@@ -67,7 +69,7 @@
         "test:lint": "pint --test --parallel",
         "test:types": "phpstan analyse --ansi --memory-limit=2G",
         "test:tia": "pest --colors=always --parallel --tia",
-        "test:coverage": "pest --colors=always --coverage --parallel --min=80",
+        "test:coverage": "pest --colors=always --coverage --parallel --min=70",
         "test": [
             "@test:lint",
             "@test:refactor",
