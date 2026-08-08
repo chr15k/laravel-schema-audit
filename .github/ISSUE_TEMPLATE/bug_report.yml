@@ -1,0 +1,124 @@
+name: "🐛 Bug Report"
+description: Report a bug with Laravel Schema Audit.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please provide enough information for the issue to be reproduced, especially the relevant migration code and Schema Audit configuration.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Describe what happened and what you believe is incorrect.
+      placeholder: A clear and concise description of the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Migration / Reproduction
+      description: |
+        Provide the smallest migration or set of migrations that reproduces the issue.
+        Include any relevant model, helper, configuration, or conditional logic involved.
+      placeholder: |
+        1. Create a migration containing...
+        2. Run `php artisan schema:audit`
+        3. Observe...
+      render: php
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Audit Command
+      description: Include the exact Schema Audit command you ran.
+      placeholder: php artisan schema:audit --json
+      render: shell
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant Configuration
+      description: |
+        Include any relevant portions of your `schema-audit.php` configuration.
+        Remove secrets or other sensitive information.
+      render: php
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Laravel Schema Audit Version
+      placeholder: e.g. v1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel Version
+      placeholder: e.g. 13.0.1
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP Version
+      placeholder: e.g. 8.4.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: database-driver
+    attributes:
+      label: Database Driver
+      description: Which database driver is the schema being audited for?
+      options:
+        - MySQL
+        - MariaDB
+        - PostgreSQL
+        - SQLite
+        - SQL Server
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: rule
+    attributes:
+      label: Affected Rule
+      description: If applicable, which rule is producing the incorrect result?
+      placeholder: e.g. UnindexedForeignKeyRule
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Audit Output
+      description: Paste the relevant output from Schema Audit.
+      render: text
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Exception / Stack Trace
+      description: If applicable, paste the full exception or relevant stack trace.
+      render: text
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      options:
+        - label: I have searched the existing issues before creating this report.
+          required: true
+        - label: I am using the latest stable release of Laravel Schema Audit.
+          required: true
+        - label: I have included a minimal reproduction where possible.
+          required: true
