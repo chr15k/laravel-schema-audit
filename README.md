@@ -139,7 +139,7 @@ Register it alongside the built-in rules:
 
 This turns Schema Audit into more than a collection of database checks: **your team can codify its own schema rules and make them part of the CI pipeline.**
 
-See [`GUIDE.md`](GUIDE.md) for writing custom rules and advanced usage.
+See [`GUIDE.md`](GUIDE.md#writing-custom-rules) for writing custom rules and advanced usage.
 
 ---
 
