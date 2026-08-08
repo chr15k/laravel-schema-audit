@@ -156,18 +156,20 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
         $findings = [];
 
         foreach ($context->schema->tables() as $table) {
-            foreach ($table->columns() as $column) {
-                if ($column->method !== ColumnMethod::Text) {
-                    continue;
-                }
+            if (! in_array($table->name, ['orders', 'events', 'sessions'], true)) {
+                continue;
+            }
 
-                $findings[] = $this->makeFinding(
-                    table: $table->name,
-                    columns: $column->name,
-                    message: "Column '{$column->name}' is a text column on a high-traffic table.",
-                    location: $column->location,
-                    guard: $column->guard,
-                );
+            foreach ($table->columns() as $column) {
+                if ($column->method === ColumnMethod::Text) {
+                    $findings[] = $this->makeFinding(
+                        table: $table->name,
+                        columns: $column->name,
+                        message: "Avoid TEXT columns on high-traffic tables.",
+                        location: $column->location,
+                        guard: $column->guard,
+                    );
+                }
             }
         }
 
@@ -188,7 +190,7 @@ return [
 
     'rules' => [
         // ...
-        \App\SchemaRules\NoTextColumnsOnHighTrafficTablesRule::class,
+        App\SchemaRules\NoTextColumnsOnHighTrafficTablesRule::class,
     ],
 ];
 ```
