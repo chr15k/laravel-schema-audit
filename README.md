@@ -1,9 +1,11 @@
 <p align="center">
-    <img width="400" alt="Termwind logo" src="art/header-a.jpeg"/>
+    <img width="600" alt="Termwind logo" src="art/header-a.jpeg"/>
 </p>
 
+<p></p>
+
 <p align="center">
-    <img alt="Termwind logo" src="art/header-b.jpeg"/>
+    <img alt="Termwind logo" width="800" src="art/header-b.jpeg"/>
 </p>
 
 <p></p>
