@@ -27,13 +27,7 @@ final readonly class ColumnChain
 
     public function hasModifier(string $method): bool
     {
-        foreach ($this->modifiers() as $call) {
-            if ($call->method === $method) {
-                return true;
-            }
-        }
-
-        return false;
+        return (bool) $this->modifier($method);
     }
 
     public function modifier(string $method): ?ColumnCall

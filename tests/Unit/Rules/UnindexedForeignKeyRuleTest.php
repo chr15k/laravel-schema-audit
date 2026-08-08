@@ -106,6 +106,29 @@ it('does not report a foreign key that already has a covering index, regardless 
     expect($result->audit->findings)->toBeEmpty();
 });
 
+it('reports composite foreign keys with a driver-specific composite message', function (): void {
+    $assignments = TableSchema::make('assignments');
+    $assignments->addForeignKey(new ForeignKey(
+        columns: ['tenant_id', 'user_id'],
+        referencesTable: 'users',
+        referencesColumn: ['tenant_id', 'id'],
+        name: 'assignments_tenant_id_user_id_foreign',
+    ));
+
+    $schema = new Schema(['assignments' => $assignments]);
+
+    $result = (new UnindexedForeignKeyRule(configWithDriver('pgsql')))->handle(
+        new AuditContext($schema),
+        fn (AuditContext $context): AuditContext => $context,
+    );
+
+    expect($result->audit->findings)
+        ->toHaveCount(1)
+        ->and($result->audit->findings[0]->columns)->toBe('tenant_id, user_id')
+        ->and($result->audit->findings[0]->message)->toContain('composite foreign key columns')
+        ->and($result->audit->findings[0]->message)->toContain('assignments');
+});
+
 it('defaults to mysql (auto-indexing) when no driver is configured', function (): void {
     $orders = TableSchema::make('orders');
     $orders->addForeignKey(new ForeignKey(columns: 'customer_id', referencesTable: 'customers', referencesColumn: 'id', name: 'x'));

@@ -69,7 +69,7 @@
         "test:lint": "pint --test --parallel",
         "test:types": "phpstan analyse --ansi --memory-limit=2G",
         "test:tia": "pest --colors=always --parallel --tia",
-        "test:coverage": "pest --colors=always --coverage --parallel --min=70",
+        "test:coverage": "pest --colors=always --coverage --parallel --min=80",
         "test": [
             "@test:lint",
             "@test:refactor",

@@ -385,3 +385,49 @@ describe('conditional unknown schema guards', function (): void {
             ->and($products?->indexes()->where('name', 'products_slug_index')->first()?->guard()?->impliesConditional())->toBeTrue();
     });
 });
+
+describe('alterations across migrations', function (): void {
+    it('renames a column and keeps its foreign key and index in sync', function (): void {
+        $posts = buildSchemaFromBuilderFixtures('Alterations')->table('posts');
+
+        expect($posts?->hasColumn('writer_id'))->toBeTrue()
+            ->and($posts?->hasColumn('author_id'))->toBeFalse()
+            ->and($posts?->foreignKeys()->firstWhere('columns', 'writer_id'))->not->toBeNull();
+    });
+
+    it('renames an index by its explicit name', function (): void {
+        $posts = buildSchemaFromBuilderFixtures('Alterations')->table('posts');
+
+        expect($posts?->indexes()->pluck('name')->all())->toContain('posts_slug_lookup')
+            ->and($posts?->indexes()->pluck('name')->all())->not->toContain('posts_slug_index');
+    });
+});
+
+describe('dropping foreignIdFor columns', function (): void {
+    it('removes the foreign key column and its conventional foreign index', function (): void {
+        $posts = buildSchemaFromBuilderFixtures('DropForeignIdFor')->table('posts');
+
+        expect($posts?->hasColumn('user_id'))->toBeFalse()
+            ->and($posts?->foreignKeys())->toBeEmpty()
+            ->and($posts?->indexes()->contains(fn ($index): bool => str_contains((string) $index->name, 'foreign')))->toBeFalse();
+    });
+});
+
+describe('column type resolution', function (): void {
+    it('resolves unsigned integer modifiers and explicit unsigned column methods', function (): void {
+        $metrics = buildSchemaFromBuilderFixtures('ColumnTypes')->table('metrics');
+
+        expect($metrics?->column('count')?->method->value)->toBe('unsignedInteger')
+            ->and($metrics?->column('total')?->method->value)->toBe('unsignedBigInteger');
+    });
+
+    it('resolves table-level and column-level primary keys', function (): void {
+        $schema = buildSchemaFromBuilderFixtures('ColumnTypes');
+
+        $metrics = $schema->table('metrics');
+        $memberships = $schema->table('memberships');
+
+        expect($metrics?->primaryKey()?->columns)->toBe(['id'])
+            ->and($memberships?->primaryKey()?->columns)->toBe(['team_id', 'user_id']);
+    });
+});

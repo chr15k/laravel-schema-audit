@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Chr15k\SchemaAudit\Migrations\MigrationLocator;
+use Chr15k\SchemaAudit\Parsers\ArgReader;
 use Chr15k\SchemaAudit\Parsers\MigrationParser;
 use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use Chr15k\SchemaAudit\Schema\Resolvers\ColumnResolver;
@@ -13,6 +14,13 @@ use Chr15k\SchemaAudit\Schema\Schema;
 use Chr15k\SchemaAudit\Schema\SchemaBuilder;
 use Chr15k\SchemaAudit\Sources\MigrationSource;
 use Chr15k\SchemaAudit\Tests\TestCase;
+use PhpParser\Node;
+use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Name;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\ParentConnectingVisitor;
+use PhpParser\NodeVisitorAbstract;
+use PhpParser\ParserFactory;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,4 +83,66 @@ function buildSchemaFromBuilderFixtures(string $relativeDir): Schema
     );
 
     return schemaBuilder()->build($source);
+}
+
+/**
+ * @return list<StaticCall>
+ */
+function parseSchemaStaticCalls(string $snippet): array
+{
+    $code = <<<PHP
+    <?php
+
+    use Illuminate\Database\Schema\Blueprint;
+    use Illuminate\Support\Facades\Schema;
+
+    {$snippet}
+    PHP;
+
+    $ast = (new ParserFactory)
+        ->createForNewestSupportedVersion()
+        ->parse($code) ?? [];
+
+    $visitor = new class extends NodeVisitorAbstract
+    {
+        /** @var list<StaticCall> */
+        public array $calls = [];
+
+        public function enterNode(Node $node): ?int
+        {
+            if (
+                $node instanceof StaticCall
+                && $node->class instanceof Name
+                && $node->class->toString() === 'Schema'
+            ) {
+                $this->calls[] = $node;
+            }
+
+            return null;
+        }
+    };
+
+    $traverser = new NodeTraverser;
+    $traverser->addVisitor(new ParentConnectingVisitor);
+    $traverser->addVisitor($visitor);
+    $traverser->traverse($ast);
+
+    return $visitor->calls;
+}
+
+function argReaderStringArg(string $snippet, int $callIndex = 0, int $position = 0): ?string
+{
+    $call = parseSchemaStaticCalls($snippet)[$callIndex];
+
+    return ArgReader::stringArgAt($call->args, $position, $call);
+}
+
+/**
+ * @return list<string>
+ */
+function argReaderStringsArg(string $snippet, int $callIndex = 0, int $position = 0): array
+{
+    $call = parseSchemaStaticCalls($snippet)[$callIndex];
+
+    return ArgReader::stringsArgAt($call->args, $position, $call);
 }

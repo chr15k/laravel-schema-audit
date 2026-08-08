@@ -16,7 +16,7 @@ final readonly class MigrationParser
      */
     public function parseFile(string $path): array
     {
-        $code = file_get_contents($path);
+        $code = @file_get_contents($path);
 
         if ($code === false) {
             throw new RuntimeException('Unable to read migration file: '.$path);
