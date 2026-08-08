@@ -1,7 +1,10 @@
-<picture>
-    <source media="(prefers-color-scheme: dark)" srcset="art/header.jpeg">
-    <img alt="Logo for Laravel Schema Audit package" src="art/header.jpeg">
-</picture>
+<p align="center">
+    <img width="400" alt="Termwind logo" src="art/header-a.jpeg"/>
+</p>
+
+<p align="center">
+    <img alt="Termwind logo" src="art/header-b.jpeg"/>
+</p>
 
 <p></p>
 
