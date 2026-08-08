@@ -101,29 +101,17 @@ final readonly class SchemaBuilder
 
     private function shouldApply(ColumnChain $chain, ?SchemaGuard $guard = null): bool
     {
-        if ($guard !== SchemaGuard::MissingColumn && $guard !== SchemaGuard::Unknown) {
+        if ($guard !== SchemaGuard::MissingColumn) {
             return true;
         }
 
         $root = $chain->root();
 
-        // Column definitions are still applied.
         if (ColumnMethod::tryFrom($root->method) !== null) {
             return true;
         }
 
-        $structuralMethod = StructuralMethod::tryFrom($root->method);
-
-        // With an unknown condition, destructive operations must still be
-        // applied so the folded schema does not retain structures that may
-        // actually be removed by the migration.
-        if ($guard === SchemaGuard::Unknown && $structuralMethod?->isDestructive()) {
-            return true;
-        }
-
-        // Don't manufacture indexes or foreign keys whose creation is
-        // conditional and therefore cannot be established statically.
-        return match ($structuralMethod) {
+        return match (StructuralMethod::tryFrom($root->method)) {
             StructuralMethod::Index,
             StructuralMethod::Unique,
             StructuralMethod::FullText,
@@ -175,13 +163,6 @@ final readonly class SchemaBuilder
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
     {
-        // Indexes and foreign keys created under `!Schema::hasColumn()` are
-        // conditional. Model the column itself, but skip dependent structures
-        // to avoid false-positive audit findings.
-        if ($guard === SchemaGuard::MissingColumn) {
-            return;
-        }
-
         $column = $this->columns->resolve($chain, $guard);
 
         if (! $column instanceof Column) {
@@ -189,6 +170,13 @@ final readonly class SchemaBuilder
         }
 
         $table->addColumn($column);
+
+        // Indexes and foreign keys created under `!Schema::hasColumn()` are
+        // conditional. Model the column itself, but skip dependent structures
+        // to avoid false-positive audit findings.
+        if ($guard === SchemaGuard::MissingColumn) {
+            return;
+        }
 
         if ($column->method->impliesPrimaryKey() || $chain->hasModifier('primary')) {
             $primaryKey = $this->primaryKeys->resolveColumnPrimaryKey($chain, $column, $guard);
