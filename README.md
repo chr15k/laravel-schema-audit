@@ -1,11 +1,11 @@
 <p align="center">
-    <img width="600" alt="Termwind logo" src="art/header-a.jpeg"/>
+    <img style="border-radius: 15px;" width="500" alt="Schema Audit header image" src="art/header-a.jpeg"/>
 </p>
 
 <p></p>
 
 <p align="center">
-    <img alt="Termwind logo" width="800" src="art/header-b.jpeg"/>
+    <img style="border-radius: 15px;" alt="Schema Audit header image" width="750" src="art/header-b.jpeg"/>
 </p>
 
 <p></p>
