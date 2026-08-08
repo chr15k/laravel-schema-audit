@@ -13,15 +13,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        include:
-          - laravel: "10.*"
-            php: "8.2"
-          - laravel: "13.*"
-            php: "8.4"
+  strategy:
+    matrix:
+      laravel:
+        - '10.*'
+        - '13.*'
 
-    name: Laravel ${{ matrix.laravel }} / PHP ${{ matrix.php }}
+    name: Laravel ${{ matrix.laravel }}
 
     steps:
       - uses: actions/checkout@v7
@@ -29,7 +27,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.4'
           coverage: xdebug
 
       - name: Validate composer.json and composer.lock
