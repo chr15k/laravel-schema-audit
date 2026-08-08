@@ -97,6 +97,60 @@ php artisan schema:audit --schema-only
 > [!NOTE]
 > Rules run against the schema reconstructed from your migration history. For ordinary migrations, findings are concrete. Where runtime conditionals affect schema changes, affected findings are marked conditional because the resulting schema cannot be determined statically with certainty.
 
+---
+
+## Enforce your own schema policies
+
+Built-in rules catch common database problems. Custom rules let your team enforce **application-specific schema standards in CI**.
+
+For example, you might want to prevent developers from adding expensive column types to high-traffic tables:
+
+```php
+final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
+{
+    public function handle(AuditContext $context, Closure $next): AuditContext
+    {
+        $findings = [];
+
+        foreach ($context->schema->tables() as $table) {
+            if (! in_array($table->name, ['orders', 'events', 'sessions'], true)) {
+                continue;
+            }
+
+            foreach ($table->columns() as $column) {
+                if ($column->method === ColumnMethod::Text) {
+                    $findings[] = $this->makeFinding(
+                        table: $table->name,
+                        columns: $column->name,
+                        message: "Avoid TEXT columns on high-traffic tables.",
+                        location: $column->location,
+                        guard: $column->guard,
+                    );
+                }
+            }
+        }
+
+        return $next($context->withFindings($findings));
+    }
+}
+```
+
+Register it alongside the built-in rules:
+
+```php
+'rules' => [
+    Rules\UnindexedForeignKeyRule::class,
+    Rules\DuplicateIndexRule::class,
+    App\SchemaRules\NoTextColumnsOnHighTrafficTablesRule::class,
+],
+```
+
+This turns Schema Audit into more than a collection of database checks: **your team can codify its own schema rules and make them part of the CI pipeline.**
+
+See [`GUIDE.md`](GUIDE.md) for writing custom rules and advanced usage.
+
+---
+
 ## Configuration
 
 ```php
@@ -131,6 +185,8 @@ return [
 >
 > `rules` — enable, disable, or replace audit rules.
 
+---
+
 ## Documentation
 
 See the [Guide](GUIDE.md) for:
@@ -141,6 +197,8 @@ See the [Guide](GUIDE.md) for:
 - limitations and unsupported operations
 - multiple database connections
 - writing custom rules
+
+---
 
 ## Limitations
 
