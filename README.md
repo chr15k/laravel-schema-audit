@@ -4,11 +4,11 @@
     </kbd>
 </p>
 
-<p></p>
+---
 
 <p align="center">
     <kbd>
-        <img style="border-radius: 15px;" alt="Schema Audit header image" width="800" src="art/header-b.jpeg"/>
+        <img style="border-radius: 15px;" alt="Schema Audit header image" src="art/header-b.jpeg"/>
     </kbd>
 </p>
 
