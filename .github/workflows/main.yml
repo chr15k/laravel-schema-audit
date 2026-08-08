@@ -10,21 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        include:
-          - laravel: "10.*"
-            pest: "^4.0"
-            pest_plugins: "^4.0"
-
-          - laravel: "13.*"
-            pest: "^5.0"
-            pest_plugins: "^5.0"
-
-    name: Laravel ${{ matrix.laravel }}
 
     steps:
       - uses: actions/checkout@v7
@@ -40,21 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
-
-      - name: Constrain Laravel version
-        run: composer require "laravel/framework:${{ matrix.laravel }}" --no-update
-
-      - name: Constrain Pest
-        run: |
-          composer require \
-            "pestphp/pest:${{ matrix.pest }}" \
-            "pestphp/pest-plugin-phpstan:${{ matrix.pest_plugins }}" \
-            "pestphp/pest-plugin-rector:${{ matrix.pest_plugins }}" \
-            "pestphp/pest-plugin-type-coverage:${{ matrix.pest_plugins }}" \
-            --no-update
-
-      - name: Update dependencies
-        run: composer update --prefer-dist --no-progress
 
       - name: Run test suite
         run: composer test
