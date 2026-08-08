@@ -13,11 +13,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-  strategy:
-    matrix:
-      laravel:
-        - '10.*'
-        - '13.*'
+    strategy:
+      matrix:
+        laravel: ['10.*', '13.*']
 
     name: Laravel ${{ matrix.laravel }}
 
