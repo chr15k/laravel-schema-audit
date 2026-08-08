@@ -58,9 +58,7 @@ final readonly class SchemaBuilder
         }
 
         if ($operation->type === SchemaOperationType::Drop) {
-            if ($declared) {
-                unset($tables[$operation->tableName]);
-            }
+            unset($tables[$operation->tableName]);
 
             return;
         }
@@ -94,25 +92,7 @@ final readonly class SchemaBuilder
         $renamed = $tables[$from];
         unset($tables[$from]);
 
-        $tables[$to] = TableSchema::make($to);
-        $tables[$to]->setLocation($renamed->location());
-        $tables[$to]->setGuard($renamed->guard());
-
-        if ($pk = $renamed->primaryKey()) {
-            $tables[$to]->setPrimaryKey($pk);
-        }
-
-        foreach ($renamed->columns() as $column) {
-            $tables[$to]->addColumn($column);
-        }
-
-        foreach ($renamed->indexes() as $index) {
-            $tables[$to]->addIndex($index);
-        }
-
-        foreach ($renamed->foreignKeys() as $fk) {
-            $tables[$to]->addForeignKey($fk);
-        }
+        $tables[$to] = $renamed->renamedTo($to);
 
         foreach ($tables as $table) {
             $table->renameReferencedTable($from, $to);
@@ -195,6 +175,13 @@ final readonly class SchemaBuilder
 
     private function applyColumnDefinition(TableSchema $table, ColumnChain $chain, ?SchemaGuard $guard = null): void
     {
+        // Indexes and foreign keys created under `!Schema::hasColumn()` are
+        // conditional. Model the column itself, but skip dependent structures
+        // to avoid false-positive audit findings.
+        if ($guard === SchemaGuard::MissingColumn) {
+            return;
+        }
+
         $column = $this->columns->resolve($chain, $guard);
 
         if (! $column instanceof Column) {
@@ -202,13 +189,6 @@ final readonly class SchemaBuilder
         }
 
         $table->addColumn($column);
-
-        // Indexes and foreign keys created under `!Schema::hasColumn()` are
-        // conditional. Model the column itself, but skip dependent structures
-        // to avoid false-positive audit findings.
-        if ($guard === SchemaGuard::MissingColumn) {
-            return;
-        }
 
         if ($column->method->impliesPrimaryKey() || $chain->hasModifier('primary')) {
             $primaryKey = $this->primaryKeys->resolveColumnPrimaryKey($chain, $column, $guard);
@@ -300,11 +280,9 @@ final readonly class SchemaBuilder
             return;
         }
 
-        if (! is_array($columns)) {
-            $columns = [$columns];
-        }
-
-        $table->dropColumns($columns);
+        $table->dropColumns(
+            is_array($columns) ? $columns : [$columns]
+        );
     }
 
     private function applyRenameIndex(TableSchema $table, ColumnCall $call): void
@@ -331,58 +309,47 @@ final readonly class SchemaBuilder
         $table->renameColumn($from, $to);
     }
 
-    private function applyDropForeignKey(TableSchema $table, ColumnCall $call): void
-    {
-        $fk = $call->stringOrArrayArgument(0);
-
-        if ($fk === null) {
-            return;
-        }
-
-        if (is_string($fk)) {
-            $table->removeForeignKey($fk);
-
-            return;
-        }
-
-        if ($fk === []) {
-            return;
-        }
-
-        $table->removeForeignKey(
-            $this->conventions->indexName(
-                $table->name,
-                $fk,
-                'foreign',
-            )
-        );
-    }
-
-    private function applyDropIndex(TableSchema $table, ColumnCall $call, string $type): void
-    {
+    private function resolveDropIndexName(
+        TableSchema $table,
+        ColumnCall $call,
+        string $type,
+    ): ?string {
         $index = $call->stringOrArrayArgument(0);
 
-        if ($index === null) {
-            return;
+        if ($index === null || $index === []) {
+            return null;
         }
 
-        if (is_string($index)) {
-            $table->removeIndex($index);
-
-            return;
-        }
-
-        if ($index === []) {
-            return;
-        }
-
-        $table->removeIndex(
-            $this->conventions->indexName(
+        return is_string($index)
+            ? $index
+            : $this->conventions->indexName(
                 $table->name,
                 $index,
                 $type,
-            )
-        );
+            );
+    }
+
+    private function applyDropForeignKey(
+        TableSchema $table,
+        ColumnCall $call,
+    ): void {
+        $name = $this->resolveDropIndexName($table, $call, 'foreign');
+
+        if ($name !== null) {
+            $table->removeForeignKey($name);
+        }
+    }
+
+    private function applyDropIndex(
+        TableSchema $table,
+        ColumnCall $call,
+        string $type,
+    ): void {
+        $name = $this->resolveDropIndexName($table, $call, $type);
+
+        if ($name !== null) {
+            $table->removeIndex($name);
+        }
     }
 
     private function applyDropConstrainedIndex(TableSchema $table, ColumnCall $call, string $type): void
@@ -400,18 +367,20 @@ final readonly class SchemaBuilder
             $column = $this->conventions->foreignKeyColumnFromModel(class_basename($model));
         }
 
-        if (is_string($column)) {
-            if ($constrained) {
-                $table->removeIndex(
-                    $this->conventions->indexName(
-                        $table->name,
-                        [$column],
-                        'foreign',
-                    )
-                );
-            }
-
-            $table->dropColumn($column);
+        if (! is_string($column)) {
+            return;
         }
+
+        if ($constrained) {
+            $table->removeIndex(
+                $this->conventions->indexName(
+                    $table->name,
+                    [$column],
+                    'foreign',
+                )
+            );
+        }
+
+        $table->dropColumn($column);
     }
 }

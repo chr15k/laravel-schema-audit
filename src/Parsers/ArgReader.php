@@ -6,6 +6,7 @@ namespace Chr15k\SchemaAudit\Parsers;
 
 use Chr15k\SchemaAudit\Schema\LaravelConventions;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -70,7 +71,7 @@ final class ArgReader
         return match (true) {
             $node instanceof String_ => [$node->value],
 
-            $node instanceof Node\Expr\Array_ => self::resolveArrayValue($node),
+            $node instanceof Array_ => self::resolveArrayValue($node),
 
             $node instanceof Variable => self::resolveVariable($node, $context),
 
@@ -94,42 +95,49 @@ final class ArgReader
         }
 
         $name = $node->name->toString();
-
         $arg = $node->args[0] ?? null;
 
         if (! $arg instanceof Node\Arg) {
             return [];
         }
 
-        if ($name === 'collect') {
-            return self::resolveStrings($arg->value, $node);
-        }
+        return match ($name) {
+            'collect' => self::resolveStrings($arg->value, $node),
 
-        /**
-         * Resolves simple config() calls by using the final config key segment.
-         *
-         * Example:
-         * config('permission.table_names.roles') => ['roles']
-         *
-         * This is a best-effort resolution because config values are not available
-         * during static analysis.
-         */
-        if ($name === 'config' && $arg->value instanceof String_) {
-            return [
-                mb_substr(
-                    $arg->value->value,
-                    mb_strrpos($arg->value->value, '.') + 1
-                ),
-            ];
-        }
+            'config' => $arg->value instanceof String_
+                ? self::resolveConfig($arg->value)
+                : [],
 
-        return [];
+            default => [],
+        };
+
+    }
+
+    /**
+     * Resolves simple config() calls by using the final config key segment.
+     *
+     * Example:
+     * config('permission.table_names.roles') => ['roles']
+     *
+     * This is a best-effort resolution because config values are not available
+     * during static analysis.
+     *
+     * @return list<string>
+     */
+    private static function resolveConfig(String_ $value): array
+    {
+        return [
+            mb_substr(
+                $value->value,
+                mb_strrpos($value->value, '.') + 1
+            ),
+        ];
     }
 
     /**
      * @return list<string>
      */
-    private static function resolveArrayValue(Node\Expr\Array_ $array): array
+    private static function resolveArrayValue(Array_ $array): array
     {
         $values = [];
 
@@ -149,10 +157,7 @@ final class ArgReader
         Variable $node,
         ?Node $context,
     ): array {
-        if (
-            ! is_string($node->name)
-            || ! $context instanceof Node
-        ) {
+        if (! is_string($node->name) || ! $context instanceof Node) {
             return [];
         }
 
@@ -162,9 +167,7 @@ final class ArgReader
         }
 
         // collect(...)->each(function ($table) {})
-        foreach (
-            self::ancestorClosures($context) as $closure
-        ) {
+        foreach (self::ancestorClosures($context) as $closure) {
             if ($values = self::resolveClosureParameter($node, $closure)) {
                 return $values;
             }
@@ -174,31 +177,41 @@ final class ArgReader
         return self::resolveAssignedVariable($node->name, $context);
     }
 
-    private static function parentStatementContainer(Node $node): ?Node
+    private static function isStatementContainer(Node $node): bool
+    {
+        return $node instanceof Node\Stmt\ClassMethod
+            || $node instanceof Node\Stmt\Function_
+            || $node instanceof Closure
+            || $node instanceof Node\Stmt\If_
+            || $node instanceof Node\Stmt\ElseIf_
+            || $node instanceof Node\Stmt\Else_
+            || $node instanceof Node\Stmt\Foreach_
+            || $node instanceof Node\Stmt\For_
+            || $node instanceof Node\Stmt\While_
+            || $node instanceof Node\Stmt\Switch_
+            || $node instanceof Node\Stmt\Case_;
+    }
+
+    private static function nearestStatementContainer(Node $node): ?Node
     {
         for (
-            $current = self::parentOf($node);
+            $current = $node;
             $current instanceof Node;
             $current = self::parentOf($current)
         ) {
-            if (
-                $current instanceof Node\Stmt\ClassMethod
-                || $current instanceof Node\Stmt\Function_
-                || $current instanceof Closure
-                || $current instanceof Node\Stmt\If_
-                || $current instanceof Node\Stmt\ElseIf_
-                || $current instanceof Node\Stmt\Else_
-                || $current instanceof Node\Stmt\Foreach_
-                || $current instanceof Node\Stmt\For_
-                || $current instanceof Node\Stmt\While_
-                || $current instanceof Node\Stmt\Switch_
-                || $current instanceof Node\Stmt\Case_
-            ) {
+            if (self::isStatementContainer($current)) {
                 return $current;
             }
         }
 
         return null;
+    }
+
+    private static function parentStatementContainer(Node $node): ?Node
+    {
+        return self::nearestStatementContainer(
+            self::parentOf($node) ?? $node
+        );
     }
 
     /**
@@ -237,33 +250,6 @@ final class ArgReader
                 if ($current === $statement) {
                     return $index;
                 }
-            }
-        }
-
-        return null;
-    }
-
-    private static function nearestStatementContainer(Node $node): ?Node
-    {
-        for (
-            $current = $node;
-            $current instanceof Node;
-            $current = self::parentOf($current)
-        ) {
-            if (
-                $current instanceof Node\Stmt\ClassMethod
-                || $current instanceof Node\Stmt\Function_
-                || $current instanceof Closure
-                || $current instanceof Node\Stmt\If_
-                || $current instanceof Node\Stmt\ElseIf_
-                || $current instanceof Node\Stmt\Else_
-                || $current instanceof Node\Stmt\Foreach_
-                || $current instanceof Node\Stmt\For_
-                || $current instanceof Node\Stmt\While_
-                || $current instanceof Node\Stmt\Switch_
-                || $current instanceof Node\Stmt\Case_
-            ) {
-                return $current;
             }
         }
 
@@ -424,18 +410,12 @@ final class ArgReader
     /**
      * @return list<string>
      */
-    /**
-     * @return list<string>
-     */
     private static function resolveEachCollection(MethodCall $each): array
     {
         $collection = $each->var;
 
-        if (! $collection instanceof FuncCall) {
-            return [];
-        }
-
         if (
+            ! $collection instanceof FuncCall ||
             ! $collection->name instanceof Name ||
             $collection->name->toString() !== 'collect'
         ) {
@@ -448,22 +428,11 @@ final class ArgReader
             return [];
         }
 
-        if (! $arg->value instanceof Node\Expr\Array_) {
-            return self::resolveStrings(
-                $arg->value,
-                $each,
-            );
+        if ($arg->value instanceof Array_) {
+            return self::resolveArrayValue($arg->value);
         }
 
-        $values = [];
-
-        foreach ($arg->value->items as $item) {
-            if ($item->value instanceof String_) {
-                $values[] = $item->value->value;
-            }
-        }
-
-        return $values;
+        return self::resolveStrings($arg->value, $each);
     }
 
     private static function parentOf(Node $node): ?Node

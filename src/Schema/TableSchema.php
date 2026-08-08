@@ -218,6 +218,33 @@ final class TableSchema implements Arrayable, JsonSerializable, SchemaReference
         return $this->indexes->hasExactColumns($columns);
     }
 
+    public function renamedTo(string $name): self
+    {
+        $renamed = self::make(
+            name: $name,
+            location: $this->location,
+            guard: $this->guard,
+        );
+
+        if ($pk = $this->primaryKey) {
+            $renamed->setPrimaryKey($pk);
+        }
+
+        foreach ($this->columns as $column) {
+            $renamed->addColumn($column);
+        }
+
+        foreach ($this->indexes as $index) {
+            $renamed->addIndex($index);
+        }
+
+        foreach ($this->foreignKeys as $fk) {
+            $renamed->addForeignKey($fk);
+        }
+
+        return $renamed;
+    }
+
     /**
      * @param  string|list<string>  $columns
      */
