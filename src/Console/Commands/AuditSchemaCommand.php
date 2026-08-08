@@ -125,7 +125,7 @@ final class AuditSchemaCommand extends Command
 
     private function renderSchemaOnly(Schema $schema): int
     {
-        $this->line($schema->toPrettyJson());
+        $this->line($schema->toPrettyJson(JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return self::SUCCESS;
     }
@@ -204,7 +204,7 @@ final class AuditSchemaCommand extends Command
                 $severity->glyph(),
                 (string) $finding,
             ),
-            sprintf('<fg=%s> ⛁ %s.%s </>', $severity->color(), $finding->table, $column ?: 'N/A')
+            sprintf('<fg=%s> ⛁ %s.%s </>', $severity->color(), $finding->table, $column ?: '?')
         );
 
         $this->renderWrappedArrow(
