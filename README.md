@@ -1,15 +1,15 @@
 <p align="center">
-    <picture>
+    <kbd>
         <img style="border-radius: 15px;" width="500" alt="Schema Audit header image" src="art/header-a.jpeg"/>
-    </picture>
+    </kbd>
 </p>
 
 <p></p>
 
 <p align="center">
-    <picture>
+    <kbd>
         <img style="border-radius: 15px;" alt="Schema Audit header image" width="750" src="art/header-b.jpeg"/>
-    </picture>
+    </kbd>
 </p>
 
 <p></p>
