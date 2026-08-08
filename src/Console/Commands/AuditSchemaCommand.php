@@ -176,8 +176,7 @@ final class AuditSchemaCommand extends Command
                 $grammar = str('issue')->plural($count);
                 $worst = $this->worstSeverity($items);
 
-                $this->renderSeparator();
-                $this->newLine();
+                $this->newLine(2);
                 $this->line(sprintf(
                     '  <%s> ⌗ %s </> <fg=cyan>(%d %s)</>',
                     $worst->colorTag(),
@@ -187,12 +186,6 @@ final class AuditSchemaCommand extends Command
                 ));
                 $items->each($this->renderFinding(...));
             });
-    }
-
-    private function renderSeparator(string $char = '░'): void
-    {
-        $this->newLine();
-        $this->line('<fg=cyan;>  '.str_repeat($char, $this->terminalContentWidth()).'</>');
     }
 
     private function renderFinding(Finding $finding): void
@@ -317,7 +310,7 @@ final class AuditSchemaCommand extends Command
 
     private function renderFail(string $duration, int $count): void
     {
-        $this->renderSeparator();
+        $this->newLine();
         $grammar = str('issue')->plural($count);
 
         $this->newLine();
