@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 ## [0.1.1] - 2026-08-08
 
 ### Changed
-* Removed Laravel 10 support in favor of addressing compatability issues
+* Removed Laravel 10 support in favor of addressing compatibility issues
 * Updated README
 
 ## [0.1.0] - 2026-08-08
