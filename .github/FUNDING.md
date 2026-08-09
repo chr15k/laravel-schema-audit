@@ -1,0 +1,3 @@
+github: chr15k
+custom: https://paypal.me/ctk8501
+buy_me_a_coffee: https://buymeacoffee.com/chr15k
