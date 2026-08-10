@@ -100,10 +100,8 @@ For example, you might want to prevent developers from adding expensive column t
 ```php
 final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->tables() as $table) {
             if (! in_array($table->name, ['orders', 'events', 'sessions'], true)) {
                 continue;
@@ -111,7 +109,7 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 
             foreach ($table->columns() as $column) {
                 if ($column->method === ColumnMethod::Text) {
-                    $findings[] = $this->makeFinding(
+                    yield $this->warning(
                         table: $table->name,
                         columns: $column->name,
                         message: "Avoid TEXT columns on high-traffic tables.",
@@ -121,8 +119,6 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
                 }
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 }
 ```

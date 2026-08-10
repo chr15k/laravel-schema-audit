@@ -45,7 +45,7 @@ it('serialises findings to json', function (): void {
             code: 'unindexed_foreign_key',
             table: 'orders',
             message: 'missing index',
-            columns: 'customer_id',
+            columns: ['customer_id'],
             severity: Severity::Warning,
         ),
     ]);

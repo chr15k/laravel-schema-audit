@@ -58,7 +58,7 @@ it('reports a foreign key with no covering index on a driver that does not auto-
         ->toHaveCount(1)
         ->and($result->audit->findings[0]->table)->toBe('orders')
         ->and($result->audit->findings[0]->code)->toBe('unindexed_foreign_key')
-        ->and($result->audit->findings[0]->columns)->toBe('customer_id')
+        ->and($result->audit->findings[0]->columns)->toBe(['customer_id'])
         ->and($result->audit->findings[0]->severity)->toBe(Severity::Warning)
         ->and($result->audit->findings[0]->message)->toContain('pgsql');
 });
@@ -124,7 +124,7 @@ it('reports composite foreign keys with a driver-specific composite message', fu
 
     expect($result->audit->findings)
         ->toHaveCount(1)
-        ->and($result->audit->findings[0]->columns)->toBe('tenant_id, user_id')
+        ->and($result->audit->findings[0]->columns)->toBe(['tenant_id, user_id'])
         ->and($result->audit->findings[0]->message)->toContain('composite foreign key columns')
         ->and($result->audit->findings[0]->message)->toContain('assignments');
 });

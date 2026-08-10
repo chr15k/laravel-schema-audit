@@ -61,7 +61,7 @@ it('reports a foreignId() foreign key pointing at a plain increments() primary k
         ->toHaveCount(1)
         ->and($result->audit->findings[0]->table)->toBe('posts')
         ->and($result->audit->findings[0]->code)->toBe('mismatched_foreign_key')
-        ->and($result->audit->findings[0]->columns)->toBe('category_id')
+        ->and($result->audit->findings[0]->columns)->toBe(['category_id'])
         ->and($result->audit->findings[0]->severity)->toBe(Severity::Error);
 });
 

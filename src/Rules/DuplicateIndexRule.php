@@ -8,21 +8,16 @@ use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Schema\TableSchema;
 use Chr15k\SchemaAudit\Schema\ValueObjects\DuplicateIndexGroup;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
-use Closure;
 
 final readonly class DuplicateIndexRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->tables() as $table) {
-            foreach ($table->indexes()->duplicateGroups() as $duplicates) {
-                $findings[] = $this->duplicateIndexFinding($table, $duplicates);
+            foreach ($table->indexes()->duplicateGroups() as $groups) {
+                yield $this->duplicateIndexFinding($table, $groups);
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 
     private function duplicateIndexFinding(
@@ -32,8 +27,8 @@ final readonly class DuplicateIndexRule extends Rule
         $index = $group->primary();
         $columns = $group->columns();
 
-        return $this->makeFinding(
-            table: $table->name,
+        return $this->warning(
+            table: $table,
             message: sprintf(
                 'Duplicate index %s on %s',
                 $index->name,

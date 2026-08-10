@@ -5,31 +5,24 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
-use Chr15k\SchemaAudit\Enums\Severity;
-use Closure;
 
 final readonly class DanglingForeignKeyRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->tables() as $table) {
             foreach ($table->danglingForeignKeys($context->schema) as $fk) {
-                $findings[] = $this->makeFinding(
-                    table: $table->name,
+                yield $this->error(
+                    table: $table,
                     message: sprintf(
                         'References missing table %s',
                         $fk->referencesTable
                     ),
                     columns: $fk->columns,
-                    severity: Severity::Error,
                     guard: $fk->guard,
                     location: $fk->location
                 );
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 }

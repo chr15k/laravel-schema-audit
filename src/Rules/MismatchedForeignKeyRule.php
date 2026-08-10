@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
-use Chr15k\SchemaAudit\Enums\Severity;
-use Closure;
 
 /**
  * Flags a foreign key whose column type doesn't match the type family of
@@ -25,10 +23,8 @@ use Closure;
  */
 final readonly class MismatchedForeignKeyRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->mismatchedForeignKeys() as $mismatch) {
             $fk = $mismatch->foreignKey;
 
@@ -48,8 +44,8 @@ final readonly class MismatchedForeignKeyRule extends Rule
             $referencesColumn = $mismatch->referencedTable->column($fk->referencesColumn);
             $referencesFamily = $referencesColumn?->method->family()->value;
 
-            $findings[] = $this->makeFinding(
-                table: $mismatch->table->name,
+            yield $this->error(
+                table: $mismatch->table,
                 message: sprintf(
                     'Foreign key %s.%s type (%s) does not match referenced column %s.%s type (%s)',
                     $mismatch->table->name,
@@ -60,12 +56,9 @@ final readonly class MismatchedForeignKeyRule extends Rule
                     $referencesFamily ?? '?',
                 ),
                 columns: $fk->columns,
-                severity: Severity::Error,
                 guard: $fk->guard,
                 location: $fk->location,
             );
         }
-
-        return $next($context->withFindings($findings));
     }
 }

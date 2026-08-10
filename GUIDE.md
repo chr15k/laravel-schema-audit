@@ -131,11 +131,11 @@ Treat each audit as a separate schema boundary rather than combining migrations 
 
 Custom rules can be added to `config('schema-audit.rules')`.
 
-Any class implementing `Chr15k\SchemaAudit\Contracts\AuditRule` can be used. For convenience, extend the abstract `Rule` class, which provides the `makeFinding()` helper.
-
 ### Creating a Rule
 
-A rule receives an `AuditContext` containing the reconstructed schema and accumulated findings.
+A rule receives an `AuditContext` containing the reconstructed schema and findings accumulated by previous rules.
+
+Rules implement `check()` and return an `iterable` of findings:
 
 ```php
 <?php
@@ -147,14 +147,11 @@ namespace App\SchemaRules;
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Rules\Rule;
-use Closure;
 
 final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->tables() as $table) {
             if (! in_array($table->name, ['orders', 'events', 'sessions'], true)) {
                 continue;
@@ -162,8 +159,8 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 
             foreach ($table->columns() as $column) {
                 if ($column->method === ColumnMethod::Text) {
-                    $findings[] = $this->makeFinding(
-                        table: $table->name,
+                    yield $this->warning(
+                        table: $table,
                         columns: $column->name,
                         message: "Avoid TEXT columns on high-traffic tables.",
                         location: $column->location,
@@ -172,13 +169,13 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
                 }
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 }
 ```
 
-Rules should treat the context as immutable. Add findings with `withFindings()` and pass the resulting context to `$next()`.
+Use `yield` to produce findings as they are discovered. This allows a rule to stream findings without first building and returning a findings array.
+
+The rule should not modify the `AuditContext`. The audit pipeline collects the findings returned by `check()` and adds them to the context before passing it to the next rule.
 
 ### Registering a Rule
 
@@ -203,12 +200,11 @@ The `AuditContext` provides access to the reconstructed schema and findings accu
 
 A rule should generally:
 
-1. inspect `$context->schema`
-2. create any findings
-3. add them with `$context->withFindings()`
-4. pass the updated context to `$next()`
+* inspect $context->schema
+* yield findings as they are discovered
+* avoid modifying the context directly
 
-This allows rules to remain independent while participating in the same audit pipeline.
+The audit pipeline is responsible for collecting the findings and passing the updated context to the next rule. This keeps individual rules focused on detecting schema issues rather than managing pipeline state.
 
 ## Configuration Reference
 
