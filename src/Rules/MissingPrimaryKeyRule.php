@@ -5,27 +5,18 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
-use Chr15k\SchemaAudit\Enums\Severity;
-use Closure;
 
 final readonly class MissingPrimaryKeyRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->tables() as $table) {
             if (! $table->hasPrimaryKey()) {
-                $findings[] = $this->makeFinding(
-                    table: $table->name,
-                    message: sprintf('Table %s has no primary key', $table->name),
-                    severity: Severity::Error,
-                    guard: $table->guard(),
-                    location: $table->location()
+                yield $this->error(
+                    table: $table,
+                    message: sprintf('Table %s has no primary key', $table->name)
                 );
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 }

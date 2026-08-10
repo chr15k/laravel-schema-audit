@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Chr15k\SchemaAudit\Rules;
 
 use Chr15k\SchemaAudit\Data\AuditContext;
-use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Schema\TableSchema;
-use Closure;
 
 /**
  * Flags a foreign key whose referenced column has no unique constraint on
@@ -17,10 +15,8 @@ use Closure;
  */
 final readonly class InvalidReferencedKeyRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
                 $referencedTable = $context->schema->table($fk->referencesTable);
@@ -41,8 +37,8 @@ final readonly class InvalidReferencedKeyRule extends Rule
                     ? implode(', ', $fk->referencesColumn)
                     : $fk->referencesColumn;
 
-                $findings[] = $this->makeFinding(
-                    table: $table->name,
+                yield $this->error(
+                    table: $table,
                     message: sprintf(
                         'Foreign key on %s references %s (%s), which has no matching unique key or primary key',
                         $columns,
@@ -50,13 +46,10 @@ final readonly class InvalidReferencedKeyRule extends Rule
                         $referencedColumns,
                     ),
                     columns: $fk->columns,
-                    severity: Severity::Error,
                     guard: $fk->guard,
                     location: $fk->location,
                 );
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 }

@@ -12,14 +12,14 @@ use Stringable;
 final readonly class Finding implements SchemaReference, Stringable
 {
     /**
-     * @param  array<int, SchemaReference>  $related
-     * @param  string|list<string>|null  $columns
+     * @param  list<string>  $columns
+     * @param  list<SchemaReference>  $related
      */
     public function __construct(
         public string $code,
         public string $table,
         public string $message,
-        public null|string|array $columns = null,
+        public array $columns = [],
         public Severity $severity = Severity::Warning,
         public ?SchemaGuard $guard = null,
         public ?SourceLocation $location = null,

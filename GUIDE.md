@@ -147,14 +147,11 @@ namespace App\SchemaRules;
 use Chr15k\SchemaAudit\Data\AuditContext;
 use Chr15k\SchemaAudit\Enums\ColumnMethod;
 use Chr15k\SchemaAudit\Rules\Rule;
-use Closure;
 
 final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 {
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
-        $findings = [];
-
         foreach ($context->schema->tables() as $table) {
             if (! in_array($table->name, ['orders', 'events', 'sessions'], true)) {
                 continue;
@@ -162,8 +159,8 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
 
             foreach ($table->columns() as $column) {
                 if ($column->method === ColumnMethod::Text) {
-                    $findings[] = $this->makeFinding(
-                        table: $table->name,
+                    yield $this->warning(
+                        table: $table,
                         columns: $column->name,
                         message: "Avoid TEXT columns on high-traffic tables.",
                         location: $column->location,
@@ -172,8 +169,6 @@ final readonly class NoTextColumnsOnHighTrafficTablesRule extends Rule
                 }
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 }
 ```

@@ -9,7 +9,6 @@ use Chr15k\SchemaAudit\Schema\TableSchema;
 use Chr15k\SchemaAudit\Schema\ValueObjects\ForeignKey;
 use Chr15k\SchemaAudit\Support\Config;
 use Chr15k\SchemaAudit\ValueObjects\Finding;
-use Closure;
 
 final readonly class UnindexedForeignKeyRule extends Rule
 {
@@ -17,23 +16,19 @@ final readonly class UnindexedForeignKeyRule extends Rule
 
     public function __construct(private Config $config) {}
 
-    public function handle(AuditContext $context, Closure $next): AuditContext
+    protected function check(AuditContext $context): iterable
     {
         if (in_array($this->config->driver(), self::AUTO_INDEXING_DRIVERS, true)) {
-            return $next($context);
+            return;
         }
-
-        $findings = [];
 
         foreach ($context->schema->tables() as $table) {
             foreach ($table->foreignKeys() as $fk) {
                 if ($table->hasNoIndexFor($fk->columns)) {
-                    $findings[] = $this->unindexedForeignKeyFinding($table, $fk);
+                    yield $this->unindexedForeignKeyFinding($table, $fk);
                 }
             }
         }
-
-        return $next($context->withFindings($findings));
     }
 
     private function unindexedForeignKeyFinding(TableSchema $table, ForeignKey $fk): Finding
@@ -56,8 +51,8 @@ final readonly class UnindexedForeignKeyRule extends Rule
                 $columns,
             );
 
-        return $this->makeFinding(
-            table: $table->name,
+        return $this->warning(
+            table: $table,
             message: $message,
             columns: $columns,
             guard: $fk->guard(),
