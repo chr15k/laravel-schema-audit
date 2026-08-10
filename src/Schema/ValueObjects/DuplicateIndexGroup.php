@@ -33,14 +33,17 @@ final readonly class DuplicateIndexGroup
     }
 
     /**
-     * @return array<int, SchemaReference>
+     * @return list<SchemaReference>
      */
     public function related(): array
     {
-        return $this->indexes
+        /** @var list<SchemaReference> $related */
+        $related = $this->indexes
             ->reject(fn (Index $index): bool => $index === $this->primary())
             ->values()
             ->all();
+
+        return $related;
     }
 
     /**

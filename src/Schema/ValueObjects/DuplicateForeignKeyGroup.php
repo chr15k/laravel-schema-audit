@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Schema\ValueObjects;
 
+use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Schema\Collections\ForeignKeyCollection;
 use LogicException;
 
@@ -32,14 +33,17 @@ final readonly class DuplicateForeignKeyGroup
     }
 
     /**
-     * @return array<int, ForeignKey>
+     * @return list<SchemaReference>
      */
     public function related(): array
     {
-        return $this->fks
+        /** @var list<SchemaReference> $related */
+        $related = $this->fks
             ->reject(fn (ForeignKey $fk): bool => $fk === $this->primary())
             ->values()
             ->all();
+
+        return $related;
     }
 
     /**

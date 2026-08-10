@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chr15k\SchemaAudit\Concerns;
 
+use Chr15k\SchemaAudit\Contracts\SchemaReference;
 use Chr15k\SchemaAudit\Enums\SchemaGuard;
 use Chr15k\SchemaAudit\Enums\Severity;
 use Chr15k\SchemaAudit\Schema\TableSchema;
@@ -16,6 +17,7 @@ trait CreatesFindings
      * Create a new finding.
      *
      * @param  string|list<string>|null  $columns
+     * @param  list<SchemaReference>  $related
      */
     protected function finding(
         TableSchema $table,
@@ -53,6 +55,7 @@ trait CreatesFindings
      * Create a warning finding.
      *
      * @param  string|list<string>|null  $columns
+     * @param  list<SchemaReference>  $related
      */
     protected function warning(
         TableSchema $table,
@@ -77,6 +80,7 @@ trait CreatesFindings
      * Create an error finding.
      *
      * @param  string|list<string>|null  $columns
+     * @param  list<SchemaReference>  $related
      */
     protected function error(
         TableSchema $table,
@@ -101,6 +105,7 @@ trait CreatesFindings
      * Create an info finding.
      *
      * @param  string|list<string>|null  $columns
+     * @param  list<SchemaReference>  $related
      */
     protected function info(
         TableSchema $table,

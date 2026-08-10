@@ -23,10 +23,14 @@ abstract readonly class Rule implements AuditRule
         AuditContext $context,
         Closure $next,
     ): AuditContext {
+        /** @var list<Finding> $findings */
+        $findings = iterator_to_array(
+            iterator: $this->check($context),
+            preserve_keys: false
+        );
+
         return $next(
-            $context->withFindings(
-                iterator_to_array($this->check($context))
-            )
+            $context->withFindings($findings)
         );
     }
 }

@@ -190,9 +190,7 @@ final class AuditSchemaCommand extends Command
 
     private function renderFinding(Finding $finding): void
     {
-        $column = is_string($finding->columns)
-            ? $finding->columns
-            : implode(', ', $finding->columns ?? []);
+        $column = implode(', ', $finding->columns);
 
         $severity = $finding->severity;
 
